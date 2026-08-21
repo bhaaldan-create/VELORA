@@ -1,11 +1,10 @@
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/lib/db";
 import type { AdminProduct } from "@/lib/admin-product-types";
 import { salePriceFromBase } from "@/lib/pricing";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
-const MAX_BYTES = 5 * 1024 * 1024;
+/** على Vercel نحفظ الصورة في قاعدة البيانات كـ data URL — حدّ معقول */
+const MAX_BYTES = 1.5 * 1024 * 1024;
 
 function mapRow(row: {
   id: string;
@@ -43,22 +42,6 @@ function mapRow(row: {
   };
 }
 
-function extForMime(mime: string) {
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "jpg";
-}
-
-async function removePublicFile(publicPath: string | null | undefined) {
-  if (!publicPath?.startsWith("/products/")) return;
-  const abs = path.join(process.cwd(), "public", publicPath.replace(/^\//, ""));
-  try {
-    await unlink(abs);
-  } catch {
-    // الملف قد يكون محذوفاً مسبقاً
-  }
-}
-
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
@@ -79,7 +62,7 @@ export async function POST(req: Request) {
     }
     if (file.size > MAX_BYTES) {
       return Response.json(
-        { ok: false, error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت." },
+        { ok: false, error: "حجم الصورة يجب ألا يتجاوز 1.5 ميجابايت." },
         { status: 400 },
       );
     }
@@ -89,17 +72,9 @@ export async function POST(req: Request) {
       return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
     }
 
-    const dir = path.join(process.cwd(), "public", "products");
-    await mkdir(dir, { recursive: true });
-
-    const ext = extForMime(file.type);
-    const filename = `${id}-${Date.now()}.${ext}`;
-    const abs = path.join(dir, filename);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(abs, buffer);
-
-    const imageUrl = `/products/${filename}`;
-    await removePublicFile(existing.imageUrl);
+    const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
+    const imageUrl = `data:${mime};base64,${buffer.toString("base64")}`;
 
     const row = await prisma.product.update({
       where: { id },
@@ -129,7 +104,6 @@ export async function DELETE(req: Request) {
       return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
     }
 
-    await removePublicFile(existing.imageUrl);
     const row = await prisma.product.update({
       where: { id },
       data: { imageUrl: null },

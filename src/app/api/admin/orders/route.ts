@@ -9,17 +9,27 @@ import {
 } from "@/lib/orders";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const statusParam = searchParams.get("status") || "all";
-  const q = searchParams.get("q") || "";
-  const status: OrderStatus | "all" =
-    statusParam === "all" || isOrderStatus(statusParam) ? statusParam : "all";
+  try {
+    const { searchParams } = new URL(req.url);
+    const statusParam = searchParams.get("status") || "all";
+    const q = searchParams.get("q") || "";
+    const status: OrderStatus | "all" =
+      statusParam === "all" || isOrderStatus(statusParam)
+        ? statusParam
+        : "all";
 
-  const all = await listStoredOrders();
-  const counts = countOrdersByStatus(all);
-  const orders = filterOrders(all, { status, q });
+    const all = await listStoredOrders();
+    const counts = countOrdersByStatus(all);
+    const orders = filterOrders(all, { status, q });
 
-  return Response.json({ ok: true, counts, orders });
+    return Response.json({ ok: true, counts, orders });
+  } catch (error) {
+    console.error("[admin/orders] GET failed", error);
+    return Response.json(
+      { ok: false, error: "تعذّر تحميل الطلبات." },
+      { status: 500 },
+    );
+  }
 }
 
 const patchSchema = z.object({

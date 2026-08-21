@@ -25,6 +25,7 @@ export function ProductMedia({
   priority = false,
 }: Props) {
   if (imageUrl) {
+    const isDataUrl = imageUrl.startsWith("data:");
     return (
       <div
         className={cn(
@@ -39,6 +40,7 @@ export function ProductMedia({
           fill
           sizes={sizes}
           priority={priority}
+          unoptimized={isDataUrl}
           className="object-contain p-1"
         />
       </div>

@@ -1,41 +1,42 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { prisma } from "@/lib/db";
+import type { OrderPayload } from "@/lib/order-email";
 import {
   normalizeStatus,
   ORDER_STATUSES,
   type OrderStatus,
   type StoredOrder,
 } from "@/lib/order-types";
+import type { Prisma } from "@/generated/prisma/client";
 
 export type { OrderStatus, StoredOrder } from "@/lib/order-types";
 export { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/lib/order-types";
 
-const ORDERS_DIR = path.join(process.cwd(), "data", "orders");
-
-function normalizeOrder(
-  raw: Partial<StoredOrder> & { orderId?: string },
-): StoredOrder | null {
-  if (!raw.orderId || !raw.order || !raw.savedAt) return null;
+function rowToStored(row: {
+  id: string;
+  subject: string;
+  emailedTo: string | null;
+  status: string;
+  orderJson: Prisma.JsonValue;
+  text: string;
+  adminNote: string | null;
+  receiptSentAt: Date | null;
+  savedAt: Date;
+  updatedAt: Date;
+}): StoredOrder | null {
+  const order = row.orderJson as unknown as OrderPayload;
+  if (!order || typeof order !== "object") return null;
   return {
-    savedAt: raw.savedAt,
-    updatedAt: raw.updatedAt,
-    orderId: raw.orderId,
-    subject: raw.subject || `طلب #${raw.orderId}`,
-    emailedTo: raw.emailedTo,
-    status: normalizeStatus(raw.status),
-    order: raw.order,
-    text: raw.text || "",
-    adminNote: raw.adminNote,
-    receiptSentAt: raw.receiptSentAt,
+    savedAt: row.savedAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    orderId: row.id,
+    subject: row.subject,
+    emailedTo: row.emailedTo || undefined,
+    status: normalizeStatus(row.status),
+    order,
+    text: row.text || "",
+    adminNote: row.adminNote || undefined,
+    receiptSentAt: row.receiptSentAt?.toISOString(),
   };
-}
-
-async function ensureDir() {
-  await mkdir(ORDERS_DIR, { recursive: true });
-}
-
-function orderPath(orderId: string) {
-  return path.join(ORDERS_DIR, `${orderId}.json`);
 }
 
 export async function saveStoredOrder(
@@ -43,48 +44,56 @@ export async function saveStoredOrder(
     status?: OrderStatus;
   },
 ): Promise<StoredOrder> {
-  await ensureDir();
-  const stored: StoredOrder = {
-    ...input,
-    status: input.status ?? "new",
-    updatedAt: new Date().toISOString(),
-  };
-  await writeFile(orderPath(stored.orderId), JSON.stringify(stored, null, 2), "utf8");
+  const status = input.status ?? "new";
+  const savedAt = new Date(input.savedAt);
+  const row = await prisma.order.upsert({
+    where: { id: input.orderId },
+    create: {
+      id: input.orderId,
+      subject: input.subject,
+      emailedTo: input.emailedTo || null,
+      status,
+      orderJson: input.order as unknown as Prisma.InputJsonValue,
+      text: input.text || "",
+      adminNote: input.adminNote || null,
+      receiptSentAt: input.receiptSentAt
+        ? new Date(input.receiptSentAt)
+        : null,
+      savedAt: Number.isNaN(savedAt.getTime()) ? new Date() : savedAt,
+    },
+    update: {
+      subject: input.subject,
+      emailedTo: input.emailedTo || null,
+      status,
+      orderJson: input.order as unknown as Prisma.InputJsonValue,
+      text: input.text || "",
+      adminNote: input.adminNote || null,
+      receiptSentAt: input.receiptSentAt
+        ? new Date(input.receiptSentAt)
+        : null,
+    },
+  });
+
+  const stored = rowToStored(row);
+  if (!stored) throw new Error("تعذّر حفظ الطلب.");
   return stored;
 }
 
 export async function getStoredOrder(
   orderId: string,
 ): Promise<StoredOrder | null> {
-  try {
-    const raw = await readFile(orderPath(orderId), "utf8");
-    return normalizeOrder(JSON.parse(raw) as Partial<StoredOrder>);
-  } catch {
-    return null;
-  }
+  const row = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!row) return null;
+  return rowToStored(row);
 }
 
 export async function listStoredOrders(): Promise<StoredOrder[]> {
-  await ensureDir();
-  const files = (await readdir(ORDERS_DIR))
-    .filter((f) => f.endsWith(".json"))
-    .sort()
-    .reverse();
-
-  const orders: StoredOrder[] = [];
-  for (const file of files) {
-    try {
-      const raw = await readFile(path.join(ORDERS_DIR, file), "utf8");
-      const normalized = normalizeOrder(JSON.parse(raw) as Partial<StoredOrder>);
-      if (normalized) orders.push(normalized);
-    } catch {
-      // ignore corrupt files
-    }
-  }
-
-  return orders.sort(
-    (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-  );
+  const rows = await prisma.order.findMany({
+    orderBy: { savedAt: "desc" },
+  });
+  return rows
+    .map(rowToStored)
+    .filter((o): o is StoredOrder => o !== null);
 }
 
 export async function updateOrderStatus(
@@ -92,24 +101,24 @@ export async function updateOrderStatus(
   status: OrderStatus,
   opts?: { adminNote?: string; markReceiptSent?: boolean },
 ): Promise<StoredOrder | null> {
-  const existing = await getStoredOrder(orderId);
+  const existing = await prisma.order.findUnique({ where: { id: orderId } });
   if (!existing) return null;
 
-  const updated: StoredOrder = {
-    ...existing,
-    status,
-    updatedAt: new Date().toISOString(),
-    adminNote:
-      typeof opts?.adminNote === "string"
-        ? opts.adminNote.trim() || undefined
-        : existing.adminNote,
-    receiptSentAt: opts?.markReceiptSent
-      ? new Date().toISOString()
-      : existing.receiptSentAt,
-  };
+  const row = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status,
+      adminNote:
+        typeof opts?.adminNote === "string"
+          ? opts.adminNote.trim() || null
+          : existing.adminNote,
+      receiptSentAt: opts?.markReceiptSent
+        ? new Date()
+        : existing.receiptSentAt,
+    },
+  });
 
-  await writeFile(orderPath(orderId), JSON.stringify(updated, null, 2), "utf8");
-  return updated;
+  return rowToStored(row);
 }
 
 export function countOrdersByStatus(orders: StoredOrder[]) {

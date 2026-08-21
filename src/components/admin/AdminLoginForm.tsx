@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const search = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,8 +34,8 @@ export function AdminLoginForm() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "تعذّر تسجيل الدخول.");
       }
-      router.replace(nextPath);
-      router.refresh();
+      // انتقال كامل حتى تُرسل كوكي الجلسة فوراً (مهم على الموبايل/الآيباد)
+      window.location.assign(nextPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر تسجيل الدخول.");
     } finally {

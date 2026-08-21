@@ -8,7 +8,7 @@ export function getWebhookUrl() {
   return process.env.ORDER_WEBHOOK_URL?.trim() || "";
 }
 
-/** الطلبات تعمل دائماً عبر الحفظ المحلي — الإيميل اختياري */
+/** الطلبات تُحفظ دائماً في قاعدة البيانات — الإيميل اختياري */
 export function isMailConfigured() {
   return true;
 }

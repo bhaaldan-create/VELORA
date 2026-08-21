@@ -159,3 +159,23 @@ model PhoneOtp {
 
   @@index([phone, createdAt])
 }
+
+/// طلبات المتجر — تُحفظ في PostgreSQL (لا يعمل تخزين الملفات على Vercel)
+model Order {
+  id            String    @id
+  subject       String
+  emailedTo     String?
+  /// new | preparing | delivered
+  status        String    @default("new")
+  /// OrderPayload كاملاً كـ JSON
+  orderJson     Json
+  text          String    @default("")
+  adminNote     String?
+  receiptSentAt DateTime?
+  savedAt       DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, savedAt])
+  @@index([savedAt])
+}
