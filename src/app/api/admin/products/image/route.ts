@@ -1,0 +1,146 @@
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { prisma } from "@/lib/db";
+import type { AdminProduct } from "@/lib/admin-product-types";
+import { salePriceFromBase } from "@/lib/pricing";
+
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
+const MAX_BYTES = 5 * 1024 * 1024;
+
+function mapRow(row: {
+  id: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+  categorySlug: string;
+  price: number;
+  discountPercent: number;
+  stock: number;
+  isActive: boolean;
+  isBestseller: boolean;
+  isNew: boolean;
+  size: string;
+  imageUrl: string | null;
+  updatedAt: Date;
+}): AdminProduct {
+  const discountPercent = row.discountPercent || 0;
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    categorySlug: row.categorySlug,
+    price: row.price,
+    discountPercent,
+    salePrice: salePriceFromBase(row.price, discountPercent),
+    stock: row.stock,
+    isActive: row.isActive,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    size: row.size,
+    imageUrl: row.imageUrl,
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+function extForMime(mime: string) {
+  if (mime === "image/png") return "png";
+  if (mime === "image/webp") return "webp";
+  return "jpg";
+}
+
+async function removePublicFile(publicPath: string | null | undefined) {
+  if (!publicPath?.startsWith("/products/")) return;
+  const abs = path.join(process.cwd(), "public", publicPath.replace(/^\//, ""));
+  try {
+    await unlink(abs);
+  } catch {
+    // الملف قد يكون محذوفاً مسبقاً
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const form = await req.formData();
+    const id = String(form.get("id") || "").trim();
+    const file = form.get("file");
+
+    if (!id) {
+      return Response.json({ ok: false, error: "معرّف المنتج مطلوب." }, { status: 400 });
+    }
+    if (!(file instanceof File)) {
+      return Response.json({ ok: false, error: "أرفقي ملف صورة." }, { status: 400 });
+    }
+    if (!ALLOWED.has(file.type)) {
+      return Response.json(
+        { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_BYTES) {
+      return Response.json(
+        { ok: false, error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت." },
+        { status: 400 },
+      );
+    }
+
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
+    }
+
+    const dir = path.join(process.cwd(), "public", "products");
+    await mkdir(dir, { recursive: true });
+
+    const ext = extForMime(file.type);
+    const filename = `${id}-${Date.now()}.${ext}`;
+    const abs = path.join(dir, filename);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(abs, buffer);
+
+    const imageUrl = `/products/${filename}`;
+    await removePublicFile(existing.imageUrl);
+
+    const row = await prisma.product.update({
+      where: { id },
+      data: { imageUrl },
+    });
+
+    return Response.json({ ok: true, product: mapRow(row) });
+  } catch (error) {
+    console.error("[admin/products/image] POST failed", error);
+    return Response.json(
+      { ok: false, error: "تعذّر رفع صورة المنتج." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = (await req.json()) as { id?: string };
+    const id = body.id?.trim();
+    if (!id) {
+      return Response.json({ ok: false, error: "معرّف المنتج مطلوب." }, { status: 400 });
+    }
+
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
+    }
+
+    await removePublicFile(existing.imageUrl);
+    const row = await prisma.product.update({
+      where: { id },
+      data: { imageUrl: null },
+    });
+
+    return Response.json({ ok: true, product: mapRow(row) });
+  } catch (error) {
+    console.error("[admin/products/image] DELETE failed", error);
+    return Response.json(
+      { ok: false, error: "تعذّر حذف صورة المنتج." },
+      { status: 500 },
+    );
+  }
+}

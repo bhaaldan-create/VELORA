@@ -1,0 +1,56 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@/generated/prisma/client";
+
+/** زد هذا الرقم بعد أي تغيير في schema حتى لا يبقى عميل Prisma قديماً في وضع التطوير */
+const PRISMA_SCHEMA_VERSION = 8;
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+  prismaSchemaVersion?: number;
+};
+
+function createPrismaClient() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL غير مضبوط. عيّني رابط PostgreSQL في .env.local (انظر .env.example).",
+    );
+  }
+  if (url.startsWith("file:")) {
+    throw new Error(
+      "DATABASE_URL يشير إلى SQLite. استخدم رابط PostgreSQL مثل postgresql://USER:PASS@HOST:5432/DB",
+    );
+  }
+  const adapter = new PrismaPg({ connectionString: url });
+  return new PrismaClient({ adapter });
+}
+
+function isStalePrismaClient(client: PrismaClient | undefined) {
+  if (!client) return true;
+  if (globalForPrisma.prismaSchemaVersion !== PRISMA_SCHEMA_VERSION) return true;
+  const customer = (
+    client as { customer?: { findUnique?: unknown } }
+  ).customer;
+  const phoneOtp = (
+    client as { phoneOtp?: { findFirst?: unknown } }
+  ).phoneOtp;
+  return (
+    typeof customer?.findUnique !== "function" ||
+    typeof phoneOtp?.findFirst !== "function"
+  );
+}
+
+if (
+  process.env.NODE_ENV !== "production" &&
+  isStalePrismaClient(globalForPrisma.prisma)
+) {
+  void globalForPrisma.prisma?.$disconnect().catch(() => undefined);
+  globalForPrisma.prisma = undefined;
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+  globalForPrisma.prismaSchemaVersion = PRISMA_SCHEMA_VERSION;
+}

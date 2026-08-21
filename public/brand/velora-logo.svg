@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" role="img" aria-label="VELORA Beauty Revealed">
+  <text
+    x="260"
+    y="78"
+    text-anchor="middle"
+    fill="#3D2640"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="72"
+    font-weight="500"
+    letter-spacing="18"
+  >VELORA</text>
+  <!-- Wave through O (approx center of O in VELORA) -->
+  <path
+    d="M292 62 C304 54, 316 70, 328 62"
+    fill="none"
+    stroke="#3D2640"
+    stroke-width="2.2"
+    stroke-linecap="round"
+  />
+  <!-- Tagline with flanking lines -->
+  <line x1="110" y1="118" x2="175" y2="118" stroke="#3D2640" stroke-width="1" opacity="0.55"/>
+  <text
+    x="260"
+    y="122"
+    text-anchor="middle"
+    fill="#3D2640"
+    font-family="Helvetica, Arial, sans-serif"
+    font-size="12"
+    letter-spacing="6"
+  >BEAUTY REVEALED</text>
+  <line x1="345" y1="118" x2="410" y2="118" stroke="#3D2640" stroke-width="1" opacity="0.55"/>
+</svg>

@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+:root {
+  --plum: #3d2640;
+  --plum-soft: #5c3a5e;
+  --ink: #1a121c;
+  --ink-deep: #1a121c;
+  --ivory: #f8f4f1;
+  --ivory-fixed: #f8f4f1;
+  --champagne: #e9dfd6;
+  --blush: #d4b5b8;
+  --mist: #f1eae6;
+  --muted: #8b7a84;
+  --surface: #ffffff;
+  --btn-bg: #3d2640;
+  --btn-bg-hover: #5c3a5e;
+  --btn-fg: #f8f4f1;
+  --background: var(--ivory);
+  --foreground: var(--ink);
+
+  /* سلم طباعة من 8 درجات — مضبوط وحديث */
+  --t1: 0.6875rem; /* 11 — تسمية علوية */
+  --t2: 0.75rem; /* 12 — تسمية */
+  --t3: 0.875rem; /* 14 — نص صغير */
+  --t4: 1rem; /* 16 — نص أساسي */
+  --t5: 1.125rem; /* 18 — نص بارز */
+  --t6: 1.5rem; /* 24 — عنوان */
+  --t7: 2rem; /* 32 — عرض صغير */
+  --t8: clamp(2.5rem, 5vw, 3.25rem); /* 40–52 — عرض رئيسي */
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-body: 1.7;
+  --track-wide: 0.08em;
+  --track-brand: 0.22em;
+}
+
+/* مظهر ليلي دافئ — يحافظ على هوية VELORA دون توهج بنفسجي */
+[data-theme="dark"] {
+  --plum: #e2d2d5;
+  --plum-soft: #cbb6ba;
+  --ink: #f3ebe6;
+  --ivory: #141114;
+  --champagne: #2a2428;
+  --blush: #c4a8ab;
+  --mist: #1c181b;
+  --muted: #9a8a92;
+  --surface: #1c181b;
+  --btn-bg: #5c3a5e;
+  --btn-bg-hover: #6e4a70;
+  --btn-fg: #f8f4f1;
+  --background: #141114;
+  --foreground: #f3ebe6;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--surface);
+}
+
+[data-theme="dark"] .text-\[var\(--ivory\)\] {
+  color: var(--ivory-fixed);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-plum: var(--plum);
+  --color-ink: var(--ink);
+  --color-ivory: var(--ivory);
+  --color-champagne: var(--champagne);
+  --color-blush: var(--blush);
+  --color-mist: var(--mist);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* هوامش آمنة لشق الشاشة في تطبيق الجوال */
+html[data-native] body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), "Segoe UI", Tahoma, sans-serif;
+  font-size: var(--t4);
+  line-height: var(--lh-body);
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* درجات الخط الثمانية */
+.t1 {
+  font-size: var(--t1);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-wide);
+}
+.t2 {
+  font-size: var(--t2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-wide);
+}
+.t3 {
+  font-size: var(--t3);
+  line-height: var(--lh-body);
+}
+.t4 {
+  font-size: var(--t4);
+  line-height: var(--lh-body);
+}
+.t5 {
+  font-size: var(--t5);
+  line-height: var(--lh-snug);
+}
+.t6 {
+  font-size: var(--t6);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+}
+.t7 {
+  font-size: var(--t7);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.015em;
+}
+.t8 {
+  font-size: var(--t8);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+}
+
+.font-brand {
+  font-family: var(--font-brand), "Times New Roman", serif;
+  letter-spacing: var(--track-brand);
+  font-optical-sizing: auto;
+}
+
+.label-caps {
+  font-size: var(--t1);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--blush) 55%, white);
+  color: var(--ink);
+}
+
+@keyframes velora-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes velora-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  #velora-receipt,
+  .receipt-sheet {
+    box-shadow: none !important;
+    border-color: #ccc !important;
+    width: 850px !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+}
+
+.receipt-sheet {
+  overflow: visible !important;
+}
