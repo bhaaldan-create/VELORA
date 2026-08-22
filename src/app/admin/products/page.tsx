@@ -15,7 +15,7 @@ export default async function AdminProductsPage() {
     <AdminShell
       active="products"
       title="إدارة المنتجات"
-      subtitle="عدّلي الاسم والسعر والخصم والمخزون والصور والإظهار مباشرة من لوحة الموظفين."
+      subtitle="أضيفي منتجات جديدة بكامل المميزات، أو عدّلي السعر والمخزون والصور والإظهار مباشرة."
     >
       <ProductsAdmin initialProducts={products} initialStats={stats} />
     </AdminShell>

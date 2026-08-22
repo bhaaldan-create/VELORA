@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
+import { ProductCreateForm } from "@/components/admin/ProductCreateForm";
 import { formatPrice } from "@/lib/utils";
 import type { AdminProduct } from "@/lib/admin-product-types";
 import { DISCOUNT_OPTIONS, salePriceFromBase } from "@/lib/pricing";
@@ -38,6 +39,7 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [, startTransition] = useTransition();
 
   const visible = useMemo(() => {
@@ -107,6 +109,20 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
         return copy;
       });
       setSavedId(updated.id);
+    });
+  }
+
+  function prependProduct(created: AdminProduct) {
+    startTransition(() => {
+      setProducts((prev) => {
+        const next = [created, ...prev];
+        refreshStats(next);
+        return next;
+      });
+      setSavedId(created.id);
+      setShowCreate(false);
+      setVisibility("all");
+      setQuery("");
     });
   }
 
@@ -236,6 +252,26 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="t3 text-[var(--muted)]">
+          أضيفي منتجات جديدة بكامل بياناتها، أو عدّلي المنتجات الحالية.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowCreate((v) => !v)}
+          className="t2 bg-[var(--plum)] px-4 py-2.5 text-[var(--ivory)]"
+        >
+          {showCreate ? "إغلاق نموذج الإضافة" : "＋ إضافة منتج جديد"}
+        </button>
+      </div>
+
+      {showCreate ? (
+        <ProductCreateForm
+          onCreated={prependProduct}
+          onCancel={() => setShowCreate(false)}
+        />
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {filters.map((f) => (
           <button
@@ -362,8 +398,8 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
                       className="hidden"
                       disabled={busy}
                       onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        void uploadImage(p, file);
+                        const f = e.target.files?.[0] || null;
+                        void uploadImage(p, f);
                         e.currentTarget.value = "";
                       }}
                     />

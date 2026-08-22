@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/db";
 import type { AdminProduct } from "@/lib/admin-product-types";
 import { salePriceFromBase } from "@/lib/pricing";
+import type { CategorySlug, SkinConcern } from "@/types";
 
 export type { AdminProduct, AdminProductStats } from "@/lib/admin-product-types";
 export { countAdminProductStats } from "@/lib/admin-product-types";
+
+const DEFAULT_TONE =
+  "linear-gradient(145deg, #E8D5D8 0%, #C9A8B0 45%, #3D2640 100%)";
 
 function toAdminProduct(row: {
   id: string;
@@ -58,7 +62,112 @@ export type AdminProductUpdate = {
   isBestseller?: boolean;
   isNew?: boolean;
   imageUrl?: string | null;
+  categorySlug?: string;
+  size?: string;
+  description?: string;
+  descriptionAr?: string;
+  benefits?: string[];
+  benefitsAr?: string[];
+  ingredients?: string[];
+  concerns?: string[];
+  rating?: number;
+  reviews?: number;
+  imageTone?: string;
+  slug?: string;
 };
+
+export type AdminProductCreateInput = {
+  name: string;
+  nameAr: string;
+  categorySlug: CategorySlug;
+  price: number;
+  stock?: number;
+  discountPercent?: number;
+  size: string;
+  description: string;
+  descriptionAr: string;
+  benefits: string[];
+  benefitsAr: string[];
+  ingredients: string[];
+  concerns: SkinConcern[];
+  isActive?: boolean;
+  isBestseller?: boolean;
+  isNew?: boolean;
+  rating?: number;
+  reviews?: number;
+  imageTone?: string;
+  slug?: string;
+};
+
+function slugify(input: string) {
+  const base = input
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return base || `product-${Date.now().toString(36)}`;
+}
+
+async function uniqueSlug(desired: string) {
+  let slug = slugify(desired);
+  let n = 2;
+  while (await prisma.product.findUnique({ where: { slug } })) {
+    slug = `${slugify(desired)}-${n}`;
+    n += 1;
+  }
+  return slug;
+}
+
+function cleanList(items: string[]) {
+  return items.map((s) => s.trim()).filter(Boolean);
+}
+
+export async function createAdminProduct(
+  data: AdminProductCreateInput,
+): Promise<AdminProduct> {
+  const category = await prisma.category.findUnique({
+    where: { slug: data.categorySlug },
+  });
+  if (!category) {
+    throw new Error("التصنيف غير موجود.");
+  }
+
+  const slug = await uniqueSlug(data.slug?.trim() || data.name);
+  const id = `p${Date.now().toString(36)}`;
+
+  const row = await prisma.product.create({
+    data: {
+      id,
+      slug,
+      name: data.name.trim(),
+      nameAr: data.nameAr.trim(),
+      categorySlug: data.categorySlug,
+      price: Math.round(data.price),
+      discountPercent: Math.round(data.discountPercent ?? 0),
+      currency: "IQD",
+      description: data.description.trim(),
+      descriptionAr: data.descriptionAr.trim(),
+      benefitsJson: cleanList(data.benefits),
+      benefitsArJson: cleanList(data.benefitsAr),
+      ingredientsJson: cleanList(data.ingredients),
+      concernsJson: data.concerns,
+      size: data.size.trim() || "—",
+      isBestseller: !!data.isBestseller,
+      isNew: data.isNew !== false,
+      rating: typeof data.rating === "number" ? data.rating : 5,
+      reviews: typeof data.reviews === "number" ? Math.round(data.reviews) : 0,
+      imageTone: data.imageTone?.trim() || DEFAULT_TONE,
+      stock: Math.round(data.stock ?? 100),
+      isActive: data.isActive !== false,
+    },
+  });
+
+  return toAdminProduct(row);
+}
 
 export async function updateAdminProduct(
   id: string,
@@ -66,6 +175,21 @@ export async function updateAdminProduct(
 ): Promise<AdminProduct | null> {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) return null;
+
+  if (data.categorySlug) {
+    const category = await prisma.category.findUnique({
+      where: { slug: data.categorySlug },
+    });
+    if (!category) throw new Error("التصنيف غير موجود.");
+  }
+
+  let nextSlug: string | undefined;
+  if (typeof data.slug === "string" && data.slug.trim()) {
+    const desired = slugify(data.slug);
+    if (desired !== existing.slug) {
+      nextSlug = await uniqueSlug(desired);
+    }
+  }
 
   const row = await prisma.product.update({
     where: { id },
@@ -83,6 +207,28 @@ export async function updateAdminProduct(
         : {}),
       ...(typeof data.isNew === "boolean" ? { isNew: data.isNew } : {}),
       ...(data.imageUrl !== undefined ? { imageUrl: data.imageUrl } : {}),
+      ...(data.categorySlug ? { categorySlug: data.categorySlug } : {}),
+      ...(typeof data.size === "string" ? { size: data.size.trim() } : {}),
+      ...(typeof data.description === "string"
+        ? { description: data.description.trim() }
+        : {}),
+      ...(typeof data.descriptionAr === "string"
+        ? { descriptionAr: data.descriptionAr.trim() }
+        : {}),
+      ...(data.benefits ? { benefitsJson: cleanList(data.benefits) } : {}),
+      ...(data.benefitsAr ? { benefitsArJson: cleanList(data.benefitsAr) } : {}),
+      ...(data.ingredients
+        ? { ingredientsJson: cleanList(data.ingredients) }
+        : {}),
+      ...(data.concerns ? { concernsJson: data.concerns } : {}),
+      ...(typeof data.rating === "number" ? { rating: data.rating } : {}),
+      ...(typeof data.reviews === "number"
+        ? { reviews: Math.round(data.reviews) }
+        : {}),
+      ...(typeof data.imageTone === "string"
+        ? { imageTone: data.imageTone.trim() || DEFAULT_TONE }
+        : {}),
+      ...(nextSlug ? { slug: nextSlug } : {}),
     },
   });
 

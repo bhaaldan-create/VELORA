@@ -1,10 +1,37 @@
 import { z } from "zod";
 import {
   countAdminProductStats,
+  createAdminProduct,
   listAdminProducts,
   updateAdminProduct,
 } from "@/lib/admin-products";
 import { DISCOUNT_OPTIONS } from "@/lib/pricing";
+
+const categoryEnum = z.enum([
+  "skincare",
+  "body-care",
+  "hair-care",
+  "makeup",
+]);
+
+const concernEnum = z.enum([
+  "hydration",
+  "glow",
+  "acne",
+  "anti-aging",
+  "sensitivity",
+  "oil-control",
+]);
+
+const stringList = z.array(z.string()).transform((arr) =>
+  arr.map((s) => s.trim()).filter(Boolean),
+);
+
+const stringListRequired = z
+  .array(z.string())
+  .min(1)
+  .transform((arr) => arr.map((s) => s.trim()).filter(Boolean))
+  .refine((arr) => arr.length >= 1, { message: "قائمة فارغة" });
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -29,6 +56,61 @@ export async function GET(req: Request) {
   return Response.json({ ok: true, stats, products });
 }
 
+const createSchema = z.object({
+  name: z.string().min(1).max(120),
+  nameAr: z.string().min(1).max(120),
+  categorySlug: categoryEnum,
+  price: z.number().int().nonnegative(),
+  stock: z.number().int().nonnegative().optional(),
+  discountPercent: z
+    .number()
+    .int()
+    .refine((v) => (DISCOUNT_OPTIONS as readonly number[]).includes(v), {
+      message: "نسبة خصم غير صالحة",
+    })
+    .optional(),
+  size: z.string().min(1).max(40),
+  description: z.string().min(1).max(2000),
+  descriptionAr: z.string().min(1).max(2000),
+  benefits: stringList.default([]),
+  benefitsAr: stringListRequired,
+  ingredients: stringListRequired,
+  concerns: z.array(concernEnum).min(1),
+  isActive: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
+  isNew: z.boolean().optional(),
+  rating: z.number().min(0).max(5).optional(),
+  reviews: z.number().int().nonnegative().optional(),
+  imageTone: z.string().max(300).optional(),
+  slug: z.string().max(120).optional(),
+});
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const parsed = createSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return Response.json(
+        {
+          ok: false,
+          error: "بيانات المنتج غير مكتملة أو غير صحيحة.",
+          details: parsed.error.flatten(),
+        },
+        { status: 400 },
+      );
+    }
+
+    const product = await createAdminProduct(parsed.data);
+    return Response.json({ ok: true, product }, { status: 201 });
+  } catch (error) {
+    console.error("[admin/products] POST failed", error);
+    const message =
+      error instanceof Error ? error.message : "تعذّر إضافة المنتج.";
+    return Response.json({ ok: false, error: message }, { status: 500 });
+  }
+}
+
 const patchSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(120).optional(),
@@ -45,6 +127,18 @@ const patchSchema = z.object({
   isActive: z.boolean().optional(),
   isBestseller: z.boolean().optional(),
   isNew: z.boolean().optional(),
+  categorySlug: categoryEnum.optional(),
+  size: z.string().min(1).max(40).optional(),
+  description: z.string().min(1).max(2000).optional(),
+  descriptionAr: z.string().min(1).max(2000).optional(),
+  benefits: stringList.optional(),
+  benefitsAr: stringList.optional(),
+  ingredients: stringList.optional(),
+  concerns: z.array(concernEnum).optional(),
+  rating: z.number().min(0).max(5).optional(),
+  reviews: z.number().int().nonnegative().optional(),
+  imageTone: z.string().max(300).optional(),
+  slug: z.string().max(120).optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -78,9 +172,8 @@ export async function PATCH(req: Request) {
     return Response.json({ ok: true, product });
   } catch (error) {
     console.error("[admin/products] PATCH failed", error);
-    return Response.json(
-      { ok: false, error: "تعذّر تحديث المنتج." },
-      { status: 500 },
-    );
+    const message =
+      error instanceof Error ? error.message : "تعذّر تحديث المنتج.";
+    return Response.json({ ok: false, error: message }, { status: 500 });
   }
 }
