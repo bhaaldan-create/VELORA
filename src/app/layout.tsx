@@ -61,6 +61,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F8F4F1" },
@@ -85,11 +86,11 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
-      <body className="flex min-h-full flex-col antialiased">
+      <body className="flex min-h-full max-w-full flex-col overflow-x-clip antialiased">
         <Providers>
           <NativeAppShell />
           <Header />
-          <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+          <main className="min-w-0 flex-1 overflow-x-clip pb-20 lg:pb-0">{children}</main>
           <Footer />
           <PrimaryBottomNav />
         </Providers>

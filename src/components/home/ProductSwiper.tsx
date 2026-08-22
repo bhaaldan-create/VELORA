@@ -107,7 +107,7 @@ export function ProductSwiper({ products, className }: Props) {
           1024: { slidesPerView: 3.2, spaceBetween: 22 },
           1280: { slidesPerView: 4, spaceBetween: 24 },
         }}
-        className="velora-swiper !overflow-visible pb-10"
+        className="velora-swiper overflow-hidden pb-10"
       >
         {products.map((product) => (
           <SwiperSlide key={product.id} className="!h-auto">

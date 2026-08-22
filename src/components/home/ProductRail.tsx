@@ -38,10 +38,10 @@ export function ProductRail({
         : "bg-[var(--ivory)]";
 
   return (
-    <section className={cn(bg, "py-16 sm:py-20 lg:py-24", className)}>
+    <section className={cn(bg, "overflow-x-clip py-16 sm:py-20 lg:py-24", className)}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mb-10 flex items-end justify-between gap-6 sm:mb-12">
-          <div className="max-w-xl">
+          <div className="min-w-0 max-w-xl">
             <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-tight text-[var(--plum)]">
               {locale === "en" ? titleEn : title}
             </h2>
@@ -58,7 +58,9 @@ export function ProductRail({
             </Link>
           ) : null}
         </div>
-        <ProductSwiper products={products} />
+        <div className="min-w-0 overflow-hidden">
+          <ProductSwiper products={products} />
+        </div>
       </div>
     </section>
   );

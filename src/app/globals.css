@@ -96,6 +96,8 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 /* هوامش آمنة لشق الشاشة في تطبيق الجوال */
@@ -115,6 +117,9 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  max-width: 100%;
+  width: 100%;
 }
 
 html[data-locale="en"] body {
@@ -246,8 +251,8 @@ html[data-locale="en"] .font-display {
 .velora-swiper {
   overflow: hidden !important;
   padding-bottom: 2.25rem !important;
-  margin-inline: -0.15rem;
-  padding-inline: 0.15rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .velora-swiper .swiper-pagination {
