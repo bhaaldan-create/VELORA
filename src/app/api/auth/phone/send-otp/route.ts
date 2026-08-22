@@ -4,6 +4,7 @@ import { iraqMobileError, normalizeIraqMobile } from "@/lib/phone";
 
 const schema = z.object({
   phone: z.string().min(1),
+  purpose: z.enum(["register", "login"]).optional().default("register"),
 });
 
 export async function POST(req: Request) {
@@ -25,7 +26,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await createAndStoreOtp(parsed.data.phone);
+    const result = await createAndStoreOtp(parsed.data.phone, {
+      purpose: parsed.data.purpose,
+    });
     if (!result.ok) {
       return Response.json({ ok: false, error: result.error }, { status: 400 });
     }

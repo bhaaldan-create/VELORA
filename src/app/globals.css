@@ -47,6 +47,15 @@
   --larsa-border-strong: rgba(58, 24, 54, 0.18);
   --larsa-champagne: #c9b7a2;
   --larsa-orbit: #b9a3bc;
+
+  /* My VELORA — soft orchid account identity */
+  --account-bg: #fbfafc;
+  --account-lilac: #f3edf7;
+  --account-orchid: #c4b0d0;
+  --account-dust: #d4c4e0;
+  --account-plum: #3a1836;
+  --account-muted: #6d526c;
+  --account-border: rgba(58, 24, 54, 0.1);
 }
 
 /* مظهر ليلي دافئ — يحافظ على هوية VELORA دون توهج بنفسجي */
@@ -304,4 +313,46 @@ html[data-locale="en"] .font-display {
   .motion-safe\:animate-\[larsa-orbit_4\.5s_linear_infinite\] {
     animation: none !important;
   }
+}
+
+/* My VELORA account utilities */
+.account-shell {
+  color: var(--account-plum);
+}
+
+.account-input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--account-border);
+  background: var(--account-lilac);
+  padding: 0.75rem 1rem;
+  font-size: 0.925rem;
+  color: var(--account-plum);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.account-input:focus {
+  border-color: rgba(58, 24, 54, 0.22);
+}
+
+.account-input:disabled {
+  opacity: 0.65;
+}
+
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--account-plum);
+  color: #fff;
+  padding: 0.7rem 1.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.account-btn:disabled {
+  opacity: 0.45;
 }

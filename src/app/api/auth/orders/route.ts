@@ -52,6 +52,12 @@ export async function GET() {
         itemCount: entry.order.items.reduce((n, i) => n + i.quantity, 0),
         paymentMethodLabel: entry.order.paymentMethodLabel,
         shippingCarrierLabel: entry.order.shippingCarrierLabel,
+        items: entry.order.items.slice(0, 3).map((i) => ({
+          name: i.name,
+          nameAr: i.nameAr,
+          quantity: i.quantity,
+          price: i.price,
+        })),
       })),
     });
   } catch (error) {

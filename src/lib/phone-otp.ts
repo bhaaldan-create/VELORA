@@ -40,7 +40,11 @@ export async function shouldRevealOtpInResponse() {
   return process.env.NODE_ENV !== "production" && !(await isWhatsAppOtpConfigured());
 }
 
-export async function createAndStoreOtp(phoneRaw: string) {
+export async function createAndStoreOtp(
+  phoneRaw: string,
+  opts?: { purpose?: "register" | "login" },
+) {
+  const purpose = opts?.purpose ?? "register";
   const phone = normalizeIraqMobile(phoneRaw);
   if (!phone) {
     return { ok: false as const, error: "رقم الهاتف غير صالح." };
@@ -49,10 +53,18 @@ export async function createAndStoreOtp(phoneRaw: string) {
   const existingCustomer = await prisma.customer.findFirst({
     where: { phone },
   });
-  if (existingCustomer) {
+
+  if (purpose === "register" && existingCustomer) {
     return {
       ok: false as const,
       error: "هذا الرقم مسجّل مسبقاً. سجّلي الدخول بدل إنشاء حساب.",
+    };
+  }
+
+  if (purpose === "login" && !existingCustomer) {
+    return {
+      ok: false as const,
+      error: "هذا الرقم غير مسجّل. أنشئي حساباً أولاً.",
     };
   }
 
@@ -82,13 +94,19 @@ export async function createAndStoreOtp(phoneRaw: string) {
     data: { phone, codeHash, expiresAt },
   });
 
-  console.info(`[otp] whatsapp phone=${phone}`);
+  console.info(`[otp] purpose=${purpose} phone=${phone}`);
 
   const wa = await sendWhatsAppOtp(phone, code);
   const reveal = await shouldRevealOtpInResponse();
+  const actionWord = purpose === "login" ? "الدخول" : "التسجيل";
+
   if (!wa.ok) {
-    // عند حظر التسليم أو فشل الإرسال: أظهري الرمز حتى لا يتوقف التسجيل
-    if (wa.deliveryBlocked || wa.missingConfig || reveal || process.env.NODE_ENV !== "production") {
+    if (
+      wa.deliveryBlocked ||
+      wa.missingConfig ||
+      reveal ||
+      process.env.NODE_ENV !== "production"
+    ) {
       console.warn("[otp] revealing code — whatsapp unavailable", wa.error);
       return {
         ok: true as const,
@@ -97,10 +115,10 @@ export async function createAndStoreOtp(phoneRaw: string) {
         channel: "dev" as const,
         devCode: code,
         message: wa.deliveryBlocked
-          ? `${wa.error} مؤقتاً: استخدمي الرمز الظاهر بالأسفل لإكمال التسجيل.`
+          ? `${wa.error} مؤقتاً: استخدمي الرمز الظاهر بالأسفل لإكمال ${actionWord}.`
           : wa.missingConfig && reveal
             ? "وضع التطوير: واتساب غير مضبوط بعد — استخدمي الرمز الظاهر بالأسفل."
-            : "تعذّر إرسال واتساب مؤقتاً — استخدمي الرمز الظاهر بالأسفل.",
+            : `تعذّر إرسال واتساب مؤقتاً — استخدمي الرمز الظاهر بالأسفل.`,
       };
     }
     return {

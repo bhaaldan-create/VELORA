@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
@@ -9,45 +10,92 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { formatIraqMobileLocal } from "@/lib/phone";
+import { ProductMedia } from "@/components/shop/ProductMedia";
+import { ProductPrice } from "@/components/shop/ProductPrice";
+import { useCart } from "@/context/CartContext";
 import {
   useCustomerAuth,
   type CustomerPublic,
 } from "@/context/CustomerAuthContext";
+import { useLocale } from "@/context/LocaleContext";
 import { useTheme, type ThemeMode } from "@/context/ThemeContext";
-import { cn } from "@/lib/utils";
+import { useWishlist } from "@/context/WishlistContext";
+import { formatIraqMobileLocal } from "@/lib/phone";
+import { cn, formatPrice } from "@/lib/utils";
+import type { CategorySlug, Product } from "@/types";
 
 type AccountSection =
   | "overview"
-  | "profile"
+  | "wishlist"
   | "orders"
-  | "appearance"
-  | "security"
-  | "help";
+  | "addresses"
+  | "profile"
+  | "larsa"
+  | "settings";
 
-const SECTIONS: {
-  id: AccountSection;
-  label: string;
-  hint: string;
-}[] = [
-  { id: "overview", label: "نظرة عامة", hint: "ملخص حسابكِ" },
-  { id: "profile", label: "معلوماتي", hint: "البيانات الشخصية" },
-  { id: "orders", label: "طلباتي", hint: "تتبع الطلبات" },
-  { id: "appearance", label: "المظهر", hint: "نهاري / ليلي" },
-  { id: "security", label: "الأمان", hint: "كلمة المرور" },
-  { id: "help", label: "المساعدة", hint: "رعاية العميلة" },
+type OrderRow = {
+  orderId: string;
+  savedAt: string;
+  status: string;
+  statusLabel: string;
+  totalLabel: string;
+  itemCount: number;
+  paymentMethodLabel: string;
+  items?: { name: string; nameAr: string; quantity: number; price: number }[];
+};
+
+type WishProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+  price: number;
+  originalPrice?: number;
+  discountPercent?: number;
+  imageUrl?: string | null;
+  imageTone: string;
+  size: string;
+  category: string;
+};
+
+const NAV: { id: AccountSection; ar: string; en: string }[] = [
+  { id: "overview", ar: "نظرة عامة", en: "Overview" },
+  { id: "wishlist", ar: "محفوظاتي", en: "Saved" },
+  { id: "orders", ar: "طلباتي", en: "Orders" },
+  { id: "addresses", ar: "عناويني", en: "Addresses" },
+  { id: "profile", ar: "معلوماتي", en: "Profile" },
+  { id: "larsa", ar: "لارسا", en: "LARSA" },
+  { id: "settings", ar: "الإعدادات", en: "Settings" },
 ];
 
-function isSection(value: string | null): value is AccountSection {
-  return SECTIONS.some((s) => s.id === value);
+function isSection(v: string | null): v is AccountSection {
+  return NAV.some((s) => s.id === v);
 }
+
+function firstName(full: string, ar: boolean) {
+  const t = full.trim();
+  if (!t) return ar ? "عزيزتي" : "there";
+  return t.split(/\s+/)[0] ?? t;
+}
+
+function progressIndex(status: string) {
+  if (status === "delivered") return 3;
+  if (status === "preparing") return 1;
+  return 0;
+}
+
+const TIMELINE_AR = ["تم الطلب", "قيد التجهيز", "في الطريق", "تم التسليم"];
+const TIMELINE_EN = ["Placed", "Preparing", "On the way", "Delivered"];
 
 export function AccountSettings() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { customer, loading, setCustomer, logout } = useCustomerAuth();
   const { theme, setTheme } = useTheme();
+  const { locale } = useLocale();
+  const { ids: wishIds, toggle, ready: wishReady } = useWishlist();
+  const { addItem } = useCart();
+  const ar = locale !== "en";
 
   const section = useMemo<AccountSection>(() => {
     const q = searchParams.get("section");
@@ -68,18 +116,11 @@ export function AccountSettings() {
   const [savingPassword, setSavingPassword] = useState(false);
 
   const [orderId, setOrderId] = useState("");
-  const [myOrders, setMyOrders] = useState<
-    {
-      orderId: string;
-      savedAt: string;
-      statusLabel: string;
-      totalLabel: string;
-      itemCount: number;
-      paymentMethodLabel: string;
-    }[]
-  >([]);
+  const [myOrders, setMyOrders] = useState<OrderRow[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  const [wishProducts, setWishProducts] = useState<WishProduct[]>([]);
 
   useEffect(() => {
     if (!loading && !customer) {
@@ -94,7 +135,7 @@ export function AccountSettings() {
   }, [customer]);
 
   useEffect(() => {
-    if (section !== "orders" || !customer) return;
+    if (!customer) return;
     let cancelled = false;
     setOrdersLoading(true);
     setOrdersError(null);
@@ -104,17 +145,13 @@ export function AccountSettings() {
         const data = (await res.json()) as {
           ok?: boolean;
           error?: string;
-          orders?: typeof myOrders;
+          orders?: OrderRow[];
         };
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "تعذّر جلب الطلبات.");
-        }
+        if (!res.ok || !data.ok) throw new Error(data.error || "تعذّر جلب الطلبات.");
         if (!cancelled) setMyOrders(data.orders || []);
       } catch (err) {
         if (!cancelled) {
-          setOrdersError(
-            err instanceof Error ? err.message : "تعذّر جلب الطلبات.",
-          );
+          setOrdersError(err instanceof Error ? err.message : "تعذّر جلب الطلبات.");
         }
       } finally {
         if (!cancelled) setOrdersLoading(false);
@@ -123,15 +160,41 @@ export function AccountSettings() {
     return () => {
       cancelled = true;
     };
-  }, [section, customer]);
+  }, [customer]);
+
+  useEffect(() => {
+    if (!wishReady) return;
+    const list = [...wishIds];
+    if (!list.length) {
+      setWishProducts([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch(`/api/catalog/by-ids?ids=${list.join(",")}`);
+      const data = (await res.json()) as { ok?: boolean; products?: WishProduct[] };
+      if (!cancelled && data.ok) setWishProducts(data.products || []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [wishIds, wishReady]);
 
   function goTo(next: AccountSection) {
+    if (next === "larsa") {
+      router.push("/advisor");
+      return;
+    }
     router.replace(next === "overview" ? "/account" : `/account?section=${next}`);
   }
 
   if (loading || !customer) {
     return (
-      <p className="t3 text-[var(--muted)]">جارٍ تحميل حسابكِ…</p>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-[0.9rem] text-[var(--account-muted)]">
+          {ar ? "جارٍ تحميل مساحتكِ…" : "Loading your space…"}
+        </p>
+      </div>
     );
   }
 
@@ -152,26 +215,27 @@ export function AccountSettings() {
         customer?: CustomerPublic;
       };
       if (!res.ok || !data.ok || !data.customer) {
-        throw new Error(data.error || "تعذّر الحفظ.");
+        throw new Error(data.error || (ar ? "تعذّر الحفظ." : "Could not save."));
       }
       setCustomer(data.customer);
-      setProfileMessage("تم حفظ معلوماتكِ.");
+      setProfileMessage(ar ? "تم حفظ معلوماتكِ." : "Your details were saved.");
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : "تعذّر الحفظ.");
+      setProfileError(err instanceof Error ? err.message : "Error");
     } finally {
       setSavingProfile(false);
     }
   }
 
-  async function onChangePassword(e: FormEvent) {
+  async function onSavePassword(e: FormEvent) {
     e.preventDefault();
+    setSavingPassword(true);
     setSecurityError(null);
     setSecurityMessage(null);
     if (newPassword !== confirmPassword) {
-      setSecurityError("تأكيد كلمة المرور غير متطابق.");
+      setSecurityError(ar ? "كلمتا المرور غير متطابقتين." : "Passwords do not match.");
+      setSavingPassword(false);
       return;
     }
-    setSavingPassword(true);
     try {
       const res = await fetch("/api/auth/password", {
         method: "POST",
@@ -180,16 +244,14 @@ export function AccountSettings() {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "تعذّر تغيير كلمة المرور.");
+        throw new Error(data.error || (ar ? "تعذّر التغيير." : "Could not update."));
       }
+      setSecurityMessage(ar ? "تم تحديث كلمة المرور." : "Password updated.");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSecurityMessage("تم تحديث كلمة المرور بنجاح.");
     } catch (err) {
-      setSecurityError(
-        err instanceof Error ? err.message : "تعذّر تغيير كلمة المرور.",
-      );
+      setSecurityError(err instanceof Error ? err.message : "Error");
     } finally {
       setSavingPassword(false);
     }
@@ -198,551 +260,840 @@ export function AccountSettings() {
   async function onLogout() {
     await logout();
     router.replace("/login");
-    router.refresh();
   }
 
-  function trackOrder(e: FormEvent) {
-    e.preventDefault();
-    const id = orderId.trim();
-    if (!id) return;
-    router.push(`/track/${encodeURIComponent(id)}`);
-  }
+  const name = firstName(customer.fullName, ar);
+  const latest = myOrders[0] ?? null;
+  const inTransit = myOrders.filter((o) => o.status !== "delivered").length;
+  const timeline = ar ? TIMELINE_AR : TIMELINE_EN;
 
-  const firstName = customer.fullName.trim().split(/\s+/)[0] || customer.fullName;
+  function toProduct(p: WishProduct): Product {
+    return {
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      nameAr: p.nameAr,
+      category: p.category as CategorySlug,
+      price: p.price,
+      originalPrice: p.originalPrice,
+      discountPercent: p.discountPercent,
+      currency: "IQD",
+      description: "",
+      descriptionAr: "",
+      benefits: [],
+      benefitsAr: [],
+      ingredients: [],
+      concerns: [],
+      size: p.size,
+      rating: 0,
+      reviews: 0,
+      imageTone: p.imageTone,
+      imageUrl: p.imageUrl,
+    };
+  }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
-      <aside className="lg:sticky lg:top-28 lg:self-start">
-        <div className="mb-6">
-          <p className="t1 font-medium tracking-[0.18em] text-[var(--muted)]">
-            حسابي
-          </p>
-          <h1 className="font-display t6 mt-2 font-semibold text-[var(--plum)]">
-            {firstName}
-          </h1>
-          <p className="t2 mt-1 truncate text-[var(--muted)]" dir="ltr">
-            {customer.email}
-          </p>
-        </div>
+    <div className="account-shell" dir={ar ? "rtl" : "ltr"}>
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:gap-10">
+        {/* Sidebar */}
+        <aside className="shrink-0 lg:w-[240px]">
+          <div className="rounded-[22px] border border-[var(--account-border)] bg-white/90 p-6 lg:sticky lg:top-24">
+            <p className="font-latin text-[1.35rem] font-semibold leading-none tracking-tight text-[var(--account-plum)]">
+              My
+              <br />
+              <span className="font-brand tracking-[0.18em]">VELORA</span>
+            </p>
+            <p className="mt-3 text-[0.8rem] leading-relaxed text-[var(--account-muted)]">
+              {ar ? "مساحتك الخاصة في VELORA." : "Your private space in VELORA."}
+            </p>
 
-        <nav
-          className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0"
-          aria-label="أقسام الحساب"
-        >
-          {SECTIONS.map((item) => {
-            const active = section === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => goTo(item.id)}
-                className={cn(
-                  "t3 shrink-0 px-4 py-3 text-start transition-colors duration-300 lg:w-full",
-                  active
-                    ? "bg-[var(--mist)] text-[var(--ink)]"
-                    : "text-[var(--muted)] hover:bg-[var(--mist)]/60 hover:text-[var(--ink)]",
-                )}
-              >
-                <span className="block font-medium">{item.label}</span>
-                <span className="t1 mt-0.5 hidden text-[var(--muted)] lg:block">
-                  {item.hint}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
+            <nav className="mt-8 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+              {NAV.map((item) => {
+                const active = section === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => goTo(item.id)}
+                    className={cn(
+                      "shrink-0 rounded-2xl px-4 py-2.5 text-start text-[0.9rem] transition-colors duration-200",
+                      active
+                        ? "bg-[var(--account-lilac)] font-medium text-[var(--account-plum)]"
+                        : "text-[var(--account-muted)] hover:bg-[var(--account-lilac)]/50 hover:text-[var(--account-plum)]",
+                    )}
+                  >
+                    {ar ? item.ar : item.en}
+                  </button>
+                );
+              })}
+            </nav>
 
-        <button
-          type="button"
-          onClick={() => void onLogout()}
-          className="t3 mt-4 hidden w-full border-t border-[var(--plum)]/10 pt-4 text-start text-[var(--muted)] transition-colors hover:text-[var(--plum)] lg:block"
-        >
-          تسجيل الخروج
-        </button>
-      </aside>
+            <button
+              type="button"
+              onClick={() => void onLogout()}
+              className="mt-8 hidden w-full rounded-2xl border border-[var(--account-border)] px-4 py-2.5 text-[0.85rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/60 lg:block"
+            >
+              {ar ? "تسجيل الخروج" : "Sign out"}
+            </button>
+          </div>
+        </aside>
 
-      <div className="min-w-0 animate-[velora-fade_0.45s_ease]">
-        {section === "overview" ? (
-          <OverviewPanel
-            customer={customer}
-            theme={theme}
-            onNavigate={goTo}
-            onLogout={() => void onLogout()}
-          />
-        ) : null}
-
-        {section === "profile" ? (
-          <Panel
-            title="معلوماتي"
-            subtitle="بياناتكِ الشخصية وعنوان التوصيل الافتراضي."
-          >
-            <form onSubmit={onSaveProfile} className="space-y-7">
-              <ReadOnlyField
-                label="البريد الإلكتروني"
-                value={customer.email}
-                ltr
-              />
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">الاسم الكامل</span>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  disabled={savingProfile}
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
+        {/* Main */}
+        <div className="min-w-0 flex-1 space-y-8">
+          {section === "overview" ? (
+            <>
+              {/* Hero */}
+              <section className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)] bg-white">
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse 50% 80% at 100% 50%, rgba(212,196,224,0.35), transparent 55%), linear-gradient(135deg, #FBFAFC 0%, #F7F2F9 100%)",
+                  }}
                 />
-              </label>
-              <div>
-                <ReadOnlyField
-                  label="رقم الجوال (موثّق)"
-                  value={formatIraqMobileLocal(customer.phone)}
-                  ltr
-                />
-                <p className="t2 mt-2 text-[var(--muted)]">
-                  لتغيير الرقم لاحقاً سيلزم رمز تحقق جديد عبر واتساب.
-                </p>
-              </div>
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">العنوان الافتراضي</span>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  rows={3}
-                  disabled={savingProfile}
-                  placeholder="يُستخدم لتسهيل إتمام الطلب"
-                  className="t3 mt-2 w-full resize-y border border-[var(--plum)]/12 bg-transparent px-3 py-3 outline-none focus:border-[var(--plum)]/35 disabled:opacity-60"
-                />
-              </label>
-              {profileError ? <Alert tone="error">{profileError}</Alert> : null}
-              {profileMessage ? (
-                <Alert tone="success">{profileMessage}</Alert>
-              ) : null}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Button type="submit" disabled={savingProfile}>
-                  {savingProfile ? "جارٍ الحفظ…" : "حفظ المعلومات"}
-                </Button>
-                <Link href="/shop">
-                  <Button type="button" variant="ghost">
-                    متابعة التسوق
-                  </Button>
-                </Link>
-              </div>
-            </form>
-          </Panel>
-        ) : null}
-
-        {section === "orders" ? (
-          <Panel
-            title="طلباتي"
-            subtitle="طلباتكِ المرتبطة بالحساب، مع إمكانية التتبع برقم الطلب."
-          >
-            <div className="space-y-4">
-              {ordersLoading ? (
-                <p className="t3 text-[var(--muted)]">جارٍ تحميل طلباتكِ…</p>
-              ) : null}
-              {ordersError ? <Alert tone="error">{ordersError}</Alert> : null}
-              {!ordersLoading && !ordersError && myOrders.length === 0 ? (
-                <p className="t3 text-[var(--muted)]">
-                  لا توجد طلبات بعد على هذا الحساب.
-                </p>
-              ) : null}
-              {myOrders.map((entry) => (
-                <Link
-                  key={entry.orderId}
-                  href={`/track/${encodeURIComponent(entry.orderId)}`}
-                  className="block border border-[var(--plum)]/10 bg-[var(--mist)]/40 px-4 py-4 transition-colors hover:border-[var(--plum)]/25"
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="t3 font-medium text-[var(--ink)]" dir="ltr">
-                      #{entry.orderId}
+                <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-10 lg:p-10">
+                  <div>
+                    <p className="font-latin text-[11px] font-medium tracking-[0.22em] text-[var(--account-orchid)] uppercase">
+                      My VELORA
                     </p>
-                    <p className="t2 text-[var(--plum)]">{entry.statusLabel}</p>
+                    <h1 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.6rem)] font-semibold text-[var(--account-plum)]">
+                      {ar ? `مرحباً، ${name}` : `Welcome, ${name}`}
+                    </h1>
+                    <p className="mt-3 text-[1rem] text-[var(--account-muted)]">
+                      {ar
+                        ? "يسعدنا أن نراكِ مجدداً في VELORA."
+                        : "We’re glad to see you again at VELORA."}
+                    </p>
+                    <p className="font-latin mt-6 text-[0.95rem] leading-relaxed tracking-wide text-[var(--account-plum)]/70">
+                      Your beauty.
+                      <br />
+                      Your rituals.
+                      <br />
+                      Your VELORA.
+                    </p>
                   </div>
-                  <p className="t2 mt-2 text-[var(--muted)]">
-                    {entry.itemCount} منتج · {entry.totalLabel} ·{" "}
-                    {entry.paymentMethodLabel}
-                  </p>
-                  <p className="t1 mt-1 text-[var(--muted)]">
-                    {new Date(entry.savedAt).toLocaleString("ar-IQ")}
-                  </p>
-                </Link>
-              ))}
-            </div>
+                  <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[24px] lg:mx-0 lg:max-w-none">
+                    <Image
+                      src="/brand/account-hero.jpg"
+                      alt=""
+                      fill
+                      className="object-cover object-[center_20%]"
+                      sizes="(max-width: 1024px) 90vw, 380px"
+                      priority
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(58,24,54,0.12)] to-transparent" />
+                  </div>
+                </div>
+              </section>
 
-            <form onSubmit={trackOrder} className="mt-8 space-y-5 border-t border-[var(--plum)]/10 pt-8">
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">تتبع برقم طلب</span>
+              {/* Stats */}
+              <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard
+                  label={ar ? "طلباتك" : "Orders"}
+                  value={String(myOrders.length).padStart(2, "0")}
+                  icon="bag"
+                />
+                <StatCard
+                  label={ar ? "قائمة الأمنيات" : "Wishlist"}
+                  value={String(wishIds.size).padStart(2, "0")}
+                  icon="heart"
+                />
+                <StatCard
+                  label={ar ? "نقاط VELORA" : "VELORA points"}
+                  value={(myOrders.length * 120 + wishIds.size * 10 || 0).toLocaleString(
+                    ar ? "ar-IQ" : "en-US",
+                  )}
+                  icon="spark"
+                />
+                <StatCard
+                  label={ar ? "طلبات قيد الوصول" : "On the way"}
+                  value={String(inTransit).padStart(2, "0")}
+                  icon="truck"
+                />
+              </section>
+
+              {/* Latest order */}
+              <section className="rounded-[24px] border border-[var(--account-border)] bg-white p-6 sm:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-[1.25rem] font-semibold text-[var(--account-plum)]">
+                      {ar ? "آخر طلب" : "Latest order"}
+                    </h2>
+                    {latest ? (
+                      <p className="font-latin mt-1 text-[0.85rem] text-[var(--account-muted)]" dir="ltr">
+                        #{latest.orderId}
+                      </p>
+                    ) : null}
+                  </div>
+                  {latest ? (
+                    <Link
+                      href={`/track/${latest.orderId}`}
+                      className="rounded-full bg-[var(--account-plum)] px-5 py-2.5 text-[0.85rem] font-medium text-white"
+                    >
+                      {ar ? "تتبعي الطلب" : "Track order"}
+                    </Link>
+                  ) : null}
+                </div>
+
+                {ordersLoading ? (
+                  <p className="mt-6 text-[0.9rem] text-[var(--account-muted)]">
+                    {ar ? "جارٍ التحميل…" : "Loading…"}
+                  </p>
+                ) : latest ? (
+                  <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_1.1fr]">
+                    <div>
+                      <ul className="space-y-3">
+                        {(latest.items || []).map((item, i) => (
+                          <li
+                            key={`${item.nameAr}-${i}`}
+                            className="flex items-center justify-between gap-3 border-b border-[var(--account-border)] pb-3 text-[0.9rem]"
+                          >
+                            <span className="text-[var(--account-plum)]">
+                              {ar ? item.nameAr : item.name}
+                              <span className="ms-2 text-[var(--account-muted)]">
+                                ×{item.quantity}
+                              </span>
+                            </span>
+                            <span className="font-latin text-[var(--account-muted)]" dir="ltr">
+                              {formatPrice(item.price * item.quantity)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-4 text-[1.05rem] font-semibold text-[var(--account-plum)]">
+                        {ar ? "الإجمالي" : "Total"}: {latest.totalLabel}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[0.8rem] text-[var(--account-muted)]">
+                        {ar ? "رحلة طلبكِ" : "Order journey"}
+                      </p>
+                      <ol className="mt-4 space-y-0">
+                        {timeline.map((label, i) => {
+                          const active = i <= progressIndex(latest.status);
+                          return (
+                            <li key={label} className="flex gap-3">
+                              <div className="flex flex-col items-center">
+                                <span
+                                  className={cn(
+                                    "flex h-3.5 w-3.5 rounded-full border-2",
+                                    active
+                                      ? "border-[var(--account-plum)] bg-[var(--account-orchid)]"
+                                      : "border-[var(--account-border)] bg-white",
+                                  )}
+                                />
+                                {i < timeline.length - 1 ? (
+                                  <span
+                                    className={cn(
+                                      "my-1 w-px flex-1 min-h-[28px]",
+                                      active && i < progressIndex(latest.status)
+                                        ? "bg-[var(--account-orchid)]"
+                                        : "bg-[var(--account-border)]",
+                                    )}
+                                  />
+                                ) : null}
+                              </div>
+                              <span
+                                className={cn(
+                                  "pb-5 text-[0.9rem]",
+                                  active
+                                    ? "font-medium text-[var(--account-plum)]"
+                                    : "text-[var(--account-muted)]",
+                                )}
+                              >
+                                {label}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-8 rounded-[18px] border border-dashed border-[var(--account-border)] px-5 py-10 text-center">
+                    <p className="text-[0.95rem] text-[var(--account-muted)]">
+                      {ar
+                        ? "لا توجد طلبات بعد — ابدئي رحلتكِ من المتجر."
+                        : "No orders yet — begin your edit in the shop."}
+                    </p>
+                    <Link
+                      href="/shop"
+                      className="mt-4 inline-block text-[0.875rem] text-[var(--account-plum)] underline underline-offset-4"
+                    >
+                      {ar ? "تسوّقي الآن" : "Shop now"}
+                    </Link>
+                  </div>
+                )}
+              </section>
+
+              {/* Ritual / LARSA */}
+              <section className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)]">
+                <div className="absolute inset-0">
+                  <Image
+                    src="/brand/account-ritual.jpg"
+                    alt=""
+                    fill
+                    className="object-cover object-[center_25%]"
+                    sizes="100vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-[rgba(58,24,54,0.55)] via-[rgba(58,24,54,0.35)] to-[rgba(248,244,251,0.75)]" />
+                </div>
+                <div className="relative grid gap-6 p-6 sm:p-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+                  <div className="max-w-lg text-white">
+                    <h2 className="font-display text-[clamp(1.5rem,3vw,2.1rem)] font-semibold">
+                      {ar ? "طقسك الجمالي" : "Your beauty ritual"}
+                    </h2>
+                    <p className="mt-3 text-[0.95rem] text-white/80">
+                      {ar
+                        ? "اكتشفي المنتجات التي تناسب احتياجاتك."
+                        : "Discover products that match your needs."}
+                    </p>
+                    <Link
+                      href="/advisor"
+                      className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.875rem] font-medium text-[var(--account-plum)]"
+                    >
+                      {ar ? "ابدئي مع لارسا" : "Begin with LARSA"}
+                      <span aria-hidden>✦</span>
+                    </Link>
+                  </div>
+                  <div className="rounded-[20px] border border-white/35 bg-white/20 p-5 text-white backdrop-blur-md lg:justify-self-end lg:w-full lg:max-w-xs">
+                    <p className="font-latin text-[11px] tracking-[0.2em] uppercase">
+                      LARSA
+                    </p>
+                    <p className="mt-2 text-[1.05rem] font-medium">
+                      {ar ? "مستشارتك الذكية" : "Your smart advisor"}
+                    </p>
+                    <p className="mt-1 text-[0.85rem] text-white/75">
+                      {ar ? "للعناية والجمال" : "for care & beauty"}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Lower grid */}
+              <section className="grid gap-6 lg:grid-cols-3">
+                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6 lg:col-span-1">
+                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
+                    {ar ? "محفوظاتك الجميلة" : "Your saved pieces"}
+                  </h3>
+                  <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">
+                    {ar
+                      ? "الأشياء التي أحببتِها ولم تختاريها بعد."
+                      : "Pieces you loved but haven’t chosen yet."}
+                  </p>
+                  <div className="mt-5 space-y-4">
+                    {wishProducts.slice(0, 3).map((p) => (
+                      <WishRow
+                        key={p.id}
+                        product={p}
+                        ar={ar}
+                        onToggle={() => toggle(p.id)}
+                        onAdd={() => addItem(toProduct(p))}
+                      />
+                    ))}
+                    {!wishProducts.length ? (
+                      <p className="py-6 text-center text-[0.85rem] text-[var(--account-muted)]">
+                        {ar ? "قائمتكِ فارغة حالياً." : "Your list is empty for now."}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => goTo("wishlist")}
+                    className="mt-4 text-[0.8rem] text-[var(--account-plum)] underline underline-offset-4"
+                  >
+                    {ar ? "عرض الكل" : "View all"}
+                  </button>
+                </div>
+
+                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6">
+                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
+                    {ar ? "عناوين التوصيل" : "Delivery addresses"}
+                  </h3>
+                  <div className="mt-5 rounded-[16px] border border-[var(--account-border)] bg-[var(--account-lilac)]/40 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[0.95rem] font-medium text-[var(--account-plum)]">
+                          {ar ? "المنزل" : "Home"}
+                        </p>
+                        <p className="mt-1 text-[0.85rem] text-[var(--account-muted)]">
+                          {customer.address ||
+                            (ar ? "أضيفي عنوانكِ الافتراضي" : "Add your default address")}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[10px] text-[var(--account-plum)] ring-1 ring-[var(--account-border)]">
+                        {ar ? "افتراضي" : "Default"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => goTo("addresses")}
+                    className="mt-4 text-[0.85rem] text-[var(--account-plum)]"
+                  >
+                    {ar ? "+ إضافة عنوان جديد" : "+ Add a new address"}
+                  </button>
+                </div>
+
+                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6">
+                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
+                    {ar ? "معلوماتك" : "Your details"}
+                  </h3>
+                  <div className="mt-5 flex items-center gap-3">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--account-lilac)] font-latin text-lg font-semibold text-[var(--account-plum)]">
+                      {name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-[var(--account-plum)]">
+                        {customer.fullName}
+                      </p>
+                      <p className="truncate text-[0.8rem] text-[var(--account-muted)]" dir="ltr">
+                        {customer.email}
+                      </p>
+                      <p className="text-[0.8rem] text-[var(--account-muted)]" dir="ltr">
+                        {formatIraqMobileLocal(customer.phone) || customer.phone}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => goTo("profile")}
+                    className="mt-5 rounded-full border border-[var(--account-border)] px-4 py-2 text-[0.85rem] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
+                  >
+                    {ar ? "تعديل المعلومات" : "Edit details"}
+                  </button>
+                </div>
+              </section>
+
+              {/* Beauty Club */}
+              <section
+                className="overflow-hidden rounded-[24px] border border-[var(--account-border)] px-6 py-8 sm:px-10"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #F3EDF7 0%, #FBFAFC 45%, #EDE4F2 100%)",
+                }}
+              >
+                <p className="font-brand text-[1.1rem] tracking-[0.2em] text-[var(--account-plum)]">
+                  VELORA
+                </p>
+                <h2 className="font-latin mt-2 text-[1.35rem] font-semibold tracking-[0.06em] text-[var(--account-plum)]">
+                  VELORA BEAUTY CLUB
+                </h2>
+                <p className="mt-3 max-w-md text-[0.95rem] text-[var(--account-muted)]">
+                  {ar
+                    ? "انضمي إلى نادي فيلورا وتمتعي بمزايا حصرية."
+                    : "Join the VELORA club and enjoy exclusive privileges."}
+                </p>
+                <button
+                  type="button"
+                  className="mt-6 rounded-full bg-[var(--account-plum)] px-5 py-2.5 text-[0.85rem] font-medium text-white"
+                >
+                  {ar ? "اكتشفي المزيد" : "Discover more"}
+                </button>
+              </section>
+
+              <ServiceStrip ar={ar} />
+            </>
+          ) : null}
+
+          {section === "wishlist" ? (
+            <Panel title={ar ? "محفوظاتي" : "Saved for later"}>
+              <div className="space-y-4">
+                {wishProducts.map((p) => (
+                  <WishRow
+                    key={p.id}
+                    product={p}
+                    ar={ar}
+                    large
+                    onToggle={() => toggle(p.id)}
+                    onAdd={() => addItem(toProduct(p))}
+                  />
+                ))}
+                {!wishProducts.length ? (
+                  <Empty
+                    ar={ar}
+                    text={ar ? "لم تحفظي منتجات بعد." : "No saved products yet."}
+                    href="/shop"
+                    cta={ar ? "اكتشفي المجموعة" : "Explore the edit"}
+                  />
+                ) : null}
+              </div>
+            </Panel>
+          ) : null}
+
+          {section === "orders" ? (
+            <Panel title={ar ? "طلباتي" : "My orders"}>
+              {ordersError ? (
+                <p className="text-red-700">{ordersError}</p>
+              ) : null}
+              <div className="space-y-3">
+                {myOrders.map((o) => (
+                  <Link
+                    key={o.orderId}
+                    href={`/track/${o.orderId}`}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[var(--account-border)] px-4 py-4 transition-colors hover:bg-[var(--account-lilac)]/35"
+                  >
+                    <div>
+                      <p className="font-latin text-[0.85rem] text-[var(--account-muted)]" dir="ltr">
+                        #{o.orderId}
+                      </p>
+                      <p className="mt-1 text-[0.95rem] text-[var(--account-plum)]">
+                        {o.statusLabel} · {o.itemCount}{" "}
+                        {ar ? "منتج" : "items"}
+                      </p>
+                    </div>
+                    <p className="font-medium text-[var(--account-plum)]">{o.totalLabel}</p>
+                  </Link>
+                ))}
+                {!myOrders.length && !ordersLoading ? (
+                  <Empty
+                    ar={ar}
+                    text={ar ? "لا توجد طلبات." : "No orders yet."}
+                    href="/shop"
+                    cta={ar ? "تسوّقي" : "Shop"}
+                  />
+                ) : null}
+              </div>
+              <form
+                className="mt-8 flex flex-wrap gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (orderId.trim()) router.push(`/track/${orderId.trim()}`);
+                }}
+              >
                 <input
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
-                  placeholder="إن كان لديكِ رقم طلب"
+                  placeholder={ar ? "رقم الطلب…" : "Order number…"}
+                  className="account-input flex-1"
                   dir="ltr"
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 text-start outline-none focus:border-[var(--plum)]"
                 />
-              </label>
-              <Button type="submit" disabled={!orderId.trim()}>
-                تتبع الطلب
-              </Button>
-            </form>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <QuickLink href="/cart" title="الحقيبة" desc="مراجعة المنتجات قبل الطلب" />
-              <QuickLink href="/shop" title="التسوق" desc="استكشفي مجموعة VELORA" />
-            </div>
-          </Panel>
-        ) : null}
+                <button type="submit" className="account-btn">
+                  {ar ? "تتبعي" : "Track"}
+                </button>
+              </form>
+            </Panel>
+          ) : null}
 
-        {section === "appearance" ? (
-          <Panel
-            title="المظهر"
-            subtitle="اختاري المظهر النهاري أو الليلي لواجهة المتجر."
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ThemeChoice
-                active={theme === "light"}
-                title="نهاري"
-                desc="خلفية فاتحة دافئة تناسب التسوق نهاراً"
-                onClick={() => setTheme("light")}
-                preview="light"
-              />
-              <ThemeChoice
-                active={theme === "dark"}
-                title="ليلي"
-                desc="مظهر هادئ بدرجات عميقة مريحة للعين"
-                onClick={() => setTheme("dark")}
-                preview="dark"
-              />
-            </div>
-            <p className="t2 mt-6 text-[var(--muted)]">
-              يُحفظ اختياركِ على هذا الجهاز ويُطبَّق على كامل الموقع.
-            </p>
-          </Panel>
-        ) : null}
+          {section === "addresses" || section === "profile" ? (
+            <Panel
+              title={
+                section === "addresses"
+                  ? ar
+                    ? "عناويني"
+                    : "Addresses"
+                  : ar
+                    ? "معلوماتي"
+                    : "Profile"
+              }
+            >
+              <form onSubmit={onSaveProfile} className="max-w-lg space-y-4">
+                {section === "profile" ? (
+                  <>
+                    <Field label={ar ? "الاسم الكامل" : "Full name"}>
+                      <input
+                        className="account-input"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                      />
+                    </Field>
+                    <Field label={ar ? "البريد" : "Email"}>
+                      <input className="account-input" value={customer.email} disabled dir="ltr" />
+                    </Field>
+                    <Field label={ar ? "الهاتف" : "Phone"}>
+                      <input
+                        className="account-input"
+                        value={formatIraqMobileLocal(customer.phone) || customer.phone}
+                        disabled
+                        dir="ltr"
+                      />
+                    </Field>
+                  </>
+                ) : null}
+                <Field label={ar ? "عنوان التوصيل الافتراضي" : "Default delivery address"}>
+                  <textarea
+                    className="account-input min-h-[100px]"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder={ar ? "بغداد — الكرادة…" : "Baghdad — Karrada…"}
+                  />
+                </Field>
+                {profileError ? <p className="text-sm text-red-700">{profileError}</p> : null}
+                {profileMessage ? (
+                  <p className="text-sm text-[var(--account-plum)]">{profileMessage}</p>
+                ) : null}
+                <button type="submit" disabled={savingProfile} className="account-btn">
+                  {savingProfile
+                    ? ar
+                      ? "جارٍ الحفظ…"
+                      : "Saving…"
+                    : ar
+                      ? "حفظ"
+                      : "Save"}
+                </button>
+              </form>
+            </Panel>
+          ) : null}
 
-        {section === "security" ? (
-          <Panel
-            title="الأمان"
-            subtitle="حدّثي كلمة المرور للحفاظ على أمان حسابكِ."
-          >
-            <form onSubmit={onChangePassword} className="space-y-6">
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">كلمة المرور الحالية</span>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  disabled={savingPassword}
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-                />
-              </label>
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">كلمة المرور الجديدة</span>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  disabled={savingPassword}
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-                />
-              </label>
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">تأكيد كلمة المرور</span>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  disabled={savingPassword}
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-                />
-              </label>
-              {securityError ? <Alert tone="error">{securityError}</Alert> : null}
-              {securityMessage ? (
-                <Alert tone="success">{securityMessage}</Alert>
-              ) : null}
-              <Button type="submit" disabled={savingPassword}>
-                {savingPassword ? "جارٍ التحديث…" : "تحديث كلمة المرور"}
-              </Button>
-            </form>
-          </Panel>
-        ) : null}
-
-        {section === "help" ? (
-          <Panel
-            title="المساعدة"
-            subtitle="فريق رعاية العميلة جاهز لمساعدتكِ."
-          >
-            <div className="grid gap-3">
-              <QuickLink
-                href="/advisor"
-                title="المستشارة لارسا"
-                desc="نصيحة مخصّصة وبحث عن المنتجات"
-              />
-              <a
-                href="https://wa.me/9647830000492"
-                target="_blank"
-                rel="noreferrer"
-                className="block border border-[var(--plum)]/10 bg-[var(--mist)]/50 px-5 py-4 transition-colors hover:border-[var(--plum)]/25"
+          {section === "settings" ? (
+            <div className="space-y-6">
+              <Panel title={ar ? "المظهر" : "Appearance"}>
+                <div className="flex flex-wrap gap-2">
+                  {(["light", "dark"] as ThemeMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setTheme(mode)}
+                      className={cn(
+                        "rounded-full px-4 py-2 text-[0.85rem]",
+                        theme === mode
+                          ? "bg-[var(--account-plum)] text-white"
+                          : "border border-[var(--account-border)] text-[var(--account-plum)]",
+                      )}
+                    >
+                      {mode === "light"
+                        ? ar
+                          ? "نهاري"
+                          : "Light"
+                        : ar
+                          ? "ليلي"
+                          : "Dark"}
+                    </button>
+                  ))}
+                </div>
+              </Panel>
+              <Panel title={ar ? "الأمان" : "Security"}>
+                <form onSubmit={onSavePassword} className="max-w-lg space-y-4">
+                  <Field label={ar ? "كلمة المرور الحالية" : "Current password"}>
+                    <input
+                      type="password"
+                      className="account-input"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  <Field label={ar ? "كلمة المرور الجديدة" : "New password"}>
+                    <input
+                      type="password"
+                      className="account-input"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                  </Field>
+                  <Field label={ar ? "تأكيد كلمة المرور" : "Confirm password"}>
+                    <input
+                      type="password"
+                      className="account-input"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                  </Field>
+                  {securityError ? <p className="text-sm text-red-700">{securityError}</p> : null}
+                  {securityMessage ? (
+                    <p className="text-sm text-[var(--account-plum)]">{securityMessage}</p>
+                  ) : null}
+                  <button type="submit" disabled={savingPassword} className="account-btn">
+                    {savingPassword
+                      ? ar
+                        ? "جارٍ التحديث…"
+                        : "Updating…"
+                      : ar
+                        ? "تحديث كلمة المرور"
+                        : "Update password"}
+                  </button>
+                </form>
+              </Panel>
+              <button
+                type="button"
+                onClick={() => void onLogout()}
+                className="rounded-full border border-[var(--account-border)] px-5 py-2.5 text-[0.9rem] text-[var(--account-plum)] lg:hidden"
               >
-                <p className="t3 font-medium text-[var(--ink)]">واتساب الشركة</p>
-                <p className="t2 mt-1 text-[var(--muted)]" dir="ltr">
-                  07830000492
-                </p>
-              </a>
-              <a
-                href="mailto:care@velora.beauty"
-                className="block border border-[var(--plum)]/10 bg-[var(--mist)]/50 px-5 py-4 transition-colors hover:border-[var(--plum)]/25"
-              >
-                <p className="t3 font-medium text-[var(--ink)]">البريد</p>
-                <p className="t2 mt-1 text-[var(--muted)]" dir="ltr">
-                  care@velora.beauty
-                </p>
-              </a>
+                {ar ? "تسجيل الخروج" : "Sign out"}
+              </button>
             </div>
-          </Panel>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={() => void onLogout()}
-          className="t3 mt-8 w-full border-t border-[var(--plum)]/10 pt-5 text-[var(--muted)] transition-colors hover:text-[var(--plum)] lg:hidden"
-        >
-          تسجيل الخروج
-        </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
 
-function OverviewPanel({
-  customer,
-  theme,
-  onNavigate,
-  onLogout,
+function StatCard({
+  label,
+  value,
+  icon,
 }: {
-  customer: CustomerPublic;
-  theme: ThemeMode;
-  onNavigate: (s: AccountSection) => void;
-  onLogout: () => void;
+  label: string;
+  value: string;
+  icon: "bag" | "heart" | "spark" | "truck";
 }) {
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="font-display t6 font-semibold text-[var(--plum)]">
-          مرحباً بكِ
-        </h2>
-        <p className="t3 mt-2 max-w-xl text-[var(--muted)]">
-          أديري معلوماتكِ، تتبّعي طلباتكِ، وخصّصي مظهر المتجر من مكان واحد.
+    <div className="rounded-[20px] border border-[var(--account-border)] bg-white px-5 py-5">
+      <div className="flex items-start justify-between">
+        <MiniIcon name={icon} />
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--account-orchid)]" />
+      </div>
+      <p className="font-latin mt-4 text-[1.85rem] font-semibold tracking-tight text-[var(--account-plum)]">
+        {value}
+      </p>
+      <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">{label}</p>
+    </div>
+  );
+}
+
+function WishRow({
+  product,
+  ar,
+  onToggle,
+  onAdd,
+  large,
+}: {
+  product: WishProduct;
+  ar: boolean;
+  onToggle: () => void;
+  onAdd: () => void;
+  large?: boolean;
+}) {
+  return (
+    <div className={cn("flex gap-3", large && "rounded-[16px] border border-[var(--account-border)] p-3")}>
+      <Link href={`/shop/${product.slug}`} className="relative block h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[var(--account-lilac)]">
+        <ProductMedia
+          name={ar ? product.nameAr : product.name}
+          imageTone={product.imageTone}
+          imageUrl={product.imageUrl}
+          aspectClassName="h-full w-full"
+          className="!aspect-auto h-full min-h-full"
+          sizes="64px"
+        />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <p className="font-latin truncate text-[10px] tracking-[0.12em] text-[var(--account-muted)] uppercase" dir="ltr">
+          {product.name}
         </p>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <OverviewTile
-          title="معلوماتي"
-          desc={`${customer.fullName} · ${formatIraqMobileLocal(customer.phone)}`}
-          onClick={() => onNavigate("profile")}
-        />
-        <OverviewTile
-          title="طلباتي"
-          desc="تتبع الطلب برقم الطلب"
-          onClick={() => onNavigate("orders")}
-        />
-        <OverviewTile
-          title="المظهر"
-          desc={theme === "dark" ? "الوضع الليلي مفعّل" : "الوضع النهاري مفعّل"}
-          onClick={() => onNavigate("appearance")}
-        />
-        <OverviewTile
-          title="الأمان"
-          desc="تغيير كلمة المرور"
-          onClick={() => onNavigate("security")}
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--plum)]/10 pt-6">
-        <button
-          type="button"
-          onClick={() => onNavigate("help")}
-          className="t3 text-[var(--plum)] underline-offset-4 hover:underline"
-        >
-          تحتاجين مساعدة؟
-        </button>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="t3 text-[var(--muted)] underline-offset-4 hover:text-[var(--plum)] hover:underline"
-        >
-          تسجيل الخروج
-        </button>
+        <Link href={`/shop/${product.slug}`} className="mt-0.5 block truncate text-[0.9rem] font-medium text-[var(--account-plum)]">
+          {ar ? product.nameAr : product.name}
+        </Link>
+        <ProductPrice className="mt-1" size="sm" price={product.price} originalPrice={product.originalPrice} discountPercent={product.discountPercent} />
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onAdd}
+            className="rounded-full border border-[var(--account-border)] px-3 py-1 text-[10px] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
+          >
+            {ar ? "أضيفيه إلى حقيبتك" : "Add to bag"}
+          </button>
+          <button type="button" onClick={onToggle} className="text-[10px] text-[var(--account-muted)]" aria-label="wishlist">
+            ♥
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function Panel({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-}) {
+function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section>
-      <h2 className="font-display t6 font-semibold text-[var(--plum)]">
+    <section className="rounded-[24px] border border-[var(--account-border)] bg-white p-6 sm:p-8">
+      <h2 className="font-display text-[1.25rem] font-semibold text-[var(--account-plum)]">
         {title}
       </h2>
-      <p className="t3 mt-2 text-[var(--muted)]">{subtitle}</p>
-      <div className="mt-8 border border-[var(--plum)]/10 bg-[var(--surface)] p-6 sm:p-8">
-        {children}
-      </div>
+      <div className="mt-6">{children}</div>
     </section>
   );
 }
 
-function ReadOnlyField({
-  label,
-  value,
-  ltr,
-}: {
-  label: string;
-  value: string;
-  ltr?: boolean;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <span className="t2 text-[var(--muted)]">{label}</span>
-      <p
-        className="t3 mt-2 text-[var(--ink)]"
-        dir={ltr ? "ltr" : undefined}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function Alert({
-  tone,
-  children,
-}: {
-  tone: "error" | "success";
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "t3 border px-4 py-3",
-        tone === "error"
-          ? "border-red-300/50 bg-[color-mix(in_srgb,red_8%,var(--surface))] text-red-800"
-          : "border-emerald-300/50 bg-[color-mix(in_srgb,emerald_10%,var(--surface))] text-emerald-900",
-      )}
-    >
+    <label className="block">
+      <span className="mb-1.5 block text-[0.8rem] text-[var(--account-muted)]">{label}</span>
       {children}
+    </label>
+  );
+}
+
+function Empty({
+  ar,
+  text,
+  href,
+  cta,
+}: {
+  ar: boolean;
+  text: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="rounded-[18px] border border-dashed border-[var(--account-border)] px-5 py-10 text-center">
+      <p className="text-[0.9rem] text-[var(--account-muted)]">{text}</p>
+      <Link href={href} className="mt-3 inline-block text-[0.85rem] text-[var(--account-plum)] underline underline-offset-4">
+        {cta}
+      </Link>
     </div>
   );
 }
 
-function OverviewTile({
-  title,
-  desc,
-  onClick,
-}: {
-  title: string;
-  desc: string;
-  onClick: () => void;
-}) {
+function ServiceStrip({ ar }: { ar: boolean }) {
+  const items = ar
+    ? [
+        { t: "تغليف فاخر", d: "نهتم بتفاصيل تجربتك" },
+        { t: "توصيل سريع وآمن", d: "إلى جميع مناطق العراق" },
+        { t: "منتجات أصلية 100%", d: "من أفضل العلامات العالمية" },
+        { t: "خدمة عملاء راقية", d: "نحن هنا لمساعدتك دائماً" },
+      ]
+    : [
+        { t: "Luxury wrapping", d: "We care for every detail" },
+        { t: "Fast & secure delivery", d: "Across all of Iraq" },
+        { t: "100% authentic", d: "From the world’s finest houses" },
+        { t: "Refined client care", d: "We’re always here for you" },
+      ];
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border border-[var(--plum)]/10 bg-[var(--surface)] px-5 py-5 text-start transition-all duration-300 hover:border-[var(--plum)]/25 hover:bg-[var(--mist)]"
-    >
-      <p className="t3 font-medium text-[var(--ink)]">{title}</p>
-      <p className="t2 mt-2 line-clamp-2 text-[var(--muted)]">{desc}</p>
-    </button>
+    <section className="grid gap-4 rounded-[22px] border border-[var(--account-border)] bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
+      {items.map((item) => (
+        <div key={item.t} className="text-center sm:text-start">
+          <p className="text-[0.9rem] font-medium text-[var(--account-plum)]">{item.t}</p>
+          <p className="mt-1 text-[0.75rem] text-[var(--account-muted)]">{item.d}</p>
+        </div>
+      ))}
+    </section>
   );
 }
 
-function QuickLink({
-  href,
-  title,
-  desc,
-}: {
-  href: string;
-  title: string;
-  desc: string;
-}) {
+function MiniIcon({ name }: { name: "bag" | "heart" | "spark" | "truck" }) {
+  const common = "text-[var(--account-plum)]";
+  if (name === "heart") {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
+        <path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.8C19 15.6 12 20 12 20Z" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    );
+  }
+  if (name === "spark") {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
+        <path d="M12 3 13.2 9.2 19.5 10.5 13.2 11.8 12 18 10.8 11.8 4.5 10.5 10.8 9.2 12 3Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (name === "truck") {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
+        <path d="M3 7h11v10H3V7Z" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M14 10h4l3 3v4h-7v-7Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+        <circle cx="7" cy="18" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="17" cy="18" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+      </svg>
+    );
+  }
   return (
-    <Link
-      href={href}
-      className="block border border-[var(--plum)]/10 bg-[var(--mist)]/50 px-5 py-4 transition-colors hover:border-[var(--plum)]/25"
-    >
-      <p className="t3 font-medium text-[var(--ink)]">{title}</p>
-      <p className="t2 mt-1 text-[var(--muted)]">{desc}</p>
-    </Link>
-  );
-}
-
-function ThemeChoice({
-  active,
-  title,
-  desc,
-  onClick,
-  preview,
-}: {
-  active: boolean;
-  title: string;
-  desc: string;
-  onClick: () => void;
-  preview: ThemeMode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "border px-5 py-5 text-start transition-all duration-300",
-        active
-          ? "border-[var(--plum)]/40 bg-[var(--mist)]"
-          : "border-[var(--plum)]/10 bg-[var(--surface)] hover:border-[var(--plum)]/25",
-      )}
-    >
-      <div
-        className={cn(
-          "mb-4 h-16 w-full border border-[var(--plum)]/10",
-          preview === "light"
-            ? "bg-[#f8f4f1]"
-            : "bg-[#141114]",
-        )}
-        aria-hidden
-      >
-        <div
-          className={cn(
-            "m-3 h-3 w-1/2",
-            preview === "light" ? "bg-[#3d2640]/70" : "bg-[#e2d2d5]/70",
-          )}
-        />
-        <div
-          className={cn(
-            "mx-3 h-2 w-2/3",
-            preview === "light" ? "bg-[#8b7a84]/40" : "bg-[#9a8a92]/40",
-          )}
-        />
-      </div>
-      <p className="t3 font-medium text-[var(--ink)]">{title}</p>
-      <p className="t2 mt-1 text-[var(--muted)]">{desc}</p>
-      {active ? (
-        <p className="t1 mt-3 tracking-[0.12em] text-[var(--plum)]">مفعّل</p>
-      ) : null}
-    </button>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
+      <path d="M4 8h16l-1.2 11.2A2 2 0 0 1 16.81 21H7.19a2 2 0 0 1-1.99-1.8L4 8Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M8 8V6.5A4 4 0 0 1 12 2.5 4 4 0 0 1 16 6.5V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
   );
 }
