@@ -47,13 +47,14 @@ export function ShopByCategory() {
         </div>
 
         {/* Mobile / tablet swipe; desktop grid */}
-        <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-4 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-0 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-3 sm:gap-4 lg:grid lg:grid-cols-4">
           {categories.map((cat, i) => (
             <Link
               key={cat.slug}
               href={`/shop?category=${cat.slug}`}
               className={cn(
-                "group relative min-w-[68%] snap-start overflow-hidden sm:min-w-[42%] lg:min-w-0",
+                "group relative min-w-[68%] shrink-0 snap-start overflow-hidden sm:min-w-[42%] lg:min-w-0",
                 "animate-[velora-rise_0.8s_ease-out_both]",
               )}
               style={{ animationDelay: `${0.06 * i}s` }}
@@ -72,6 +73,7 @@ export function ShopByCategory() {
               </div>
             </Link>
           ))}
+          </div>
         </div>
       </div>
     </section>
