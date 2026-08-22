@@ -4,6 +4,7 @@ import { LarsaPremium } from "@/components/home/LarsaPremium";
 import { ProductRail } from "@/components/home/ProductRail";
 import { ShopByCategory } from "@/components/home/ShopByCategory";
 import { TrustBenefits } from "@/components/home/TrustBenefits";
+import { ContactHelpCard } from "@/components/contact/ContactHelpCard";
 import {
   getBestsellers,
   getFragranceProducts,
@@ -104,6 +105,7 @@ export default async function HomePage() {
 
       <LarsaPremium />
       <TrustBenefits />
+      <ContactHelpCard />
     </>
   );
 }

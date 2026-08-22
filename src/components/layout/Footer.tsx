@@ -2,14 +2,23 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
+import { IconInstagram, IconWhatsApp } from "@/components/contact/SocialIcons";
 import { PaymentMethodsRow } from "@/components/payments/PaymentMethods";
 import { brand, navLinks } from "@/constants/brand";
 import { useLocale } from "@/context/LocaleContext";
+import {
+  getDefaultWhatsAppUrl,
+  getInstagramUrl,
+  socialLinks,
+} from "@/lib/social-links";
 import { formatPrice } from "@/lib/utils";
 import { DELIVERY_FEE_IQD, WASEET_CARRIER } from "@/lib/shipping";
 
 export function Footer() {
   const { t, locale } = useLocale();
+  const ar = locale !== "en";
+  const waUrl = getDefaultWhatsAppUrl(ar ? "ar" : "en");
+  const igUrl = getInstagramUrl();
 
   const navLabels: Record<string, string> = {
     "/": t.home,
@@ -105,6 +114,69 @@ export function Footer() {
               {formatPrice(DELIVERY_FEE_IQD)}
             </li>
           </ul>
+        </div>
+      </div>
+
+      {/* Editorial stay-in-touch — ليس شريط أيقونات تقليدي */}
+      <div className="mx-auto max-w-7xl border-t border-white/10 px-5 py-12 sm:px-8">
+        <div className="max-w-2xl">
+          <h3 className="font-display text-[1.35rem] font-semibold text-[var(--ivory-fixed)] sm:text-[1.5rem]">
+            {ar
+              ? "ابقي على تواصل مع VELORA"
+              : "Stay close to VELORA"}
+          </h3>
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-[var(--ivory-fixed)]/65">
+            {ar
+              ? "تابعي جديدنا، اكتشفي أحدث المنتجات، أو تواصلي معنا مباشرة."
+              : "Follow what’s new, discover the latest pieces, or reach us directly."}
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 sm:gap-4">
+          <a
+            href={igUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-4 rounded-[18px] border border-white/10 bg-white/[0.04] px-5 py-4 transition-colors hover:border-white/25 hover:bg-white/[0.07]"
+            aria-label={`Instagram ${socialLinks.instagram.handle}`}
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-[var(--ivory-fixed)]">
+              <IconInstagram size={18} />
+            </span>
+            <span className="min-w-0 text-start">
+              <span className="block text-[0.7rem] tracking-[0.16em] text-[#d4b5b8] uppercase">
+                Instagram
+              </span>
+              <span
+                className="mt-1 block font-latin text-[0.95rem] tracking-[0.03em] text-[var(--ivory-fixed)]"
+                dir="ltr"
+              >
+                {socialLinks.instagram.handle}
+              </span>
+            </span>
+          </a>
+
+          {waUrl ? (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-4 rounded-[18px] border border-white/10 bg-white/[0.04] px-5 py-4 transition-colors hover:border-white/25 hover:bg-white/[0.07]"
+              aria-label={ar ? "تواصلي معنا عبر WhatsApp" : "Contact us on WhatsApp"}
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-[#9fd4b8]">
+                <IconWhatsApp size={18} />
+              </span>
+              <span className="min-w-0 text-start">
+                <span className="block text-[0.7rem] tracking-[0.16em] text-[#d4b5b8] uppercase">
+                  WhatsApp
+                </span>
+                <span className="mt-1 block text-[0.95rem] text-[var(--ivory-fixed)]">
+                  {ar ? "تواصلي معنا" : "Message us"}
+                </span>
+              </span>
+            </a>
+          ) : null}
         </div>
       </div>
 

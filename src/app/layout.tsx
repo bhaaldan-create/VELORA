@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
 import { Providers } from "@/components/layout/Providers";
+import { FloatingContact } from "@/components/contact/FloatingContact";
 import { brand } from "@/constants/brand";
 import "./globals.css";
 
@@ -92,6 +93,7 @@ export default function RootLayout({
           <Header />
           <main className="min-w-0 flex-1 overflow-x-clip pb-20 lg:pb-0">{children}</main>
           <Footer />
+          <FloatingContact />
           <PrimaryBottomNav />
         </Providers>
       </body>

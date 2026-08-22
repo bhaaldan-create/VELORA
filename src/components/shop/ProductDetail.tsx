@@ -4,16 +4,22 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { IconWhatsApp } from "@/components/contact/SocialIcons";
 import { useCart } from "@/context/CartContext";
+import { useLocale } from "@/context/LocaleContext";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { categoryLabels, ui } from "@/constants/brand";
+import { getProductWhatsAppUrl } from "@/lib/social-links";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { locale } = useLocale();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const ar = locale !== "en";
+  const waProductUrl = getProductWhatsAppUrl(product, ar ? "ar" : "en");
 
   const handleAdd = () => {
     addItem(product, qty);
@@ -62,7 +68,8 @@ export function ProductDetail({ product }: { product: Product }) {
           <span className="t3 text-[var(--muted)]">· {product.size}</span>
         </div>
         <p className="t3 mt-2 text-[var(--muted)]">
-          ★ {product.rating} · {product.reviews.toLocaleString("ar-IQ")} {ui.reviews}
+          ★ {product.rating} · {product.reviews.toLocaleString("ar-IQ")}{" "}
+          {ui.reviews}
         </p>
 
         <p className="t4 mt-8 text-[var(--ink)]/75">{product.descriptionAr}</p>
@@ -78,7 +85,7 @@ export function ProductDetail({ product }: { product: Product }) {
           ))}
         </ul>
 
-        <div className="mt-10 flex flex-wrap items-center gap-4">
+        <div className="mt-10 flex flex-wrap items-center gap-3">
           <div className="flex items-center border border-[var(--plum)]/20">
             <button
               type="button"
@@ -98,9 +105,22 @@ export function ProductDetail({ product }: { product: Product }) {
               +
             </button>
           </div>
-          <Button onClick={handleAdd} className="min-w-[180px]">
+          <Button onClick={handleAdd} className="min-w-[160px]">
             {added ? ui.added : ui.addToBag}
           </Button>
+          {waProductUrl ? (
+            <a
+              href={waProductUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="t2 inline-flex min-h-[48px] min-w-[160px] items-center justify-center gap-2 border border-[var(--plum)]/20 bg-transparent px-5 py-3 font-medium tracking-[0.04em] text-[var(--plum)] transition-all duration-300 hover:border-[var(--plum)]/40 hover:bg-[var(--mist)]/60"
+              aria-label={ar ? "اطلبي عبر WhatsApp" : "Order via WhatsApp"}
+              title={ar ? "اطلبي عبر WhatsApp" : "Order via WhatsApp"}
+            >
+              <IconWhatsApp size={16} className="text-[#3d8b6e]" />
+              {ar ? "اطلبي عبر WhatsApp" : "Order via WhatsApp"}
+            </a>
+          ) : null}
         </div>
 
         <div className="mt-12 border-t border-[var(--plum)]/10 pt-8">
@@ -114,7 +134,10 @@ export function ProductDetail({ product }: { product: Product }) {
 
         <p className="t3 mt-8 text-[var(--muted)]">
           {ui.needHelp}{" "}
-          <Link href="/advisor" className="text-[var(--plum)] underline underline-offset-4">
+          <Link
+            href="/advisor"
+            className="text-[var(--plum)] underline underline-offset-4"
+          >
             {ui.askAdvisor}
           </Link>
         </p>
