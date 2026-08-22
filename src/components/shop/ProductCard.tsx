@@ -4,9 +4,9 @@ import Link from "next/link";
 import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
-import { useWishlist } from "@/context/WishlistContext";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
+import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { getProductBrand } from "@/lib/product-brand";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +19,6 @@ export function ProductCard({
 }) {
   const { addItem } = useCart();
   const { locale, t } = useLocale();
-  const { has, toggle } = useWishlist();
-  const wished = has(product.id);
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
   const badge =
@@ -37,30 +35,10 @@ export function ProductCard({
   return (
     <article className={cn("group flex h-full flex-col", className)}>
       <div className="relative overflow-hidden bg-[var(--mist)]/60">
-        <button
-          type="button"
-          aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-          onClick={(e) => {
-            e.preventDefault();
-            toggle(product.id);
-          }}
-          className={cn(
-            "absolute top-3 end-3 z-10 flex h-9 w-9 items-center justify-center",
-            "bg-[var(--ivory)]/90 text-[var(--ink)]/55 backdrop-blur-sm",
-            "transition-colors duration-300 hover:text-[var(--plum)]",
-            wished && "text-[var(--plum)]",
-          )}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M12 20s-7-4.35-7-9.2A4.2 4.2 0 0 1 12 7.1a4.2 4.2 0 0 1 7 3.7C19 15.65 12 20 12 20Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              fill={wished ? "currentColor" : "none"}
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        <WishlistHeartButton
+          productId={product.id}
+          className="absolute top-3 end-3 bg-[var(--ivory)]/90 backdrop-blur-sm"
+        />
 
         {badge ? (
           <span className="absolute top-3 start-3 z-10 bg-[var(--ivory)]/95 px-2 py-1 text-[10px] font-medium tracking-[0.12em] text-[var(--plum)] uppercase">

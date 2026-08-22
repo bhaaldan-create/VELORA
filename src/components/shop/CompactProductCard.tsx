@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
+import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { getProductBrand } from "@/lib/product-brand";
 import { cn } from "@/lib/utils";
 
@@ -24,30 +25,34 @@ export function CompactProductCard({
 
   return (
     <article className={cn("group flex h-full flex-col", className)}>
-      <Link
-        href={`/shop/${product.slug}`}
-        className="relative block overflow-hidden rounded-2xl bg-[var(--mist)]/50"
-      >
-        <ProductMedia
-          name={title}
-          imageTone={product.imageTone}
-          imageUrl={product.imageUrl}
-          aspectClassName="aspect-[3/4]"
-          className="transition-transform duration-500 group-hover:scale-[1.03]"
-          sizes="(max-width: 768px) 42vw, 18vw"
+      <div className="relative overflow-hidden rounded-2xl bg-[var(--mist)]/50">
+        <WishlistHeartButton
+          productId={product.id}
+          size="sm"
+          className="absolute top-2 end-2 rounded-full bg-[var(--ivory)]/90 backdrop-blur-sm"
         />
-        {product.isNew || product.isBestseller ? (
-          <span className="absolute top-2 start-2 rounded-full bg-[var(--ivory)]/95 px-2 py-0.5 font-latin text-[9px] font-semibold tracking-[0.08em] text-[var(--plum)] uppercase">
-            {product.isNew
-              ? locale === "en"
-                ? "New"
-                : "جديد"
-              : locale === "en"
-                ? "Best"
-                : "مميز"}
-          </span>
-        ) : null}
-      </Link>
+        <Link href={`/shop/${product.slug}`} className="block">
+          <ProductMedia
+            name={title}
+            imageTone={product.imageTone}
+            imageUrl={product.imageUrl}
+            aspectClassName="aspect-[3/4]"
+            className="transition-transform duration-500 group-hover:scale-[1.03]"
+            sizes="(max-width: 768px) 42vw, 18vw"
+          />
+          {product.isNew || product.isBestseller ? (
+            <span className="absolute top-2 start-2 rounded-full bg-[var(--ivory)]/95 px-2 py-0.5 font-latin text-[9px] font-semibold tracking-[0.08em] text-[var(--plum)] uppercase">
+              {product.isNew
+                ? locale === "en"
+                  ? "New"
+                  : "جديد"
+                : locale === "en"
+                  ? "Best"
+                  : "مميز"}
+            </span>
+          ) : null}
+        </Link>
+      </div>
 
       <div className="flex flex-1 flex-col pt-2.5">
         <p

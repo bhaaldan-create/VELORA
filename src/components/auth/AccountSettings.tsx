@@ -21,6 +21,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { useTheme, type ThemeMode } from "@/context/ThemeContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { formatIraqMobileLocal } from "@/lib/phone";
+import { getProductBrand } from "@/lib/product-brand";
 import { cn, formatPrice } from "@/lib/utils";
 import type { CategorySlug, Product } from "@/types";
 
@@ -56,6 +57,8 @@ type WishProduct = {
   imageTone: string;
   size: string;
   category: string;
+  stock?: number;
+  inStock?: boolean;
 };
 
 const NAV: { id: AccountSection; ar: string; en: string }[] = [
@@ -93,7 +96,7 @@ export function AccountSettings() {
   const { customer, loading, setCustomer, logout } = useCustomerAuth();
   const { theme, setTheme } = useTheme();
   const { locale } = useLocale();
-  const { ids: wishIds, toggle, ready: wishReady } = useWishlist();
+  const { ids: wishIds, count: wishCount, toggle, ready: wishReady } = useWishlist();
   const { addItem } = useCart();
   const ar = locale !== "en";
 
@@ -163,22 +166,28 @@ export function AccountSettings() {
   }, [customer]);
 
   useEffect(() => {
-    if (!wishReady) return;
-    const list = [...wishIds];
-    if (!list.length) {
+    if (!wishReady || !customer) return;
+    if (!wishIds.size) {
       setWishProducts([]);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const res = await fetch(`/api/catalog/by-ids?ids=${list.join(",")}`);
-      const data = (await res.json()) as { ok?: boolean; products?: WishProduct[] };
-      if (!cancelled && data.ok) setWishProducts(data.products || []);
+      try {
+        const res = await fetch("/api/auth/wishlist", { cache: "no-store" });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          products?: WishProduct[];
+        };
+        if (!cancelled && data.ok) setWishProducts(data.products || []);
+      } catch {
+        if (!cancelled) setWishProducts([]);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [wishIds, wishReady]);
+  }, [wishIds, wishReady, customer, wishCount]);
 
   function goTo(next: AccountSection) {
     if (next === "larsa") {
@@ -395,12 +404,13 @@ export function AccountSettings() {
                 />
                 <StatCard
                   label={ar ? "قائمة الأمنيات" : "Wishlist"}
-                  value={String(wishIds.size).padStart(2, "0")}
+                  value={String(wishCount).padStart(2, "0")}
                   icon="heart"
+                  onClick={() => goTo("wishlist")}
                 />
                 <StatCard
                   label={ar ? "نقاط VELORA" : "VELORA points"}
-                  value={(myOrders.length * 120 + wishIds.size * 10 || 0).toLocaleString(
+                  value={(myOrders.length * 120 + wishCount * 10 || 0).toLocaleString(
                     ar ? "ar-IQ" : "en-US",
                   )}
                   icon="spark"
@@ -587,7 +597,7 @@ export function AccountSettings() {
                         key={p.id}
                         product={p}
                         ar={ar}
-                        onToggle={() => toggle(p.id)}
+                        onToggle={() => void toggle(p.id)}
                         onAdd={() => addItem(toProduct(p))}
                       />
                     ))}
@@ -697,28 +707,52 @@ export function AccountSettings() {
           ) : null}
 
           {section === "wishlist" ? (
-            <Panel title={ar ? "محفوظاتي" : "Saved for later"}>
-              <div className="space-y-4">
-                {wishProducts.map((p) => (
-                  <WishRow
-                    key={p.id}
-                    product={p}
-                    ar={ar}
-                    large
-                    onToggle={() => toggle(p.id)}
-                    onAdd={() => addItem(toProduct(p))}
-                  />
-                ))}
-                {!wishProducts.length ? (
-                  <Empty
-                    ar={ar}
-                    text={ar ? "لم تحفظي منتجات بعد." : "No saved products yet."}
-                    href="/shop"
-                    cta={ar ? "اكتشفي المجموعة" : "Explore the edit"}
-                  />
-                ) : null}
+            <section>
+              <div className="mb-8">
+                <h2 className="font-display text-[1.6rem] font-semibold text-[var(--account-plum)] sm:text-[1.85rem]">
+                  {ar ? "محفوظاتك الجميلة" : "Your beautiful saves"}
+                </h2>
+                <p className="mt-2 max-w-xl text-[0.95rem] text-[var(--account-muted)]">
+                  {ar
+                    ? "المنتجات التي أحببتِها وتريدين الاحتفاظ بها لوقت لاحق."
+                    : "Pieces you loved and want to keep for later."}
+                </p>
               </div>
-            </Panel>
+
+              {wishProducts.length ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {wishProducts.map((p) => (
+                    <WishGridCard
+                      key={p.id}
+                      product={p}
+                      ar={ar}
+                      onToggle={() => void toggle(p.id)}
+                      onAdd={() => addItem(toProduct(p))}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[24px] border border-[var(--account-border)] bg-white px-6 py-16 text-center">
+                  <p className="text-[1.75rem] text-[var(--account-orchid)]" aria-hidden>
+                    ♡
+                  </p>
+                  <h3 className="mt-4 font-display text-[1.2rem] font-semibold text-[var(--account-plum)]">
+                    {ar ? "لم تحفظي أي منتجات بعد" : "Nothing saved yet"}
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-sm text-[0.9rem] text-[var(--account-muted)]">
+                    {ar
+                      ? "اكتشفي منتجاتك المفضلة واحتفظي بها هنا لتعودي إليها متى شئتِ."
+                      : "Discover your favorites and keep them here to return whenever you like."}
+                  </p>
+                  <Link
+                    href="/shop"
+                    className="mt-8 inline-flex rounded-full bg-[var(--account-plum)] px-6 py-2.5 text-[0.85rem] font-medium text-white"
+                  >
+                    {ar ? "اكتشفي المنتجات" : "Discover products"}
+                  </Link>
+                </div>
+              )}
+            </section>
           ) : null}
 
           {section === "orders" ? (
@@ -928,13 +962,17 @@ function StatCard({
   label,
   value,
   icon,
+  onClick,
 }: {
   label: string;
   value: string;
   icon: "bag" | "heart" | "spark" | "truck";
+  onClick?: () => void;
 }) {
-  return (
-    <div className="rounded-[20px] border border-[var(--account-border)] bg-white px-5 py-5">
+  const className =
+    "rounded-[20px] border border-[var(--account-border)] bg-white px-5 py-5 text-start transition-colors duration-300";
+  const body = (
+    <>
       <div className="flex items-start justify-between">
         <MiniIcon name={icon} />
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--account-orchid)]" />
@@ -943,7 +981,107 @@ function StatCard({
         {value}
       </p>
       <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">{label}</p>
-    </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(className, "hover:border-[var(--account-orchid)]/50 hover:bg-[var(--account-lilac)]/30")}
+      >
+        {body}
+      </button>
+    );
+  }
+
+  return <div className={className}>{body}</div>;
+}
+
+function WishGridCard({
+  product,
+  ar,
+  onToggle,
+  onAdd,
+}: {
+  product: WishProduct;
+  ar: boolean;
+  onToggle: () => void;
+  onAdd: () => void;
+}) {
+  const inStock = product.inStock !== false && (product.stock ?? 1) > 0;
+  const brand = getProductBrand(product.name, product.nameAr);
+  return (
+    <article className="overflow-hidden rounded-[22px] border border-[var(--account-border)] bg-white">
+      <div className="relative">
+        <Link href={`/shop/${product.slug}`} className="block">
+          <ProductMedia
+            name={ar ? product.nameAr : product.name}
+            imageTone={product.imageTone}
+            imageUrl={product.imageUrl}
+            aspectClassName="aspect-[3/4]"
+            sizes="(max-width: 640px) 90vw, 280px"
+          />
+        </Link>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label="wishlist"
+          className="absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--account-plum)] backdrop-blur-sm"
+        >
+          ♥
+        </button>
+      </div>
+      <div className="p-4">
+        <p
+          className="font-latin truncate text-[10px] tracking-[0.14em] text-[var(--account-muted)] uppercase"
+          dir="ltr"
+        >
+          {brand}
+        </p>
+        <Link
+          href={`/shop/${product.slug}`}
+          className="mt-1 block line-clamp-2 text-[0.95rem] font-medium text-[var(--account-plum)]"
+        >
+          {ar ? product.nameAr : product.name}
+        </Link>
+        <ProductPrice
+          className="mt-2"
+          size="sm"
+          price={product.price}
+          originalPrice={product.originalPrice}
+          discountPercent={product.discountPercent}
+        />
+        <p
+          className={cn(
+            "mt-2 text-[0.75rem]",
+            inStock ? "text-[var(--account-muted)]" : "text-red-700/80",
+          )}
+        >
+          {inStock
+            ? ar
+              ? "متوفر"
+              : "In stock"
+            : ar
+              ? "غير متوفر حالياً"
+              : "Currently unavailable"}
+        </p>
+        {inStock ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="mt-4 w-full rounded-full border border-[var(--account-border)] py-2.5 text-[0.8rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/50"
+          >
+            {ar ? "أضيفيه إلى الحقيبة" : "Add to bag"}
+          </button>
+        ) : (
+          <p className="mt-4 py-2.5 text-center text-[0.8rem] text-[var(--account-muted)]">
+            {ar ? "غير متوفر حالياً" : "Currently unavailable"}
+          </p>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -960,6 +1098,7 @@ function WishRow({
   onAdd: () => void;
   large?: boolean;
 }) {
+  const inStock = product.inStock !== false && (product.stock ?? 1) > 0;
   return (
     <div className={cn("flex gap-3", large && "rounded-[16px] border border-[var(--account-border)] p-3")}>
       <Link href={`/shop/${product.slug}`} className="relative block h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[var(--account-lilac)]">
@@ -981,13 +1120,19 @@ function WishRow({
         </Link>
         <ProductPrice className="mt-1" size="sm" price={product.price} originalPrice={product.originalPrice} discountPercent={product.discountPercent} />
         <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onAdd}
-            className="rounded-full border border-[var(--account-border)] px-3 py-1 text-[10px] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
-          >
-            {ar ? "أضيفيه إلى حقيبتك" : "Add to bag"}
-          </button>
+          {inStock ? (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="rounded-full border border-[var(--account-border)] px-3 py-1 text-[10px] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
+            >
+              {ar ? "أضيفيه إلى حقيبتك" : "Add to bag"}
+            </button>
+          ) : (
+            <span className="px-1 py-1 text-[10px] text-red-700/80">
+              {ar ? "غير متوفر حالياً" : "Currently unavailable"}
+            </span>
+          )}
           <button type="button" onClick={onToggle} className="text-[10px] text-[var(--account-muted)]" aria-label="wishlist">
             ♥
           </button>

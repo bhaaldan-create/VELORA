@@ -52,6 +52,7 @@ model Product {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  wishlistItems  CustomerWishlistItem[]
 
   @@index([categorySlug])
   @@index([isActive, isBestseller])
@@ -135,16 +136,31 @@ model SalaryItem {
 
 /// زبون المتجر — حساب تسجيل الدخول
 model Customer {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String                 @id @default(cuid())
+  email         String                 @unique
   passwordHash  String
   fullName      String
   /// جوال عراقي بصيغة 9647XXXXXXXXX
-  phone         String   @unique
-  phoneVerified Boolean  @default(false)
-  address       String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  phone         String                 @unique
+  phoneVerified Boolean                @default(false)
+  address       String                 @default("")
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  wishlistItems CustomerWishlistItem[]
+}
+
+/// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
+model CustomerWishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId, createdAt])
+  @@index([productId])
 }
 
 /// رموز تحقق رقم الهاتف (OTP)

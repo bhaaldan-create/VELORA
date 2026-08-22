@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
+import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { categoryLabels, ui } from "@/constants/brand";
 
 export function ProductDetail({ product }: { product: Product }) {
@@ -22,15 +23,21 @@ export function ProductDetail({ product }: { product: Product }) {
 
   return (
     <div className="mx-auto grid max-w-7xl gap-12 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-20">
-      <ProductMedia
-        name={product.nameAr}
-        imageTone={product.imageTone}
-        imageUrl={product.imageUrl}
-        aspectClassName="aspect-[4/5]"
-        className="w-full animate-[velora-fade_1s_ease-out_both]"
-        sizes="(max-width: 1024px) 100vw, 50vw"
-        priority
-      />
+      <div className="relative">
+        <WishlistHeartButton
+          productId={product.id}
+          className="absolute top-4 end-4 rounded-full bg-[var(--ivory)]/90 backdrop-blur-sm"
+        />
+        <ProductMedia
+          name={product.nameAr}
+          imageTone={product.imageTone}
+          imageUrl={product.imageUrl}
+          aspectClassName="aspect-[4/5]"
+          className="w-full animate-[velora-fade_1s_ease-out_both]"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          priority
+        />
+      </div>
 
       <div className="animate-[velora-rise_0.9s_0.15s_ease-out_both]">
         <Link

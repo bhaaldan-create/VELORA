@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 import { resolveProductsByIdsOrSlugs } from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ export async function GET(req: Request) {
   }
 
   const products = await resolveProductsByIdsOrSlugs(ids);
+  const stockRows = await prisma.product.findMany({
+    where: { id: { in: products.map((p) => p.id) } },
+    select: { id: true, stock: true },
+  });
+  const stockById = new Map(stockRows.map((s) => [s.id, s.stock]));
+
   return NextResponse.json({
     ok: true,
     products: products.map((p) => ({
@@ -31,6 +38,8 @@ export async function GET(req: Request) {
       imageTone: p.imageTone,
       size: p.size,
       category: p.category,
+      stock: stockById.get(p.id) ?? 0,
+      inStock: (stockById.get(p.id) ?? 0) > 0,
     })),
   });
 }
