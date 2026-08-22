@@ -63,10 +63,12 @@ function toProduct(item: RecommendedProduct): Product {
 export function ProductRecommendationCards({
   items,
   ritualNote,
+  ritualSteps,
   compact = false,
 }: {
   items: RecommendedProduct[];
   ritualNote?: string | null;
+  ritualSteps?: string[] | null;
   compact?: boolean;
 }) {
   const { addItem } = useCart();
@@ -75,7 +77,16 @@ export function ProductRecommendationCards({
 
   return (
     <div className={compact ? "mt-3 space-y-3" : "space-y-4"}>
-      {ritualNote ? (
+      {ritualSteps?.length ? (
+        <ol className="space-y-1.5 border border-[var(--plum)]/10 bg-[var(--ivory)]/70 px-3 py-3">
+          {ritualSteps.map((step, i) => (
+            <li key={i} className="t2 flex gap-2 text-[var(--ink)]/75">
+              <span className="font-medium text-[var(--plum)]">{i + 1}.</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      ) : ritualNote ? (
         <p className="t2 text-[var(--muted)]">{ritualNote}</p>
       ) : null}
       {items.map((item) => (

@@ -33,6 +33,20 @@
   --lh-body: 1.7;
   --track-wide: 0.08em;
   --track-brand: 0.22em;
+
+  /* LARSA — نظام ألوان الاستشارة */
+  --larsa-white: #ffffff;
+  --larsa-wash: #fbfafc;
+  --larsa-lavender: #f3edf5;
+  --larsa-lavender-deep: #e8ddeb;
+  --larsa-plum: #3a1836;
+  --larsa-plum-deep: #241022;
+  --larsa-plum-soft: #6d526c;
+  --larsa-muted: #858085;
+  --larsa-border: rgba(58, 24, 54, 0.1);
+  --larsa-border-strong: rgba(58, 24, 54, 0.18);
+  --larsa-champagne: #c9b7a2;
+  --larsa-orbit: #b9a3bc;
 }
 
 /* مظهر ليلي دافئ — يحافظ على هوية VELORA دون توهج بنفسجي */
@@ -73,6 +87,7 @@
   --color-muted: var(--muted);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-latin: var(--font-latin);
 }
 
 * {
@@ -100,6 +115,14 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+html[data-locale="en"] body {
+  font-family: var(--font-latin), var(--font-body), system-ui, sans-serif;
+}
+
+html[data-locale="en"] .font-display {
+  font-family: var(--font-latin), var(--font-display), sans-serif;
 }
 
 /* درجات الخط الثمانية */
@@ -143,6 +166,10 @@ body {
 
 .font-display {
   font-family: var(--font-display), var(--font-body), sans-serif;
+}
+
+.font-latin {
+  font-family: var(--font-latin), var(--font-body), system-ui, sans-serif;
 }
 
 .font-brand {
@@ -213,4 +240,63 @@ body {
 
 .receipt-sheet {
   overflow: visible !important;
+}
+
+/* Premium product swiper */
+.velora-swiper {
+  overflow: hidden !important;
+  padding-bottom: 2.25rem !important;
+  margin-inline: -0.15rem;
+  padding-inline: 0.15rem;
+}
+
+.velora-swiper .swiper-pagination {
+  bottom: 0 !important;
+}
+
+.velora-swiper .swiper-pagination-bullet {
+  width: 5px;
+  height: 5px;
+  margin: 0 3px !important;
+  background: var(--plum);
+  opacity: 0.22;
+  border-radius: 999px;
+  transition: opacity 0.25s ease, width 0.25s ease;
+}
+
+.velora-swiper .swiper-pagination-bullet-active {
+  opacity: 0.85;
+  width: 14px;
+}
+
+.velora-swiper .swiper-slide {
+  height: auto;
+}
+
+/* LARSA motion */
+@keyframes larsa-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes larsa-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-\[larsa-orbit_4\.5s_linear_infinite\] {
+    animation: none !important;
+  }
 }

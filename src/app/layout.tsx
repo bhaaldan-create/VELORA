@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Bodoni_Moda, IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
@@ -25,6 +25,13 @@ const display = IBM_Plex_Sans_Arabic({
 /** خط فاخر راقٍ لاسم VELORA */
 const brandFont = Bodoni_Moda({
   variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+/** خط إنجليزي مودرن لأسماء البراندات والنصوص اللاتينية */
+const latin = Outfit({
+  variable: "--font-latin",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -61,7 +68,7 @@ export const viewport: Viewport = {
   ],
 };
 
-const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}}catch(e){}})();`;
+const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -73,7 +80,7 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${body.variable} ${display.variable} ${brandFont.variable} h-full`}
+      className={`${body.variable} ${display.variable} ${brandFont.variable} ${latin.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />

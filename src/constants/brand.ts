@@ -74,10 +74,19 @@ export const ui = {
   globalOrigins: "من أفضل البراندات حول العالم",
 } as const;
 
-/** العلامات الأربع الرئيسية */
+/** العلامات الأربع الرئيسية (هيدر سطح المكتب) */
 export const primaryNavLinks = [
   { href: "/", labelAr: "الرئيسية", id: "home" as const },
   { href: "/shop", labelAr: "التسوق", id: "shop" as const },
+  { href: "/advisor", labelAr: "لارسا", id: "advisor" as const },
+  { href: "/account", labelAr: "حسابي", id: "account" as const },
+] as const;
+
+/** شريط الجوال */
+export const bottomNavLinks = [
+  { href: "/", labelAr: "الرئيسية", id: "home" as const },
+  { href: "/shop", labelAr: "التسوق", id: "shop" as const },
+  { href: "/search", labelAr: "بحث", id: "search" as const },
   { href: "/advisor", labelAr: "لارسا", id: "advisor" as const },
   { href: "/account", labelAr: "حسابي", id: "account" as const },
 ] as const;

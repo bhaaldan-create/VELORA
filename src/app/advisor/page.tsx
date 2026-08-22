@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { AdvisorChat } from "@/components/advisor/AdvisorChat";
+import { LarsaExperience } from "@/components/advisor/LarsaExperience";
 
 export const metadata: Metadata = {
-  title: "لارسا",
+  title: "LARSA · لارسا — مستشارتكِ الشخصية للجمال",
   description:
-    "البحث والمستشارة لارسا في VELORA — إرشاد جمالي شخصي للمنتجات والطقوس.",
+    "لارسا — المساعد الذكي للجمال داخل VELORA BEAUTY. استشارة شخصية وروتيناً من منتجاتنا فقط.",
 };
 
 export default function AdvisorPage() {
-  return <AdvisorChat />;
+  return <LarsaExperience />;
 }

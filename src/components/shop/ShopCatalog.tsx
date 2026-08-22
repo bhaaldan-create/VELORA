@@ -2,112 +2,161 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ProductCard } from "@/components/shop/ProductCard";
-import { cn } from "@/lib/utils";
-import { ui } from "@/constants/brand";
+import {
+  getShopBrand,
+  productMatchesBrand,
+} from "@/data/shop-brands";
+import { ShopProductSwiper } from "@/components/shop/ShopProductSwiper";
+import { useLocale } from "@/context/LocaleContext";
 import type { Category, CategorySlug, Product } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface ShopCatalogProps {
   initialCategory?: string;
+  initialBrand?: string;
   products: Product[];
   categories: Category[];
 }
 
 export function ShopCatalog({
   initialCategory,
+  initialBrand,
   products,
   categories,
 }: ShopCatalogProps) {
+  const { locale, t } = useLocale();
+  const brand = getShopBrand(initialBrand);
   const [category, setCategory] = useState<string | undefined>(
     initialCategory && categories.some((c) => c.slug === initialCategory)
       ? initialCategory
       : undefined,
   );
-  const [query, setQuery] = useState("");
 
   const list = useMemo(() => {
-    const q = query.toLowerCase().trim();
     let result = products;
-
-    if (category) {
-      result = result.filter((p) => p.category === category);
-    }
-
-    if (q) {
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.nameAr.includes(q) ||
-          p.category.includes(q) ||
-          p.concerns.some((c) => c.includes(q)) ||
-          p.benefitsAr.some((b) => b.includes(q)) ||
-          p.benefits.some((b) => b.toLowerCase().includes(q)),
+    if (brand) {
+      result = result.filter((p) =>
+        productMatchesBrand(p.name, p.nameAr, brand),
       );
     }
-
+    if (category) {
+      result = result.filter((p) => p.category === (category as CategorySlug));
+    }
     return result;
-  }, [products, category, query]);
+  }, [products, brand, category]);
+
+  const rails = useMemo(() => {
+    if (brand || category) return null;
+    return categories
+      .map((cat) => ({
+        cat,
+        items: products.filter((p) => p.category === cat.slug),
+      }))
+      .filter((r) => r.items.length > 0);
+  }, [brand, category, categories, products]);
+
+  const heading = brand
+    ? locale === "en"
+      ? brand.name
+      : brand.nameAr
+    : category
+      ? locale === "en"
+        ? (categories.find((c) => c.slug === category)?.name ?? t.shop)
+        : (categories.find((c) => c.slug === category)?.nameAr ?? t.shop)
+      : locale === "en"
+        ? "Shop"
+        : "التسوق";
 
   return (
     <div>
-      <div className="flex flex-col gap-6 border-b border-[var(--plum)]/10 pb-8 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="t1 font-medium tracking-[0.18em] text-[var(--muted)]">
-            {ui.shop}
-          </p>
-          <h1 className="font-display t7 mt-2 font-semibold text-[var(--plum)]">
-            المجموعة
+          {brand ? (
+            <Link
+              href="/search"
+              className="font-latin text-[11px] font-medium tracking-[0.16em] text-[var(--muted)] uppercase transition-colors hover:text-[var(--plum)]"
+            >
+              ← Brands
+            </Link>
+          ) : null}
+          <h1
+            className={cn(
+              "mt-2 text-[clamp(1.5rem,3.5vw,2.2rem)] font-semibold text-[var(--plum)]",
+              brand ? "font-latin tracking-tight" : "font-display",
+            )}
+            dir={brand ? "ltr" : undefined}
+          >
+            {heading}
           </h1>
+          <p className="mt-1 text-[0.85rem] text-[var(--muted)]">
+            {locale === "en"
+              ? `${list.length} products · swipe`
+              : `${list.length} منتج · مرّري`}
+          </p>
         </div>
-        <label className="block w-full max-w-sm">
-          <span className="sr-only">بحث</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={ui.search}
-            className="t3 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none placeholder:text-[var(--muted)] focus:border-[var(--plum)]"
-          />
-        </label>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2">
-        <FilterChip
+      {/* فلاتر تصنيف مضغوطة — بدون بحث */}
+      <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <FilterPill
           active={!category}
           onClick={() => setCategory(undefined)}
-          label={ui.all}
+          label={locale === "en" ? "All" : "الكل"}
         />
         {categories.map((cat) => (
-          <FilterChip
+          <FilterPill
             key={cat.slug}
             active={category === cat.slug}
-            onClick={() => setCategory(cat.slug as CategorySlug)}
-            label={cat.nameAr}
+            onClick={() => setCategory(cat.slug)}
+            label={locale === "en" ? cat.name : cat.nameAr}
           />
         ))}
       </div>
 
-      <p className="t3 mt-6 text-[var(--muted)]">{ui.productsCount(list.length)}</p>
-
-      <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-
-      {list.length === 0 ? (
-        <p className="t4 py-20 text-center text-[var(--muted)]">
-          لا توجد منتجات مطابقة. جرّبي بحثاً آخر أو{" "}
-          <Link href="/advisor" className="underline underline-offset-4">
-            {ui.askAdvisor}
+      {rails && !category ? (
+        <div className="mt-10 space-y-12">
+          {rails.map(({ cat, items }) => (
+            <section key={cat.slug}>
+              <div className="mb-4 flex items-baseline justify-between gap-3">
+                <h2 className="font-display text-[1.15rem] font-semibold text-[var(--plum)]">
+                  {locale === "en" ? cat.name : cat.nameAr}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setCategory(cat.slug)}
+                  className="font-latin text-[11px] font-medium tracking-[0.12em] text-[var(--muted)] uppercase hover:text-[var(--plum)]"
+                >
+                  {locale === "en" ? "See all" : "الكل"}
+                </button>
+              </div>
+              <ShopProductSwiper products={items} />
+            </section>
+          ))}
+        </div>
+      ) : list.length ? (
+        <div className="mt-8">
+          <ShopProductSwiper products={list} />
+        </div>
+      ) : (
+        <div className="mt-10 rounded-3xl border border-dashed border-[var(--plum)]/12 px-6 py-16 text-center">
+          <p className="text-[0.95rem] text-[var(--muted)]">
+            {locale === "en"
+              ? "No products here yet."
+              : "لا توجد منتجات هنا حالياً."}
+          </p>
+          <Link
+            href="/search"
+            className="mt-4 inline-block text-[0.875rem] text-[var(--plum)] underline underline-offset-4"
+          >
+            {locale === "en" ? "Browse brands" : "تصفّح البراندات"}
           </Link>
-          .
-        </p>
-      ) : null}
+        </div>
+      )}
     </div>
   );
 }
 
-function FilterChip({
+function FilterPill({
   active,
   onClick,
   label,
@@ -121,7 +170,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "t2 px-4 py-2 font-medium transition-colors duration-300",
+        "shrink-0 rounded-full px-4 py-2 text-[12px] font-medium transition-colors duration-300",
         active
           ? "bg-[var(--plum)] text-[var(--ivory)]"
           : "bg-[var(--mist)] text-[var(--ink)]/70 hover:bg-[var(--champagne)]",

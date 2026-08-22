@@ -45,8 +45,8 @@ export async function POST(req: Request) {
         system,
         messages: await convertToModelMessages(messages),
         tools: advisorTools,
-        stopWhen: isStepCount(4),
-        temperature: 0.7,
+        stopWhen: isStepCount(6),
+        temperature: 0.65,
       });
 
       return result.toUIMessageStreamResponse();

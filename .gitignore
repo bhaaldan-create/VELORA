@@ -68,3 +68,5 @@ next-env.d.ts
 android/app/*.apk
 android/app/*.aab
 
+.vercel
+.env*

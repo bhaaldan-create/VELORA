@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { mapCategory, mapProduct } from "@/lib/catalog-mapper";
+import { isFragranceProduct } from "@/lib/product-brand";
 import type { Category, Product } from "@/types";
 
 export async function getAllCategories(): Promise<Category[]> {
@@ -59,6 +60,43 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
     take: limit,
   });
   return rows.map(mapProduct);
+}
+
+export async function getNewArrivals(limit = 12): Promise<Product[]> {
+  const rows = await prisma.product.findMany({
+    where: { isActive: true, isNew: true },
+    orderBy: [{ updatedAt: "desc" }, { nameAr: "asc" }],
+    take: limit,
+  });
+  if (rows.length >= 4) return rows.map(mapProduct);
+
+  const fallback = await prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: [{ createdAt: "desc" }, { nameAr: "asc" }],
+    take: limit,
+  });
+  return fallback.map(mapProduct);
+}
+
+export async function getBestsellers(limit = 12): Promise<Product[]> {
+  const rows = await prisma.product.findMany({
+    where: { isActive: true, isBestseller: true },
+    orderBy: [{ rating: "desc" }, { reviews: "desc" }],
+    take: limit,
+  });
+  if (rows.length >= 4) return rows.map(mapProduct);
+
+  const fallback = await prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: [{ rating: "desc" }, { reviews: "desc" }],
+    take: limit,
+  });
+  return fallback.map(mapProduct);
+}
+
+export async function getFragranceProducts(limit = 12): Promise<Product[]> {
+  const all = await getAllProducts();
+  return all.filter(isFragranceProduct).slice(0, limit);
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
