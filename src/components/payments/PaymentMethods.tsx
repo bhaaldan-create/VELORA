@@ -72,9 +72,11 @@ export function PaymentMethodsRow({
 
 /** اختيار طريقة الدفع في صفحة الدفع */
 export function PaymentMethodPicker({
+  methods = paymentMethods,
   value,
   onChange,
 }: {
+  methods?: PaymentMethod[];
   value: string;
   onChange: (id: string) => void;
 }) {
@@ -84,7 +86,7 @@ export function PaymentMethodPicker({
         طريقة الدفع
       </legend>
       <div className="grid gap-3">
-        {paymentMethods.map((method) => {
+        {methods.map((method) => {
           const selected = value === method.id;
           return (
             <label

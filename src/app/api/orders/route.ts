@@ -10,6 +10,7 @@ import {
 import { buildOrderEmail, type OrderPayload } from "@/lib/order-email";
 import { normalizeIraqMobile } from "@/lib/phone";
 import { isSuperQiPaymentMethod, SUPER_QI_ACCOUNT } from "@/lib/super-qi";
+import { isWaylPaymentMethod } from "@/data/payments";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
@@ -111,6 +112,8 @@ export async function POST(req: Request) {
       order.superQiAccount = SUPER_QI_ACCOUNT.number;
       order.paymentStatus = "pending";
       order.transferReference = order.transferReference.trim();
+    } else if (isWaylPaymentMethod(order.paymentMethod)) {
+      order.paymentStatus = "unpaid";
     } else {
       order.paymentStatus = order.paymentStatus || "unpaid";
     }
@@ -137,9 +140,11 @@ export async function POST(req: Request) {
       inbox: "/admin/orders",
       message: result.emailed
         ? undefined
-        : isSuperQiPaymentMethod(order.paymentMethod)
-          ? "تم حفظ الطلب. سيتحقق الفريق من وصول التحويل إلى سوبر كي."
-          : "تم حفظ الطلب في صندوق الطلبات. افتحي /admin/orders للمتابعة.",
+        : isWaylPaymentMethod(order.paymentMethod)
+          ? "سيُحوَّل الدفع إلى صفحة Wayl الآمنة بعد إنشاء الطلب."
+          : isSuperQiPaymentMethod(order.paymentMethod)
+            ? "تم حفظ الطلب. سيتحقق الفريق من وصول التحويل إلى سوبر كي."
+            : "تم حفظ الطلب في صندوق الطلبات. افتحي /admin/orders للمتابعة.",
     });
   } catch (error) {
     console.error("[orders] failed", error);

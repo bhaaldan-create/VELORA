@@ -160,3 +160,48 @@ export function filterOrders(
 export function isOrderStatus(value: string): value is OrderStatus {
   return (ORDER_STATUSES as readonly string[]).includes(value);
 }
+
+export async function markOrderPaidByWayl(
+  orderId: string,
+  meta: { waylLinkId?: string; waylEventId?: string },
+): Promise<StoredOrder | null> {
+  const existing = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!existing) return null;
+
+  const stored = rowToStored(existing);
+  if (!stored) return null;
+
+  if (
+    meta.waylEventId &&
+    existing.adminNote?.includes(`wayl-event:${meta.waylEventId}`)
+  ) {
+    return stored;
+  }
+
+  if (stored.order.paymentStatus === "paid") {
+    return stored;
+  }
+
+  const order: OrderPayload = {
+    ...stored.order,
+    paymentStatus: "paid",
+    waylLinkId: meta.waylLinkId || stored.order.waylLinkId,
+  };
+
+  const noteParts = [
+    existing.adminNote?.trim(),
+    meta.waylEventId ? `wayl-event:${meta.waylEventId}` : null,
+    meta.waylLinkId ? `wayl-link:${meta.waylLinkId}` : null,
+    "دفع Wayl ✓",
+  ].filter(Boolean);
+
+  const row = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      orderJson: order as unknown as Prisma.InputJsonValue,
+      adminNote: noteParts.join(" · "),
+    },
+  });
+
+  return rowToStored(row);
+}

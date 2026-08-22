@@ -1,5 +1,6 @@
 export type PaymentMethodId =
   | "cod"
+  | "wayl"
   | "zain-cash"
   | "qi-card"
   | "visa"
@@ -23,6 +24,15 @@ export const paymentMethods: PaymentMethod[] = [
     nameAr: "الدفع عند الاستلام",
     descriptionAr: "ادفعي نقداً عند وصول الطلب.",
     logo: "/payments/cod.png",
+  },
+  {
+    id: "wayl",
+    name: "Wayl",
+    nameAr: "الدفع الإلكتروني — Wayl",
+    descriptionAr:
+      "بطاقة، محفظة، أو تحويل — دفع آمن عبر بوابة Wayl العراقية.",
+    logo: "/payments/wayl.svg",
+    badgeClass: "bg-[#0F766E]",
   },
   {
     id: "zain-cash",
@@ -60,4 +70,16 @@ export const paymentMethods: PaymentMethod[] = [
 
 export function getPaymentMethod(id: PaymentMethodId) {
   return paymentMethods.find((m) => m.id === id);
+}
+
+/** طرق الدفع في صفحة إتمام الطلب */
+export function getCheckoutPaymentMethods(waylEnabled: boolean): PaymentMethod[] {
+  if (waylEnabled) {
+    return paymentMethods.filter((m) => m.id === "cod" || m.id === "wayl");
+  }
+  return paymentMethods;
+}
+
+export function isWaylPaymentMethod(method: string) {
+  return method === "wayl";
 }

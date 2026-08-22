@@ -26,6 +26,8 @@ export type OrderPayload = {
   /** Stripe PaymentIntent id عند الدفع بالبطاقة (إن وُجد) */
   paymentIntentId?: string;
   paymentStatus?: "paid" | "unpaid" | "pending";
+  /** معرّف رابط الدفع في Wayl */
+  waylLinkId?: string;
   /** رقم عملية التحويل من سوبر كي */
   transferReference?: string;
   /** رقم حساب سوبر كي المستلم */

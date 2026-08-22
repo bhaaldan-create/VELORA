@@ -8,7 +8,7 @@ import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { formatIraqMobileLocal } from "@/lib/phone";
 import { formatPrice } from "@/lib/utils";
 import { ui } from "@/constants/brand";
-import { getPaymentMethod, type PaymentMethodId } from "@/data/payments";
+import { getPaymentMethod, isWaylPaymentMethod, type PaymentMethod, type PaymentMethodId } from "@/data/payments";
 import {
   PaymentLogo,
   PaymentMethodPicker,
@@ -26,7 +26,13 @@ import {
 } from "@/lib/shipping";
 import { DeliveryFeeNotice } from "@/components/shipping/DeliveryFeeNotice";
 
-export function CheckoutForm() {
+export function CheckoutForm({
+  paymentMethods,
+  defaultPaymentMethod = "cod",
+}: {
+  paymentMethods?: PaymentMethod[];
+  defaultPaymentMethod?: PaymentMethodId;
+}) {
   const { items, subtotal, clearCart } = useCart();
   const { customer, loading: authLoading } = useCustomerAuth();
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,7 +42,7 @@ export function CheckoutForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethodId>("cod");
+    useState<PaymentMethodId>(defaultPaymentMethod);
   const [selectedPaymentLabel, setSelectedPaymentLabel] = useState("");
   const [qiModalOpen, setQiModalOpen] = useState(false);
   const [transferReference, setTransferReference] = useState<string | null>(
@@ -52,6 +58,7 @@ export function CheckoutForm() {
   const [notes, setNotes] = useState("");
 
   const needsSuperQi = isSuperQiPaymentMethod(paymentMethod);
+  const needsWayl = isWaylPaymentMethod(paymentMethod);
   const deliveryFee = DELIVERY_FEE_IQD;
   const total = getOrderTotal(subtotal, deliveryFee);
   const usingAccount = Boolean(customer);
@@ -190,7 +197,11 @@ export function CheckoutForm() {
       notes: trimmedNotes || undefined,
       paymentMethod,
       paymentMethodLabel,
-      paymentStatus: needsSuperQi ? "pending" : "unpaid",
+      paymentStatus: needsSuperQi
+        ? "pending"
+        : needsWayl
+          ? "unpaid"
+          : "unpaid",
       transferReference: transferRef,
       superQiAccount: needsSuperQi ? SUPER_QI_ACCOUNT.number : undefined,
       customerId: customer?.id,
@@ -224,6 +235,32 @@ export function CheckoutForm() {
 
       if (!res.ok || !json.ok) {
         throw new Error(json.error || "تعذّر إرسال الطلب.");
+      }
+
+      const createdOrderId = json.orderId ?? null;
+
+      if (needsWayl && createdOrderId) {
+        const linkRes = await fetch("/api/payments/wayl/create-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: createdOrderId }),
+        });
+        const linkJson = (await linkRes.json()) as {
+          ok?: boolean;
+          paymentUrl?: string;
+          error?: string;
+        };
+
+        if (!linkRes.ok || !linkJson.ok || !linkJson.paymentUrl) {
+          throw new Error(
+            linkJson.error ||
+              "تم حفظ الطلب لكن تعذّر فتح صفحة الدفع. تواصلي معنا عبر واتساب.",
+          );
+        }
+
+        clearCart();
+        window.location.href = linkJson.paymentUrl;
+        return;
       }
 
       setSelectedPaymentLabel(paymentMethodLabel);
@@ -424,6 +461,7 @@ export function CheckoutForm() {
         </div>
 
         <PaymentMethodPicker
+          methods={paymentMethods}
           value={paymentMethod}
           onChange={(id) => {
             setPaymentMethod(id as PaymentMethodId);
@@ -446,6 +484,16 @@ export function CheckoutForm() {
           />
         ) : null}
 
+        {needsWayl ? (
+          <div className="border border-[var(--plum)]/12 bg-[var(--mist)] px-4 py-4">
+            <p className="t3 font-medium text-[var(--ink)]">الدفع عبر Wayl</p>
+            <p className="t2 mt-2 text-[var(--muted)]">
+              بعد تأكيد الطلب ستُحوَّلين إلى صفحة دفع آمنة (بطاقة، محفظة، أو
+              تحويل). يُفعَّل الطلب تلقائياً بعد إتمام الدفع.
+            </p>
+          </div>
+        ) : null}
+
         {paymentMethod === "zain-cash" ? (
           <div className="border border-[var(--plum)]/12 bg-[var(--mist)] px-4 py-4">
             <p className="t3 font-medium text-[var(--ink)]">زين كاش</p>
@@ -464,10 +512,14 @@ export function CheckoutForm() {
 
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting
-            ? "جارٍ إرسال الطلب…"
+            ? needsWayl
+              ? "جارٍ التحويل إلى Wayl…"
+              : "جارٍ إرسال الطلب…"
             : needsSuperQi && !transferReference
               ? "افتحي نافذة سوبر كي لإتمام الدفع"
-              : `${ui.placeOrder} · ${formatPrice(total)}`}
+              : needsWayl
+                ? `ادفعي عبر Wayl · ${formatPrice(total)}`
+                : `${ui.placeOrder} · ${formatPrice(total)}`}
         </Button>
 
         <p className="t2 text-[var(--muted)]">
