@@ -435,7 +435,7 @@ export function ProductCreateForm({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
         <p className="t2 mt-1 text-[var(--muted)]">
-          JPG / PNG / WebP — حتى 1.5 ميجابايت
+          JPG / PNG / WebP — حتى 12 ميجابايت
         </p>
       </div>
 

@@ -1,10 +1,12 @@
 import {
+  ADMIN_IMAGE_MIME,
+  MAX_ADMIN_IMAGE_BYTES,
+  MAX_ADMIN_IMAGE_ERROR,
+} from "@/lib/admin/image-limits";
+import {
   getHomeCategoryConfig,
   saveHomeCategoryConfig,
 } from "@/lib/home/config";
-
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
-const MAX_BYTES = 1.5 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
@@ -24,15 +26,15 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    if (!ALLOWED.has(file.type)) {
+    if (!ADMIN_IMAGE_MIME.has(file.type)) {
       return Response.json(
         { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
         { status: 400 },
       );
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_ADMIN_IMAGE_BYTES) {
       return Response.json(
-        { ok: false, error: "حجم الصورة يجب ألا يتجاوز 1.5 ميجابايت." },
+        { ok: false, error: MAX_ADMIN_IMAGE_ERROR },
         { status: 400 },
       );
     }

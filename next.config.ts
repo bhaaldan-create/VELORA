@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  experimental: {
+    // يسمح برفع صور عالية الدقة عبر Route Handlers / Proxy
+    proxyClientMaxBodySize: "20mb",
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
   async headers() {
     return [
       {

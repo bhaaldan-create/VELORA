@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/db";
 import type { AdminProduct } from "@/lib/admin-product-types";
+import {
+  ADMIN_IMAGE_MIME,
+  MAX_ADMIN_IMAGE_BYTES,
+  MAX_ADMIN_IMAGE_ERROR,
+} from "@/lib/admin/image-limits";
 import { salePriceFromBase } from "@/lib/pricing";
-
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
-/** على Vercel نحفظ الصورة في قاعدة البيانات كـ data URL — حدّ معقول */
-const MAX_BYTES = 1.5 * 1024 * 1024;
 
 function mapRow(row: {
   id: string;
@@ -54,15 +55,15 @@ export async function POST(req: Request) {
     if (!(file instanceof File)) {
       return Response.json({ ok: false, error: "أرفقي ملف صورة." }, { status: 400 });
     }
-    if (!ALLOWED.has(file.type)) {
+    if (!ADMIN_IMAGE_MIME.has(file.type)) {
       return Response.json(
         { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
         { status: 400 },
       );
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_ADMIN_IMAGE_BYTES) {
       return Response.json(
-        { ok: false, error: "حجم الصورة يجب ألا يتجاوز 1.5 ميجابايت." },
+        { ok: false, error: MAX_ADMIN_IMAGE_ERROR },
         { status: 400 },
       );
     }
