@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       ok: true,
       email: result.email,
       message: "تم التحقق من البريد الإلكتروني.",
+      verificationToken: result.token,
     });
   } catch (error) {
     console.error("[auth/email/verify-otp]", error);

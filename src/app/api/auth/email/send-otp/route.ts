@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { validateAuthEmail } from "@/lib/auth-email";
 import {
   createAndStoreEmailOtp,
-  normalizeAuthEmail,
 } from "@/lib/email-otp";
 
 const schema = z.object({
@@ -20,15 +20,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const email = normalizeAuthEmail(parsed.data.email);
-    if (!email) {
+    const validated = validateAuthEmail(parsed.data.email);
+    if (!validated.ok) {
       return Response.json(
-        { ok: false, error: "البريد الإلكتروني غير صالح." },
+        { ok: false, error: validated.error },
         { status: 400 },
       );
     }
 
-    const result = await createAndStoreEmailOtp(email, {
+    const result = await createAndStoreEmailOtp(validated.email, {
       purpose: parsed.data.purpose,
     });
     if (!result.ok) {

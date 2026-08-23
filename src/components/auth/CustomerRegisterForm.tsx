@@ -12,6 +12,9 @@ import {
   iraqMobileError,
   maskIraqMobileInput,
 } from "@/lib/phone";
+import { validateAuthEmail } from "@/lib/auth-email";
+
+const AUTH_FETCH: RequestInit = { credentials: "include" };
 
 function safeNext(raw: string | null) {
   if (!raw) return "/account";
@@ -33,6 +36,9 @@ export function CustomerRegisterForm() {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationToken, setEmailVerificationToken] = useState<
+    string | null
+  >(null);
   const [devCode, setDevCode] = useState<string | null>(null);
   const [otpHint, setOtpHint] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -77,17 +83,21 @@ export function CustomerRegisterForm() {
   }, [cooldown]);
 
   async function sendOtp() {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.includes("@")) {
-      setError("أدخلي بريداً إلكترونياً صالحاً.");
+    const validated = validateAuthEmail(email);
+    if (!validated.ok) {
+      setError(validated.error);
       return;
     }
+    const normalizedEmail = validated.email;
+    setEmail(normalizedEmail);
     setSubmitting(true);
     setError(null);
     setDevCode(null);
     setOtpHint(null);
+    setEmailVerificationToken(null);
     try {
       const res = await fetch("/api/auth/email/send-otp", {
+        ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,19 +129,31 @@ export function CustomerRegisterForm() {
   }
 
   async function verifyOtp() {
+    const validated = validateAuthEmail(email);
+    if (!validated.ok) {
+      setError(validated.error);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/auth/email/verify-otp", {
+        ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), code: otp }),
+        body: JSON.stringify({ email: validated.email, code: otp }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        verificationToken?: string;
+      };
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "رمز غير صحيح.");
       }
+      setEmail(validated.email);
       setEmailVerified(true);
+      setEmailVerificationToken(data.verificationToken ?? null);
       setDevCode(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التحقق.");
@@ -142,6 +164,11 @@ export function CustomerRegisterForm() {
   }
 
   async function createAccount() {
+    const validated = validateAuthEmail(email);
+    if (!validated.ok) {
+      setError(validated.error);
+      return;
+    }
     const err = iraqMobileError(phone);
     if (err) {
       setError(err);
@@ -151,9 +178,18 @@ export function CustomerRegisterForm() {
     setError(null);
     try {
       const res = await fetch("/api/auth/register", {
+        ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, phone, password }),
+        body: JSON.stringify({
+          fullName,
+          email: validated.email,
+          phone,
+          password,
+          ...(emailVerificationToken
+            ? { emailVerificationToken }
+            : {}),
+        }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -282,6 +318,7 @@ export function CustomerRegisterForm() {
               onClick={() => {
                 setStep("details");
                 setEmailVerified(false);
+                setEmailVerificationToken(null);
                 setOtp("");
                 setPhone("");
                 setDevCode(null);

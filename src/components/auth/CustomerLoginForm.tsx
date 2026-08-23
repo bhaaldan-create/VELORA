@@ -9,6 +9,9 @@ import {
   type CustomerPublic,
 } from "@/context/CustomerAuthContext";
 import { useLocale } from "@/context/LocaleContext";
+import { validateAuthEmail } from "@/lib/auth-email";
+
+const AUTH_FETCH: RequestInit = { credentials: "include" };
 
 function safeNext(raw: string | null) {
   if (!raw) return "/account";
@@ -72,20 +75,22 @@ export function CustomerLoginForm() {
   }, [cooldown]);
 
   async function sendOtp() {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.includes("@")) {
-      setError(ar ? "أدخلي بريداً إلكترونياً صالحاً." : "Enter a valid email.");
+    const validated = validateAuthEmail(email);
+    if (!validated.ok) {
+      setError(validated.error);
       return;
     }
+    setEmail(validated.email);
     setSubmitting(true);
     setError(null);
     setDevCode(null);
     setOtpHint(null);
     try {
       const res = await fetch("/api/auth/email/send-otp", {
+        ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail, purpose: "login" }),
+        body: JSON.stringify({ email: validated.email, purpose: "login" }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -113,14 +118,20 @@ export function CustomerLoginForm() {
   }
 
   async function loginWithOtp() {
+    const validated = validateAuthEmail(email);
+    if (!validated.ok) {
+      setError(validated.error);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/auth/login/email", {
+        ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          email: validated.email,
           code: otp,
         }),
       });

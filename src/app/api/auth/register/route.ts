@@ -9,6 +9,7 @@ import {
   publicCustomer,
 } from "@/lib/customer-auth";
 import { normalizeIraqMobile } from "@/lib/phone";
+import { validateAuthEmail } from "@/lib/auth-email";
 import {
   EMAIL_VERIFY_COOKIE,
   verifyEmailVerifiedToken,
@@ -20,6 +21,7 @@ const schema = z.object({
   phone: z.string().trim().min(10, "رقم الهاتف غير صالح."),
   password: z.string().min(8, "كلمة المرور 8 أحرف على الأقل."),
   address: z.string().trim().max(500).optional(),
+  emailVerificationToken: z.string().trim().min(10).optional(),
 });
 
 export async function POST(req: Request) {
@@ -42,12 +44,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const email = parsed.data.email.toLowerCase();
+    const validatedEmail = validateAuthEmail(parsed.data.email);
+    if (!validatedEmail.ok) {
+      return Response.json(
+        { ok: false, error: validatedEmail.error },
+        { status: 400 },
+      );
+    }
+
+    const email = validatedEmail.email;
     const jar = await cookies();
-    const verified = await verifyEmailVerifiedToken(
-      jar.get(EMAIL_VERIFY_COOKIE)?.value,
-      email,
-    );
+    const cookieToken = jar.get(EMAIL_VERIFY_COOKIE)?.value;
+    const bodyToken = parsed.data.emailVerificationToken;
+    const verified =
+      (await verifyEmailVerifiedToken(cookieToken, email)) ||
+      (bodyToken
+        ? await verifyEmailVerifiedToken(bodyToken, email)
+        : false);
     if (!verified) {
       return Response.json(
         {

@@ -4,6 +4,7 @@ import {
   createCustomerSessionToken,
   verifyCustomerSessionToken,
 } from "@/lib/customer-auth";
+import { validateAuthEmail } from "@/lib/auth-email";
 import { getSmtpConfigIssue, isSmtpConfigured, sendOtpEmail } from "@/lib/smtp";
 
 const REFRESH_PAGE_HINT =
@@ -66,10 +67,11 @@ export async function createAndStoreEmailOtp(
   opts?: { purpose?: "register" | "login" },
 ) {
   const purpose = opts?.purpose ?? "register";
-  const email = normalizeAuthEmail(emailRaw);
-  if (!email) {
-    return { ok: false as const, error: "البريد الإلكتروني غير صالح." };
+  const validated = validateAuthEmail(emailRaw);
+  if (!validated.ok) {
+    return { ok: false as const, error: validated.error };
   }
+  const email = validated.email;
 
   const existingCustomer = await prisma.customer.findUnique({
     where: { email },
@@ -171,11 +173,12 @@ export async function createAndStoreEmailOtp(
 }
 
 export async function verifyEmailOtpCode(emailRaw: string, codeRaw: string) {
-  const email = normalizeAuthEmail(emailRaw);
-  const code = codeRaw.replace(/\D/g, "");
-  if (!email) {
-    return { ok: false as const, error: "البريد الإلكتروني غير صالح." };
+  const validated = validateAuthEmail(emailRaw);
+  if (!validated.ok) {
+    return { ok: false as const, error: validated.error };
   }
+  const email = validated.email;
+  const code = codeRaw.replace(/\D/g, "");
   if (code.length !== 6) {
     return { ok: false as const, error: "أدخلي رمز التحقق المكوّن من 6 أرقام." };
   }

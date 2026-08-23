@@ -155,15 +155,15 @@ export async function sendOtpEmail(
 ): Promise<SmtpSendResult> {
   const action =
     purpose === "login" ? "تسجيل الدخول إلى حسابكِ" : "إنشاء حسابكِ";
-  const subject = `فريق VELORA Beauty — رمز التحقق (${code})`;
+  const subject = `VELORA Beauty — رمز التحقق ${code}`;
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://velorabeautyiq.me";
 
   const text = [
     "VELORA Beauty",
-    "فريق VELORA Beauty",
+    "BEAUTY REVEALED",
     "",
-    `مرحباً،`,
+    "مرحباً،",
     "",
     `رمز التحقق لـ${action} على موقع VELORA:`,
     "",
@@ -173,31 +173,80 @@ export async function sendOtpEmail(
     "",
     "إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.",
     "",
-    "مع تحيات فريق VELORA Beauty 🤍",
+    "مع تحيات فريق VELORA Beauty",
     siteUrl,
   ].join("\n");
 
-  const html = `
-    <div dir="rtl" style="font-family: Georgia, 'Times New Roman', serif; color: #3d2b4a; max-width: 440px; margin: 0 auto;">
-      <div style="border-bottom: 1px solid #e8dfe6; padding-bottom: 16px; margin-bottom: 20px;">
-        <p style="letter-spacing: 0.18em; font-size: 11px; color: #8b6f8e; margin: 0 0 6px; text-transform: uppercase;">VELORA Beauty</p>
-        <p style="font-size: 15px; font-weight: 600; margin: 0; color: #3d2b4a;">فريق VELORA Beauty</p>
-      </div>
-      <p style="margin: 0 0 12px; line-height: 1.7; font-size: 15px;">مرحباً،</p>
-      <p style="margin: 0 0 20px; line-height: 1.7; font-size: 15px;">
-        رمز التحقق لـ<strong>${action}</strong> على موقع VELORA:
-      </p>
-      <div style="background: #f8f4f1; border: 1px solid #e8dfe6; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;">
-        <p dir="ltr" style="font-size: 32px; letter-spacing: 0.4em; font-weight: 700; margin: 0; color: #3d2b4a;">${code}</p>
-      </div>
-      <p style="font-size: 13px; color: #6b5b6e; line-height: 1.6; margin: 0 0 24px;">
-        صالح لمدة 5 دقائق. لا تشاركي الرمز مع أحد.<br/>
-        إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.
-      </p>
-      <p style="font-size: 14px; color: #3d2b4a; margin: 0 0 4px;">مع تحيات فريق VELORA Beauty 🤍</p>
-      <p style="font-size: 12px; margin: 0;"><a href="${siteUrl}" style="color: #8b6f8e;">velorabeautyiq.me</a></p>
-    </div>
-  `;
+  const html = buildVeloraOtpEmailHtml({ code, action, siteUrl });
 
   return sendTransactionalEmail({ to: email, subject, text, html });
+}
+
+function buildVeloraOtpEmailHtml(input: {
+  code: string;
+  action: string;
+  siteUrl: string;
+}) {
+  const { code, action, siteUrl } = input;
+  const digits = code.split("");
+
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VELORA Beauty</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f1ee;font-family:Georgia,'Times New Roman',serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f1ee;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border:1px solid #e8dfe6;border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background:linear-gradient(180deg,#3d2640 0%,#5a3a5f 100%);padding:28px 24px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:34px;letter-spacing:0.28em;color:#f8f4f1;font-weight:500;">VELORA</p>
+              <p style="margin:0;font-size:10px;letter-spacing:0.42em;color:#dcc9d8;text-transform:uppercase;font-family:Helvetica,Arial,sans-serif;">Beauty Revealed</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 28px 12px;">
+              <p style="margin:0 0 10px;font-size:16px;line-height:1.8;color:#3d2640;">مرحباً،</p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:#5c4a63;">
+                رمز التحقق لـ<strong style="color:#3d2640;">${action}</strong> على موقع VELORA:
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto 24px;">
+                <tr>
+                  ${digits
+                    .map(
+                      (digit) =>
+                        `<td style="width:44px;height:52px;background:#f8f4f1;border:1px solid #e8dfe6;border-radius:10px;text-align:center;font-size:28px;font-weight:700;color:#3d2640;font-family:Helvetica,Arial,sans-serif;">${digit}</td><td style="width:8px;"></td>`,
+                    )
+                    .join("")}
+                </tr>
+              </table>
+              <p style="margin:0 0 8px;font-size:13px;line-height:1.7;color:#8b6f8e;text-align:center;">
+                صالح لمدة <strong>5 دقائق</strong>. لا تشاركي الرمز مع أحد.
+              </p>
+              <p style="margin:0;font-size:13px;line-height:1.7;color:#8b6f8e;text-align:center;">
+                إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 28px;text-align:center;">
+              <a href="${siteUrl}" style="display:inline-block;padding:12px 28px;background:#3d2640;color:#f8f4f1;text-decoration:none;border-radius:999px;font-size:13px;letter-spacing:0.08em;font-family:Helvetica,Arial,sans-serif;">زيارة velorabeautyiq.me</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 24px 24px;border-top:1px solid #f0e8ee;text-align:center;">
+              <p style="margin:0 0 4px;font-size:12px;color:#8b6f8e;">مع تحيات فريق VELORA Beauty</p>
+              <p style="margin:0;font-size:11px;color:#b7a5b3;font-family:Helvetica,Arial,sans-serif;">orders@velorabeautyiq.me</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
