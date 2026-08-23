@@ -130,6 +130,7 @@ export function AccountSettings() {
   const [securityMessage, setSecurityMessage] = useState<string | null>(null);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [orderId, setOrderId] = useState("");
   const [myOrders, setMyOrders] = useState<OrderRow[]>([]);
@@ -280,8 +281,13 @@ export function AccountSettings() {
   }
 
   async function onLogout() {
-    await logout();
-    router.replace("/login");
+    setLoggingOut(true);
+    try {
+      await logout();
+      router.replace("/login");
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   const name = firstName(customer.fullName, ar);
@@ -350,13 +356,13 @@ export function AccountSettings() {
               })}
             </nav>
 
-            <button
-              type="button"
-              onClick={() => void onLogout()}
-              className="mt-8 hidden w-full rounded-2xl border border-[var(--account-border)] px-4 py-2.5 text-[0.85rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/60 lg:block"
-            >
-              {ar ? "تسجيل الخروج" : "Sign out"}
-            </button>
+            <div className="mt-8 hidden lg:block">
+              <AccountLogoutButton
+                ar={ar}
+                busy={loggingOut}
+                onClick={() => void onLogout()}
+              />
+            </div>
           </div>
         </aside>
 
@@ -715,6 +721,29 @@ export function AccountSettings() {
                 </button>
               </section>
 
+              <section className="rounded-[22px] border border-[rgba(168,62,72,0.12)] bg-gradient-to-l from-[#fdf6f7] to-white p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[0.95rem] font-semibold text-[#9b3440]">
+                      {ar ? "إنهاء الجلسة" : "End session"}
+                    </p>
+                    <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">
+                      {ar
+                        ? "سجّلي الخروج بأمان من حسابكِ على هذا الجهاز."
+                        : "Sign out securely from your account on this device."}
+                    </p>
+                  </div>
+                  <div className="w-full sm:w-auto sm:min-w-[200px]">
+                    <AccountLogoutButton
+                      ar={ar}
+                      busy={loggingOut}
+                      variant="solid"
+                      onClick={() => void onLogout()}
+                    />
+                  </div>
+                </div>
+              </section>
+
               <ServiceStrip ar={ar} />
             </>
           ) : null}
@@ -956,18 +985,74 @@ export function AccountSettings() {
                   </button>
                 </form>
               </Panel>
-              <button
-                type="button"
-                onClick={() => void onLogout()}
-                className="rounded-full border border-[var(--account-border)] px-5 py-2.5 text-[0.9rem] text-[var(--account-plum)] lg:hidden"
-              >
-                {ar ? "تسجيل الخروج" : "Sign out"}
-              </button>
+              <div className="lg:hidden">
+                <AccountLogoutButton
+                  ar={ar}
+                  busy={loggingOut}
+                  variant="solid"
+                  onClick={() => void onLogout()}
+                />
+              </div>
             </div>
           ) : null}
         </div>
       </div>
     </div>
+  );
+}
+
+function AccountLogoutButton({
+  ar,
+  busy,
+  onClick,
+  variant = "soft",
+}: {
+  ar: boolean;
+  busy?: boolean;
+  onClick: () => void;
+  variant?: "soft" | "solid";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className={cn(
+        "account-logout-btn",
+        variant === "solid" && "account-logout-btn--solid",
+      )}
+    >
+      <LogoutIcon />
+      <span>
+        {busy
+          ? ar
+            ? "جارٍ الخروج…"
+            : "Signing out…"
+          : ar
+            ? "تسجيل الخروج"
+            : "Sign out"}
+      </span>
+    </button>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
   );
 }
 

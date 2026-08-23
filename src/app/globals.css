@@ -367,6 +367,67 @@ html[data-locale="en"] .font-display {
   opacity: 0.45;
 }
 
+/* زر تسجيل خروج مميز — حساب الزبونة */
+.account-logout-btn {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 62, 72, 0.22);
+  background: linear-gradient(180deg, #fdf4f5 0%, #f8e8ea 100%);
+  color: #9b3440;
+  padding: 0.78rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 8px 20px rgba(155, 52, 64, 0.08);
+  transition:
+    transform 0.18s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.account-logout-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f9e6e8 0%, #f3d4d8 100%);
+  border-color: rgba(168, 62, 72, 0.35);
+  color: #842832;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 10px 24px rgba(155, 52, 64, 0.14);
+}
+
+.account-logout-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.account-logout-btn:disabled {
+  opacity: 0.55;
+}
+
+.account-logout-btn--solid {
+  border-color: transparent;
+  background: linear-gradient(180deg, #b44752 0%, #9b3440 100%);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 10px 22px rgba(155, 52, 64, 0.22);
+}
+
+.account-logout-btn--solid:hover:not(:disabled) {
+  background: linear-gradient(180deg, #c1525d 0%, #8a2e39 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 12px 26px rgba(155, 52, 64, 0.28);
+}
+
 /* ─── VELORA ADMIN OS ─── */
 .admin-os {
   --admin-bg: #f8f6f4;
