@@ -35,9 +35,10 @@ export async function PUT(req: Request) {
     return Response.json({ ok: true, config });
   } catch (error) {
     console.error("[admin/home-hero] PUT", error);
-    return Response.json(
-      { ok: false, error: "تعذّر حفظ إعدادات الهيرو." },
-      { status: 500 },
-    );
+    const detail =
+      error instanceof Error
+        ? error.message
+        : "تعذّر حفظ إعدادات الهيرو.";
+    return Response.json({ ok: false, error: detail }, { status: 500 });
   }
 }

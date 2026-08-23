@@ -5,6 +5,7 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { persistAdminImage } from "@/lib/admin/persist-image";
 import { salePriceFromBase } from "@/lib/pricing";
 
 function mapRow(row: {
@@ -75,7 +76,13 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
-    const imageUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+    const persisted = await persistAdminImage({
+      buffer,
+      mime,
+      folder: "products",
+      basename: id,
+    });
+    const imageUrl = persisted.url;
 
     const row = await prisma.product.update({
       where: { id },
@@ -85,8 +92,10 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, product: mapRow(row) });
   } catch (error) {
     console.error("[admin/products/image] POST failed", error);
+    const detail =
+      error instanceof Error ? error.message : "تعذّر رفع صورة المنتج.";
     return Response.json(
-      { ok: false, error: "تعذّر رفع صورة المنتج." },
+      { ok: false, error: detail },
       { status: 500 },
     );
   }

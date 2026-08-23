@@ -3,6 +3,7 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { persistAdminImage } from "@/lib/admin/persist-image";
 import {
   getHomeCategoryConfig,
   saveHomeCategoryConfig,
@@ -50,18 +51,22 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
-    const imageUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+    const persisted = await persistAdminImage({
+      buffer,
+      mime,
+      folder: "home-categories",
+      basename: cardId,
+    });
 
     const cards = [...config.cards];
-    cards[index] = { ...cards[index]!, imageUrl };
+    cards[index] = { ...cards[index]!, imageUrl: persisted.url };
 
     const saved = await saveHomeCategoryConfig({ ...config, cards });
-    return Response.json({ ok: true, config: saved, imageUrl });
+    return Response.json({ ok: true, config: saved, imageUrl: persisted.url });
   } catch (error) {
     console.error("[admin/home-categories/image] POST", error);
-    return Response.json(
-      { ok: false, error: "تعذّر رفع صورة الفئة." },
-      { status: 500 },
-    );
+    const detail =
+      error instanceof Error ? error.message : "تعذّر رفع صورة الفئة.";
+    return Response.json({ ok: false, error: detail }, { status: 500 });
   }
 }

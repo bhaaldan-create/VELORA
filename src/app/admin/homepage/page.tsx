@@ -49,10 +49,21 @@ export default function AdminHomepagePage() {
     setMessage(null);
     setError(null);
     try {
+      // لا نعيد إرسال صور data: الضخمة — الرفع يحفظها مسبقاً والسيرفر يحتفظ بها
+      const payload: HomeHeroConfig = {
+        ...config,
+        slides: config.slides.map((s) => ({
+          ...s,
+          imageUrl: s.imageUrl.startsWith("data:") ? "" : s.imageUrl,
+          imageUrlMobile: s.imageUrlMobile?.startsWith("data:")
+            ? ""
+            : s.imageUrlMobile,
+        })),
+      };
       const res = await fetch("/api/admin/home-hero", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config }),
+        body: JSON.stringify({ config: payload }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -65,8 +76,12 @@ export default function AdminHomepagePage() {
       }
       if (data.config) setConfig(data.config);
       setMessage("تم حفظ شرائح الهيرو.");
-    } catch {
-      setError("فشل الحفظ.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل الحفظ: ${err.message}`
+          : "فشل الحفظ. جرّبي حفظ النصوص بعد رفع الصور، أو صغّري حجم الصورة.",
+      );
     } finally {
       setSaving(false);
     }
@@ -77,10 +92,17 @@ export default function AdminHomepagePage() {
     setMessage(null);
     setError(null);
     try {
+      const payload: HomeCategoryConfig = {
+        ...categories,
+        cards: categories.cards.map((c) => ({
+          ...c,
+          imageUrl: c.imageUrl.startsWith("data:") ? "" : c.imageUrl,
+        })),
+      };
       const res = await fetch("/api/admin/home-categories", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config: categories }),
+        body: JSON.stringify({ config: payload }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -93,8 +115,12 @@ export default function AdminHomepagePage() {
       }
       if (data.config) setCategories(data.config);
       setMessage("تم حفظ بطاقات «تسوق حسب الفئة».");
-    } catch {
-      setError("فشل حفظ الفئات.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل حفظ الفئات: ${err.message}`
+          : "فشل حفظ الفئات.",
+      );
     } finally {
       setSavingCategories(false);
     }
@@ -189,7 +215,7 @@ export default function AdminHomepagePage() {
     <AdminShell active="homepage" title="الصفحة الرئيسية">
       <PageHeader
         title="هيرو الصفحة الرئيسية"
-        description="عدّلي نصوص الشرائح وارفعِ صور الحملات مباشرة — تظهر فوراً على الصفحة الرئيسية."
+        description="ارفعي الصور أولاً (تُحفظ فوراً)، ثم احفظي النصوص والأزرار. لا حاجة لإعادة رفع الصورة عند الحفظ."
         actions={
           <button
             type="button"
@@ -460,7 +486,7 @@ export default function AdminHomepagePage() {
           <div className="pt-4">
             <PageHeader
               title="تسوق حسب الفئة"
-              description="ارفعي صور بطاقات الفئات وعدّلي العناوين والروابط — تظهر مباشرة في الصفحة الرئيسية."
+              description="ارفعي الصورة أولاً (تُحفظ فوراً)، ثم احفظي العناوين والروابط."
               actions={
                 <button
                   type="button"

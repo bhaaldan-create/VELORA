@@ -95,7 +95,40 @@ export async function getHomeHeroConfig(): Promise<HomeHeroConfig> {
 export async function saveHomeHeroConfig(
   data: HomeHeroConfig,
 ): Promise<HomeHeroConfig> {
-  const merged = mergeHomeHeroConfig(data);
+  const existing = await getHomeHeroConfig();
+  const base = structuredClone(DEFAULT_HOME_HERO);
+
+  const slidesIn = Array.isArray(data.slides) ? data.slides : existing.slides;
+  const slides = slidesIn.map((raw, i) => {
+    const fallback =
+      existing.slides.find((s) => s.id === raw.id) ??
+      existing.slides[i] ??
+      base.slides[i] ??
+      base.slides[0]!;
+    const slide = sanitizeSlide(raw, fallback);
+    const incomingImage =
+      typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
+    const incomingMobile =
+      typeof raw.imageUrlMobile === "string" ? raw.imageUrlMobile.trim() : "";
+
+    return {
+      ...slide,
+      // Empty / omitted image → keep whatever is already saved
+      imageUrl: incomingImage || fallback.imageUrl,
+      imageUrlMobile: incomingMobile || fallback.imageUrlMobile,
+    };
+  });
+
+  const merged: HomeHeroConfig = {
+    version:
+      typeof data.version === "number" ? data.version : existing.version,
+    autoplayMs:
+      typeof data.autoplayMs === "number" && data.autoplayMs >= 3000
+        ? data.autoplayMs
+        : existing.autoplayMs,
+    slides,
+  };
+
   await prisma.homeHeroConfig.upsert({
     where: { id: CONFIG_ID },
     create: { id: CONFIG_ID, data: merged },
@@ -167,7 +200,32 @@ export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
 export async function saveHomeCategoryConfig(
   data: HomeCategoryConfig,
 ): Promise<HomeCategoryConfig> {
-  const merged = mergeHomeCategoryConfig(data);
+  const existing = await getHomeCategoryConfig();
+  const base = structuredClone(DEFAULT_HOME_CATEGORIES);
+
+  const cardsIn = Array.isArray(data.cards) ? data.cards : existing.cards;
+  const cards = cardsIn.map((raw, i) => {
+    const fallback =
+      existing.cards.find((c) => c.id === raw.id) ??
+      existing.cards[i] ??
+      base.cards[i] ??
+      base.cards[0]!;
+    const card = sanitizeCategoryCard(raw, fallback);
+    const incomingImage =
+      typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
+
+    return {
+      ...card,
+      imageUrl: incomingImage || fallback.imageUrl,
+    };
+  });
+
+  const merged: HomeCategoryConfig = {
+    version:
+      typeof data.version === "number" ? data.version : existing.version,
+    cards,
+  };
+
   await prisma.homeCategoryConfig.upsert({
     where: { id: CONFIG_ID },
     create: { id: CONFIG_ID, data: merged },

@@ -3,6 +3,7 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { persistAdminImage } from "@/lib/admin/persist-image";
 import {
   getHomeHeroConfig,
   saveHomeHeroConfig,
@@ -51,7 +52,13 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
-    const imageUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+    const persisted = await persistAdminImage({
+      buffer,
+      mime,
+      folder: "home-hero",
+      basename: `${slideId}-${variant === "mobile" ? "mobile" : "desktop"}`,
+    });
+    const imageUrl = persisted.url;
 
     const slides = [...config.slides];
     const slide = { ...slides[index]! };
@@ -62,12 +69,20 @@ export async function POST(req: Request) {
     }
     slides[index] = slide;
 
+    // Save only image fields for this slide — avoid rewriting unrelated text
     const saved = await saveHomeHeroConfig({ ...config, slides });
-    return Response.json({ ok: true, config: saved, imageUrl, variant });
+    return Response.json({
+      ok: true,
+      config: saved,
+      imageUrl,
+      variant,
+    });
   } catch (error) {
     console.error("[admin/home-hero/image] POST", error);
+    const detail =
+      error instanceof Error ? error.message : "تعذّر رفع صورة الهيرو.";
     return Response.json(
-      { ok: false, error: "تعذّر رفع صورة الهيرو." },
+      { ok: false, error: detail },
       { status: 500 },
     );
   }
