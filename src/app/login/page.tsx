@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { CustomerLoginForm } from "@/components/auth/CustomerLoginForm";
 
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
   return (
     <main

@@ -1,11 +1,14 @@
 import { z } from "zod";
-import { createAndStoreOtp } from "@/lib/phone-otp";
-import { iraqMobileError, normalizeIraqMobile } from "@/lib/phone";
+import {
+  createAndStoreEmailOtp,
+  resolveAuthEmail,
+} from "@/lib/email-otp";
 
+/** توافق مع الواجهة القديمة — يوجّه الإرسال إلى البريد فقط */
 const schema = z.object({
-  phone: z.string().min(1),
-  purpose: z.enum(["register", "login"]).optional().default("register"),
+  phone: z.string().optional(),
   email: z.string().trim().email().optional(),
+  purpose: z.enum(["register", "login"]).optional().default("register"),
 });
 
 export async function POST(req: Request) {
@@ -14,32 +17,31 @@ export async function POST(req: Request) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return Response.json(
-        { ok: false, error: "أدخلي رقم الهاتف." },
+        { ok: false, error: "أدخلي البريد الإلكتروني." },
         { status: 400 },
       );
     }
 
-    const err = iraqMobileError(parsed.data.phone);
-    if (err || !normalizeIraqMobile(parsed.data.phone)) {
-      return Response.json(
-        { ok: false, error: err || "رقم الهاتف غير صالح." },
-        { status: 400 },
-      );
-    }
-
-    const result = await createAndStoreOtp(parsed.data.phone, {
-      purpose: parsed.data.purpose,
+    const purpose = parsed.data.purpose;
+    const resolved = await resolveAuthEmail({
       email: parsed.data.email,
+      phone: parsed.data.phone,
+      purpose,
     });
+    if (!resolved.ok) {
+      return Response.json({ ok: false, error: resolved.error }, { status: 400 });
+    }
+
+    const result = await createAndStoreEmailOtp(resolved.email, { purpose });
     if (!result.ok) {
       return Response.json({ ok: false, error: result.error }, { status: 400 });
     }
 
     return Response.json({
       ok: true,
-      phone: result.phone,
+      email: result.email,
       expiresInSec: result.expiresInSec,
-      channel: result.channel,
+      channel: "email" as const,
       message: result.message,
       ...(result.devCode ? { devCode: result.devCode } : {}),
     });

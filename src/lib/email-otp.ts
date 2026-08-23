@@ -4,7 +4,11 @@ import {
   createCustomerSessionToken,
   verifyCustomerSessionToken,
 } from "@/lib/customer-auth";
+import { normalizeIraqMobile } from "@/lib/phone";
 import { getSmtpConfigIssue, isSmtpConfigured, sendOtpEmail } from "@/lib/smtp";
+
+const REFRESH_PAGE_HINT =
+  "حدّثي الصفحة (اسحبي للأسفل أو Ctrl+F5) ثم استخدمي البريد الإلكتروني.";
 
 export const EMAIL_VERIFY_COOKIE = "velora_email_verified";
 export const OTP_TTL_MS = 5 * 60 * 1000;
@@ -23,6 +27,42 @@ export function normalizeAuthEmail(raw: string | undefined | null) {
   const email = raw?.trim().toLowerCase() ?? "";
   if (!email || !email.includes("@")) return "";
   return email;
+}
+
+/** يدعم الواجهة القديمة (رقم جوال) والجديدة (بريد) */
+export async function resolveAuthEmail(input: {
+  email?: string | null;
+  phone?: string | null;
+  purpose: "register" | "login";
+}) {
+  const direct = normalizeAuthEmail(input.email);
+  if (direct) {
+    return { ok: true as const, email: direct };
+  }
+
+  const phone = input.phone ? normalizeIraqMobile(input.phone) : "";
+  if (input.purpose === "login" && phone) {
+    const customer = await prisma.customer.findFirst({ where: { phone } });
+    if (!customer) {
+      return {
+        ok: false as const,
+        error: "هذا الرقم غير مسجّل. أنشئي حساباً أولاً.",
+      };
+    }
+    return { ok: true as const, email: customer.email.toLowerCase() };
+  }
+
+  if (input.purpose === "register") {
+    return {
+      ok: false as const,
+      error: `التسجيل أصبح عبر البريد الإلكتروني. ${REFRESH_PAGE_HINT}`,
+    };
+  }
+
+  return {
+    ok: false as const,
+    error: `أدخلي البريد الإلكتروني. ${REFRESH_PAGE_HINT}`,
+  };
 }
 
 export function hashOtpCode(email: string, code: string) {
