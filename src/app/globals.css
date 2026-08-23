@@ -223,6 +223,16 @@ html[data-locale="en"] .font-display {
   }
 }
 
+@keyframes velora-rose-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

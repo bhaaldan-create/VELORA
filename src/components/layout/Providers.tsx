@@ -1,6 +1,7 @@
 "use client";
 
 import { CartProvider } from "@/context/CartContext";
+import { CheckoutUIProvider } from "@/context/CheckoutUIContext";
 import { CustomerAuthProvider } from "@/context/CustomerAuthContext";
 import { LocaleProvider } from "@/context/LocaleContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -13,7 +14,9 @@ export function Providers({ children }: { children: ReactNode }) {
       <LocaleProvider>
         <CustomerAuthProvider>
           <WishlistProvider>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              <CheckoutUIProvider>{children}</CheckoutUIProvider>
+            </CartProvider>
           </WishlistProvider>
         </CustomerAuthProvider>
       </LocaleProvider>

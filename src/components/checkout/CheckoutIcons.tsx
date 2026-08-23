@@ -140,3 +140,99 @@ export function IconArrowStart({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconHome({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5", className)}
+      aria-hidden
+    >
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5.2v-5.5h-3.6V21H5a1 1 0 0 1-1-1v-9.5Z" />
+    </svg>
+  );
+}
+
+export function IconCreditCard({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5", className)}
+      aria-hidden
+    >
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </svg>
+  );
+}
+
+export function IconFileCheck({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5", className)}
+      aria-hidden
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6" />
+      <path d="m9 15 2 2 4-4" />
+    </svg>
+  );
+}
+
+export function IconCopy({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-4 w-4", className)}
+      aria-hidden
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+export function IconTruck({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5", className)}
+      aria-hidden
+    >
+      <path d="M10 17h4" />
+      <path d="M3 17h2" />
+      <path d="M15 17h2" />
+      <path d="M19 17h2" />
+      <path d="M3 7h11v10H3Z" />
+      <path d="M14 7h4l3 4v6h-7V7Z" />
+      <circle cx="7.5" cy="17.5" r="1.5" />
+      <circle cx="17.5" cy="17.5" r="1.5" />
+    </svg>
+  );
+}

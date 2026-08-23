@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { IconInstagram, IconWhatsApp } from "@/components/contact/SocialIcons";
+import { useCheckoutUI } from "@/context/CheckoutUIContext";
 import { useLocale } from "@/context/LocaleContext";
 import {
   getDefaultWhatsAppUrl,
@@ -48,7 +49,10 @@ export function FloatingContact() {
     };
   }, [open]);
 
+  const { immersive } = useCheckoutUI();
+
   if (pathname.startsWith("/admin")) return null;
+  if (immersive) return null;
   if (!waUrl && !igUrl) return null;
 
   const isCartPage = pathname === "/cart";

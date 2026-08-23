@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { bottomNavLinks } from "@/constants/brand";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
+import { useCheckoutUI } from "@/context/CheckoutUIContext";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
 
@@ -109,9 +110,11 @@ const icons = {
 export function PrimaryBottomNav() {
   const pathname = usePathname();
   const { customer } = useCustomerAuth();
+  const { immersive } = useCheckoutUI();
   const { t } = useLocale();
 
   if (pathname.startsWith("/admin")) return null;
+  if (immersive) return null;
 
   const labels = {
     home: t.home,
