@@ -4,16 +4,20 @@ import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 export default function AdminLoginPage() {
   return (
     <main
-      className="mx-auto flex min-h-screen max-w-5xl items-center px-5 py-16 sm:px-8"
+      className="admin-os flex min-h-dvh items-center justify-center px-5 py-12"
       dir="rtl"
     >
-      <Suspense
-        fallback={
-          <p className="t3 text-[var(--muted)]">جارٍ تحميل صفحة الدخول…</p>
-        }
-      >
-        <AdminLoginForm />
-      </Suspense>
+      <div className="w-full max-w-md rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[var(--admin-shadow-md)] sm:p-8">
+        <Suspense
+          fallback={
+            <p className="text-[13px] text-[var(--admin-text-muted)]">
+              جارٍ تحميل صفحة الدخول…
+            </p>
+          }
+        >
+          <AdminLoginForm />
+        </Suspense>
+      </div>
     </main>
   );
 }

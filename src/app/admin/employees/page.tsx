@@ -29,8 +29,8 @@ export default async function AdminEmployeesPage() {
   return (
     <AdminShell
       active="employees"
-      title="الموظفون والحضور"
-      subtitle="إدارة الموظفين حسب الفرع، تسجيل الحضور، والرواتب — مع إضافة فروع جديدة مباشرة."
+      title="الموظفون"
+      subtitle="الفريق، الحضور، الرواتب، والفروع."
     >
       <EmployeesAdmin
         initialEmployees={employees}

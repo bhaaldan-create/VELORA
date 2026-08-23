@@ -122,12 +122,26 @@ export async function updateOrderStatus(
 }
 
 export function countOrdersByStatus(orders: StoredOrder[]) {
-  return {
+  const base = {
     all: orders.length,
-    new: orders.filter((o) => o.status === "new").length,
-    preparing: orders.filter((o) => o.status === "preparing").length,
-    delivered: orders.filter((o) => o.status === "delivered").length,
-  };
+    new: 0,
+    confirmed: 0,
+    preparing: 0,
+    ready_to_ship: 0,
+    handed_to_courier: 0,
+    in_transit: 0,
+    out_for_delivery: 0,
+    delivered: 0,
+    deferred: 0,
+    cancelled: 0,
+    returned: 0,
+    failed_delivery: 0,
+  } satisfies Record<"all" | OrderStatus, number>;
+
+  for (const o of orders) {
+    base[o.status] += 1;
+  }
+  return base;
 }
 
 export function filterOrders(

@@ -83,7 +83,20 @@ function firstName(full: string, ar: boolean) {
 
 function progressIndex(status: string) {
   if (status === "delivered") return 3;
-  if (status === "preparing") return 1;
+  if (
+    status === "handed_to_courier" ||
+    status === "in_transit" ||
+    status === "out_for_delivery"
+  ) {
+    return 2;
+  }
+  if (
+    status === "preparing" ||
+    status === "confirmed" ||
+    status === "ready_to_ship"
+  ) {
+    return 1;
+  }
   return 0;
 }
 

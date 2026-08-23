@@ -251,17 +251,22 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="t3 text-[var(--muted)]">
-          أضيفي منتجات جديدة بكامل بياناتها، أو عدّلي المنتجات الحالية.
-        </p>
+        <div>
+          <h1 className="text-[1.35rem] font-semibold tracking-tight text-[var(--admin-text)]">
+            المنتجات
+          </h1>
+          <p className="mt-1 text-[13px] text-[var(--admin-text-secondary)]">
+            أضيفي منتجات جديدة أو عدّلي السعر والمخزون والإظهار.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setShowCreate((v) => !v)}
-          className="t2 bg-[var(--plum)] px-4 py-2.5 text-[var(--ivory)]"
+          className="inline-flex h-9 items-center rounded-[8px] bg-[var(--admin-plum)] px-3.5 text-[13px] font-medium text-white"
         >
-          {showCreate ? "إغلاق نموذج الإضافة" : "＋ إضافة منتج جديد"}
+          {showCreate ? "إغلاق النموذج" : "إضافة منتج"}
         </button>
       </div>
 
@@ -272,49 +277,46 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
         />
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="flex gap-2 overflow-x-auto admin-scroll pb-1">
         {filters.map((f) => (
           <button
             key={f.id}
             type="button"
             onClick={() => setVisibility(f.id)}
-            className={`border px-4 py-4 text-right transition ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
               visibility === f.id
-                ? "border-[var(--plum)] bg-[var(--plum)] text-[var(--ivory)]"
-                : "border-[var(--plum)]/15 bg-white text-[var(--plum)] hover:border-[var(--plum)]/40"
+                ? "bg-[var(--admin-plum)] text-white"
+                : "border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"
             }`}
           >
-            <div className="t2 opacity-80">{f.label}</div>
-            <div className="font-display t6 mt-1 font-medium">{f.count}</div>
+            {f.label}
+            <span className="admin-num ms-1.5 opacity-70">{f.count}</span>
           </button>
         ))}
       </div>
 
-      <div>
-        <label className="t2 text-[var(--muted)]" htmlFor="product-search">
-          بحث في المنتجات
-        </label>
-        <input
-          id="product-search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="الاسم، التصنيف، المعرّف…"
-          className="t4 mt-2 w-full border border-[var(--plum)]/20 bg-white px-4 py-3 outline-none focus:border-[var(--plum)]"
-        />
-      </div>
+      <input
+        id="product-search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="الاسم، التصنيف، المعرّف…"
+        className="h-11 w-full rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-[14px] outline-none focus:border-[var(--admin-plum-soft)]"
+      />
 
       {error ? (
-        <div className="t3 border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+        <div className="rounded-[8px] border border-[var(--admin-danger)]/20 bg-[var(--admin-danger-bg)] px-4 py-3 text-[13px] text-[var(--admin-danger)]">
           {error}
         </div>
       ) : null}
 
       {visible.length === 0 ? (
-        <div className="border border-[var(--plum)]/15 bg-[var(--mist)] px-6 py-16 text-center">
-          <p className="t4 text-[var(--plum)]">لا توجد منتجات مطابقة</p>
+        <div className="rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-bg-elevated)] px-6 py-14 text-center">
+          <p className="text-[15px] font-medium text-[var(--admin-text)]">
+            لا توجد منتجات مطابقة
+          </p>
         </div>
       ) : (
-        <ul className="space-y-4">
+        <ul className="space-y-2.5">
           {visible.map((p) => {
             const draft = getDraft(p);
             const busy = pendingId === p.id;

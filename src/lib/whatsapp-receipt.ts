@@ -102,10 +102,30 @@ export function statusMessageForCustomer(status: OrderStatus) {
   switch (status) {
     case "new":
       return "استلمنا طلبكِ وهو بانتظار التأكيد.";
+    case "confirmed":
+      return "تم تأكيد طلبكِ وسنبدأ التجهيز قريباً.";
     case "preparing":
       return "طلبكِ قيد التجهيز وتم إنشاء الوصل.";
+    case "ready_to_ship":
+      return "طلبكِ جاهز للشحن.";
+    case "handed_to_courier":
+      return "تم تسليم طلبكِ لشركة التوصيل.";
+    case "in_transit":
+      return "طلبكِ في الطريق إليكِ.";
+    case "out_for_delivery":
+      return "طلبكِ خرج للتسليم اليوم.";
     case "delivered":
       return "تم تسليم طلبكِ. نتمنى أن يعجبكِ!";
+    case "deferred":
+      return "تم تأجيل توصيل طلبكِ مؤقتاً.";
+    case "cancelled":
+      return "تم إلغاء الطلب.";
+    case "returned":
+      return "تم تسجيل مرتجع للطلب.";
+    case "failed_delivery":
+      return "تعذّر إتمام التسليم — سنتواصل معكِ.";
+    default:
+      return "تم تحديث حالة طلبكِ.";
   }
 }
 

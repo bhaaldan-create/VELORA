@@ -19,6 +19,15 @@ function smtpPort() {
 
 const DEFAULT_SMTP_USER = "orders@velorabeautyiq.me";
 
+/** Gmail App Password = 16 حرفاً (أحياناً مع مسافات — نزيلها) */
+export function normalizeSmtpPass(raw: string | undefined | null) {
+  return (raw ?? "").trim().replaceAll(" ", "").replaceAll('"', "").replaceAll("'", "");
+}
+
+export function getSmtpPass() {
+  return normalizeSmtpPass(process.env.SMTP_PASS);
+}
+
 export function getSmtpUser() {
   return process.env.SMTP_USER?.trim() || DEFAULT_SMTP_USER;
 }
@@ -37,16 +46,30 @@ export function getMailFromName() {
 }
 
 export function isSmtpConfigured() {
-  return Boolean(process.env.SMTP_PASS?.trim());
+  return Boolean(getSmtpPass());
+}
+
+function looksLikeGmailAppPassword(pass: string) {
+  return pass.length === 16 && /^[a-zA-Z0-9]+$/.test(pass);
 }
 
 export function getSmtpConfigIssue(): string | null {
-  if (!process.env.SMTP_PASS?.trim()) {
+  const pass = getSmtpPass();
+  if (!pass) {
     return [
       "SMTP_PASS غير مضبوط على Vercel.",
-      "من حساب orders@velorabeautyiq.me في Google:",
-      "myaccount.google.com/apppasswords",
-      "أنشئي App Password وأضيفيه في Vercel → Settings → Environment Variables → SMTP_PASS (Production).",
+      "فعّلي التحقّق بخطوتين على orders@velorabeautyiq.me،",
+      "ثم أنشئي App Password من myaccount.google.com/apppasswords",
+      "وضعيه في Vercel → SMTP_PASS (Production).",
+    ].join(" ");
+  }
+  if (!looksLikeGmailAppPassword(pass)) {
+    return [
+      "SMTP_PASS ليست App Password صحيحة من Google.",
+      "كلمة مرور الحساب العادية لا تعمل مع SMTP.",
+      "فعّلي التحقّق بخطوتين على orders@velorabeautyiq.me،",
+      "أنشئي App Password (16 حرفاً)،",
+      "واستبدلي SMTP_PASS على Vercel ثم Redeploy.",
     ].join(" ");
   }
   return null;
@@ -61,7 +84,7 @@ function getTransport() {
       secure: smtpPort() === 465,
       auth: {
         user: getSmtpUser(),
-        pass: process.env.SMTP_PASS!.trim(),
+        pass: getSmtpPass(),
       },
     });
   }
@@ -112,7 +135,12 @@ export async function sendTransactionalEmail(input: {
 function mapSmtpSendError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login") || lower.includes("authentication")) {
-    return "فشل تسجيل الدخول إلى SMTP — تحققي من SMTP_USER و App Password.";
+    return [
+      "فشل تسجيل الدخول إلى SMTP.",
+      "Google لا يقبل كلمة مرور الحساب — تحتاجين App Password (16 حرفاً).",
+      "فعّلي التحقّق بخطوتين على orders@velorabeautyiq.me،",
+      "أنشئي App Password، وضعيها في SMTP_PASS على Vercel.",
+    ].join(" ");
   }
   if (lower.includes("recipient address rejected") || lower.includes("mailbox")) {
     return "عنوان البريد المستلم مرفوض.";

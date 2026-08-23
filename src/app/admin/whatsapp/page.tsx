@@ -4,8 +4,8 @@ import { WhatsAppAdminPanel } from "@/components/admin/WhatsAppAdminPanel";
 export default function AdminWhatsAppPage() {
   return (
     <AdminShell
-      title="واتساب الشركة"
-      subtitle="ربط رقم 07830000492 لإرسال رموز التحقق للزبائن"
+      title="واتساب"
+      subtitle="الاتصال، القوالب، واختبار الإرسال لعمليات VELORA."
       active="whatsapp"
     >
       <WhatsAppAdminPanel />

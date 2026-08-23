@@ -15,7 +15,7 @@ export function AdminLoginForm() {
   const nextPath = useMemo(() => {
     const n = search.get("next");
     if (n && n.startsWith("/admin")) return n;
-    return "/admin/orders";
+    return "/admin";
   }, [search]);
 
   const configError = search.get("error") === "config";

@@ -34,7 +34,20 @@ export async function GET(req: Request) {
 
 const patchSchema = z.object({
   orderId: z.string().min(3),
-  status: z.enum(["new", "preparing", "delivered"]),
+  status: z.enum([
+    "new",
+    "confirmed",
+    "preparing",
+    "ready_to_ship",
+    "handed_to_courier",
+    "in_transit",
+    "out_for_delivery",
+    "delivered",
+    "deferred",
+    "cancelled",
+    "returned",
+    "failed_delivery",
+  ]),
   adminNote: z.string().max(500).optional(),
   markReceiptSent: z.boolean().optional(),
 });

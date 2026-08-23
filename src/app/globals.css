@@ -366,3 +366,109 @@ html[data-locale="en"] .font-display {
 .account-btn:disabled {
   opacity: 0.45;
 }
+
+/* ─── VELORA ADMIN OS ─── */
+.admin-os {
+  --admin-bg: #f8f6f4;
+  --admin-bg-elevated: #fbfaf9;
+  --admin-surface: #ffffff;
+  --admin-surface-soft: #f2eeec;
+  --admin-surface-mute: #eee9e7;
+  --admin-border: rgba(44, 35, 48, 0.08);
+  --admin-border-strong: rgba(44, 35, 48, 0.14);
+  --admin-text: #2c2330;
+  --admin-text-secondary: #6e626c;
+  --admin-text-muted: #968a93;
+  --admin-plum: #342239;
+  --admin-plum-mid: #3e2944;
+  --admin-plum-soft: #49334f;
+  --admin-success: #3d6b55;
+  --admin-success-bg: #e8f2ec;
+  --admin-warning: #9a6b2f;
+  --admin-warning-bg: #f7efdf;
+  --admin-danger: #8f3d45;
+  --admin-danger-bg: #f6e8ea;
+  --admin-info: #4a5d78;
+  --admin-info-bg: #e8eef5;
+  --admin-shipping: #3a5a6e;
+  --admin-shipping-bg: #e6eef2;
+  --admin-sidebar-w: 15.5rem;
+  --admin-sidebar-collapsed: 4.25rem;
+  --admin-topbar-h: 3.5rem;
+  --admin-radius: 10px;
+  --admin-radius-sm: 8px;
+  --admin-shadow: 0 1px 2px rgba(44, 35, 48, 0.04);
+  --admin-shadow-md: 0 4px 16px rgba(44, 35, 48, 0.06);
+  --admin-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  min-height: 100dvh;
+}
+
+.admin-os[data-theme="dark"] {
+  --admin-bg: #161218;
+  --admin-bg-elevated: #1c181d;
+  --admin-surface: #211c22;
+  --admin-surface-soft: #2a242b;
+  --admin-surface-mute: #322c33;
+  --admin-border: rgba(243, 235, 230, 0.08);
+  --admin-border-strong: rgba(243, 235, 230, 0.14);
+  --admin-text: #f3ebe6;
+  --admin-text-secondary: #b5a8b0;
+  --admin-text-muted: #8e828a;
+  --admin-plum: #e8dce0;
+  --admin-plum-mid: #d4c4ca;
+  --admin-plum-soft: #c4b0b8;
+  --admin-success-bg: rgba(61, 107, 85, 0.25);
+  --admin-warning-bg: rgba(154, 107, 47, 0.22);
+  --admin-danger-bg: rgba(143, 61, 69, 0.22);
+  --admin-info-bg: rgba(74, 93, 120, 0.25);
+  --admin-shipping-bg: rgba(58, 90, 110, 0.25);
+}
+
+.admin-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum" 1;
+}
+
+.admin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(44, 35, 48, 0.2) transparent;
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.admin-animate-in {
+  animation: admin-fade-in 0.28s var(--admin-ease) both;
+}
+
+@keyframes admin-skeleton {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.admin-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--admin-surface-soft) 25%,
+    var(--admin-surface-mute) 37%,
+    var(--admin-surface-soft) 63%
+  );
+  background-size: 200% 100%;
+  animation: admin-skeleton 1.4s ease infinite;
+  border-radius: var(--admin-radius-sm);
+}
