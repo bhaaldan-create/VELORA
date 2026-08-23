@@ -1,6 +1,22 @@
 "use client";
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
+import {
+  Building2,
+  CalendarCheck,
+  UserCog,
+  Users,
+  Wallet,
+} from "@/components/admin/ui/icons";
+import { Badge } from "@/components/admin/ui/StatusBadge";
+import {
+  AdminButton,
+  EmptyState,
+  PageHeader,
+  StatCard,
+  Surface,
+} from "@/components/admin/ui/primitives";
+import { useAdminToast } from "@/components/admin/ui/Toast";
 import { formatPrice } from "@/lib/utils";
 import {
   ATTENDANCE_STATUSES,
@@ -26,7 +42,7 @@ import {
 type Tab = "employees" | "attendance" | "payroll" | "branches";
 
 const fieldClass =
-  "mt-1 w-full border border-[var(--plum)]/20 bg-[var(--mist)] px-3 py-2 outline-none focus:border-[var(--plum)]";
+  "mt-1.5 h-10 w-full rounded-[8px] border border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] px-3 text-[13px] text-[var(--admin-text)] outline-none transition focus:border-[var(--admin-plum-soft)]";
 
 type Props = {
   initialEmployees: AdminEmployee[];
@@ -39,6 +55,13 @@ type Props = {
   initialMonth: string;
 };
 
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "؟";
+  if (parts.length === 1) return parts[0]!.slice(0, 2);
+  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`;
+}
+
 export function EmployeesAdmin({
   initialEmployees,
   initialBranches,
@@ -49,6 +72,7 @@ export function EmployeesAdmin({
   initialDate,
   initialMonth,
 }: Props) {
+  const toast = useAdminToast();
   const [tab, setTab] = useState<Tab>("employees");
   const [employees, setEmployees] = useState(initialEmployees);
   const [branches, setBranches] = useState(initialBranches);
@@ -61,6 +85,7 @@ export function EmployeesAdmin({
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [, startTransition] = useTransition();
 
   const activeBranches = useMemo(
@@ -128,7 +153,9 @@ export function EmployeesAdmin({
       setAttendance(json.attendance);
       setDate(nextDate);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر تحميل الحضور.");
+      const msg = err instanceof Error ? err.message : "تعذّر تحميل الحضور.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -163,7 +190,9 @@ export function EmployeesAdmin({
         }));
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر تحميل الرواتب.");
+      const msg = err instanceof Error ? err.message : "تعذّر تحميل الرواتب.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -236,10 +265,14 @@ export function EmployeesAdmin({
         notes: "",
         branchId: newEmp.branchId,
       });
+      setShowAddEmployee(false);
+      toast.success("تم إضافة الموظف");
       await reloadBranches();
       await reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إضافة الموظف.");
+      const msg = err instanceof Error ? err.message : "تعذّر إضافة الموظف.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -269,10 +302,13 @@ export function EmployeesAdmin({
         active: next.filter((e) => e.isActive).length,
         inactive: next.filter((e) => !e.isActive).length,
       }));
+      toast.success("تم حفظ التعديلات");
       await reloadBranches();
       await reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر تحديث الموظف.");
+      const msg = err instanceof Error ? err.message : "تعذّر تحديث الموظف.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -301,10 +337,13 @@ export function EmployeesAdmin({
         active: next.filter((e) => e.isActive).length,
         inactive: next.filter((e) => !e.isActive).length,
       }));
+      toast.success("تم حذف الموظف");
       await reloadBranches();
       await reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر حذف الموظف.");
+      const msg = err instanceof Error ? err.message : "تعذّر حذف الموظف.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -334,9 +373,12 @@ export function EmployeesAdmin({
         const rest = prev.filter((a) => a.employeeId !== employeeId);
         return [...rest, json.attendance!];
       });
+      toast.success("تم تحديث الحضور", attendanceLabel(status));
       void reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر حفظ الحضور.");
+      const msg = err instanceof Error ? err.message : "تعذّر حفظ الحضور.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -380,9 +422,12 @@ export function EmployeesAdmin({
         amount: "",
         reason: "",
       });
+      toast.success("تم إضافة البند");
       await reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إضافة البند.");
+      const msg = err instanceof Error ? err.message : "تعذّر إضافة البند.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -401,9 +446,12 @@ export function EmployeesAdmin({
       if (!res.ok || !json.ok) {
         throw new Error(json.error || "تعذّر حذف البند.");
       }
+      toast.success("تم حذف البند");
       await reloadPayroll(month);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر حذف البند.");
+      const msg = err instanceof Error ? err.message : "تعذّر حذف البند.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -442,8 +490,11 @@ export function EmployeesAdmin({
       if (!newEmp.branchId) {
         setNewEmp((s) => ({ ...s, branchId: json.branch!.id }));
       }
+      toast.success("تم إضافة الفرع");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إضافة الفرع.");
+      const msg = err instanceof Error ? err.message : "تعذّر إضافة الفرع.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -451,7 +502,12 @@ export function EmployeesAdmin({
 
   async function patchBranch(
     id: string,
-    data: Partial<{ name: string; city: string; address: string; isActive: boolean }>,
+    data: Partial<{
+      name: string;
+      city: string;
+      address: string;
+      isActive: boolean;
+    }>,
   ) {
     setPending(true);
     setError(null);
@@ -472,9 +528,12 @@ export function EmployeesAdmin({
       setBranches((prev) =>
         prev.map((b) => (b.id === id ? json.branch! : b)),
       );
+      toast.success("تم تحديث الفرع");
       await reloadBranches();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر تحديث الفرع.");
+      const msg = err instanceof Error ? err.message : "تعذّر تحديث الفرع.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
@@ -495,64 +554,114 @@ export function EmployeesAdmin({
         throw new Error(json.error || "تعذّر حذف الفرع.");
       }
       setBranches((prev) => prev.filter((b) => b.id !== id));
+      toast.success("تم حذف الفرع");
       await reloadBranches();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر حذف الفرع.");
+      const msg = err instanceof Error ? err.message : "تعذّر حذف الفرع.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(false);
     }
   }
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "employees", label: "الموظفون" },
-    { id: "attendance", label: "الحضور" },
-    { id: "payroll", label: "الرواتب" },
-    { id: "branches", label: "الفروع" },
+  const tabs: {
+    id: Tab;
+    label: string;
+    icon: typeof Users;
+  }[] = [
+    { id: "employees", label: "الموظفون", icon: Users },
+    { id: "attendance", label: "الحضور", icon: CalendarCheck },
+    { id: "payroll", label: "الرواتب", icon: Wallet },
+    { id: "branches", label: "الفروع", icon: Building2 },
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="الموظفون" value={String(stats.employees)} />
-        <StatCard label="نشطون" value={String(stats.active)} />
-        <StatCard label="الفروع" value={String(stats.branches)} />
+    <div className="space-y-5">
+      <PageHeader
+        title="الموظفون"
+        description="الفريق، الحضور، الرواتب، والفروع — بنفس لغة VELORA Admin OS."
+        actions={
+          tab === "employees" ? (
+            <AdminButton
+              size="sm"
+              onClick={() => setShowAddEmployee((v) => !v)}
+            >
+              {showAddEmployee ? "إغلاق" : "إضافة موظف"}
+            </AdminButton>
+          ) : null
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCard
+          label="الموظفون"
+          value={stats.employees}
+          format="number"
+          icon={Users}
+        />
+        <StatCard
+          label="نشطون"
+          value={stats.active}
+          format="number"
+          icon={UserCog}
+          tone="success"
+        />
+        <StatCard
+          label="الفروع"
+          value={stats.branches}
+          format="number"
+          icon={Building2}
+        />
         <StatCard
           label="حضور اليوم"
-          value={`${stats.todayPresent} / ${stats.active}`}
+          value={stats.todayPresent}
+          format="number"
+          icon={CalendarCheck}
+          tone="info"
         />
         <StatCard
           label="صافي رواتب الشهر"
-          value={formatPrice(stats.monthPayrollTotal)}
+          value={stats.monthPayrollTotal}
+          format="iqd"
+          icon={Wallet}
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`t2 px-4 py-2 transition ${
-              tab === t.id
-                ? "bg-[var(--plum)] text-[var(--ivory)]"
-                : "border border-[var(--plum)]/15 bg-white text-[var(--plum)] hover:border-[var(--plum)]/40"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex gap-2 overflow-x-auto admin-scroll pb-1">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
+                active
+                  ? "bg-[var(--admin-plum)] text-white"
+                  : "border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)]"
+              }`}
+            >
+              <Icon className="size-3.5" strokeWidth={1.6} aria-hidden />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {error ? (
-        <div className="t3 border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+        <div className="rounded-[8px] border border-[var(--admin-danger)]/20 bg-[var(--admin-danger-bg)] px-4 py-3 text-[13px] text-[var(--admin-danger)]">
           {error}
         </div>
       ) : null}
 
       {tab === "branches" ? (
-        <section className="space-y-6">
-          <div className="border border-[var(--plum)]/12 bg-white p-5">
-            <h2 className="font-display t5 text-[var(--plum)]">إضافة فرع</h2>
+        <section className="space-y-4">
+          <Surface>
+            <h2 className="text-[14px] font-semibold text-[var(--admin-text)]">
+              إضافة فرع
+            </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Field label="اسم الفرع">
                 <input
@@ -583,384 +692,406 @@ export function EmployeesAdmin({
                 />
               </Field>
             </div>
-            <button
-              type="button"
+            <AdminButton
+              className="mt-4"
               disabled={pending}
               onClick={() => void addBranch()}
-              className="t2 mt-4 border border-[var(--plum)] bg-[var(--plum)] px-4 py-2 text-[var(--ivory)] disabled:opacity-40"
             >
               إضافة الفرع
-            </button>
-          </div>
+            </AdminButton>
+          </Surface>
 
-          <ul className="space-y-3">
-            {branches.map((b) => (
-              <li
-                key={b.id}
-                className="border border-[var(--plum)]/12 bg-white p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`t1 px-2 py-1 ${
-                          b.isActive
-                            ? "bg-[var(--plum)] text-[var(--ivory)]"
-                            : "bg-[var(--mist)] text-[var(--muted)]"
-                        }`}
-                      >
-                        {b.isActive ? "نشط" : "موقوف"}
-                      </span>
-                      <span className="t2 text-[var(--muted)]">
-                        {b.employeeCount} موظف
-                      </span>
+          {branches.length === 0 ? (
+            <EmptyState
+              icon={Building2}
+              title="لا توجد فروع"
+              description="أضيفي أول فرع لبدء تنظيم الفريق."
+            />
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {branches.map((b) => (
+                <li key={b.id}>
+                  <Surface>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-soft)] text-[var(--admin-plum-soft)]">
+                          <Building2 className="size-4" strokeWidth={1.6} />
+                        </span>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge tone={b.isActive ? "success" : "neutral"}>
+                              {b.isActive ? "نشط" : "موقوف"}
+                            </Badge>
+                            <span className="text-[11px] text-[var(--admin-text-muted)]">
+                              {b.employeeCount} موظف
+                            </span>
+                          </div>
+                          <h3 className="mt-1.5 text-[15px] font-semibold text-[var(--admin-text)]">
+                            {b.name}
+                          </h3>
+                          <p className="mt-0.5 text-[12px] text-[var(--admin-text-secondary)]">
+                            {[b.city, b.address].filter(Boolean).join(" · ") ||
+                              "بدون تفاصيل عنوان"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="font-display t5 mt-2 text-[var(--plum)]">
-                      {b.name}
-                    </h3>
-                    <p className="t3 text-[var(--muted)]">
-                      {[b.city, b.address].filter(Boolean).join(" · ") ||
-                        "بدون تفاصيل عنوان"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <Field label="الاسم">
-                    <input
-                      defaultValue={b.name}
-                      className={fieldClass}
-                      id={`br-name-${b.id}`}
-                    />
-                  </Field>
-                  <Field label="المدينة">
-                    <input
-                      defaultValue={b.city}
-                      className={fieldClass}
-                      id={`br-city-${b.id}`}
-                    />
-                  </Field>
-                  <Field label="العنوان">
-                    <input
-                      defaultValue={b.address}
-                      className={fieldClass}
-                      id={`br-address-${b.id}`}
-                    />
-                  </Field>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={pending}
-                    className="t2 border border-[var(--plum)] bg-[var(--plum)] px-3 py-2 text-[var(--ivory)] disabled:opacity-40"
-                    onClick={() =>
-                      void patchBranch(b.id, {
-                        name: (
-                          document.getElementById(
-                            `br-name-${b.id}`,
-                          ) as HTMLInputElement
-                        ).value.trim(),
-                        city: (
-                          document.getElementById(
-                            `br-city-${b.id}`,
-                          ) as HTMLInputElement
-                        ).value.trim(),
-                        address: (
-                          document.getElementById(
-                            `br-address-${b.id}`,
-                          ) as HTMLInputElement
-                        ).value.trim(),
-                      })
-                    }
-                  >
-                    حفظ
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    className="t2 border border-[var(--plum)]/20 bg-[var(--mist)] px-3 py-2 text-[var(--plum)] disabled:opacity-40"
-                    onClick={() =>
-                      void patchBranch(b.id, { isActive: !b.isActive })
-                    }
-                  >
-                    {b.isActive ? "إيقاف" : "تفعيل"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    className="t2 border border-red-200 bg-red-50 px-3 py-2 text-red-800 disabled:opacity-40"
-                    onClick={() => void removeBranch(b.id)}
-                  >
-                    حذف
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <Field label="الاسم">
+                        <input
+                          defaultValue={b.name}
+                          className={fieldClass}
+                          id={`br-name-${b.id}`}
+                        />
+                      </Field>
+                      <Field label="المدينة">
+                        <input
+                          defaultValue={b.city}
+                          className={fieldClass}
+                          id={`br-city-${b.id}`}
+                        />
+                      </Field>
+                      <Field label="العنوان">
+                        <input
+                          defaultValue={b.address}
+                          className={fieldClass}
+                          id={`br-address-${b.id}`}
+                        />
+                      </Field>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <AdminButton
+                        size="sm"
+                        disabled={pending}
+                        onClick={() =>
+                          void patchBranch(b.id, {
+                            name: (
+                              document.getElementById(
+                                `br-name-${b.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim(),
+                            city: (
+                              document.getElementById(
+                                `br-city-${b.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim(),
+                            address: (
+                              document.getElementById(
+                                `br-address-${b.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim(),
+                          })
+                        }
+                      >
+                        حفظ
+                      </AdminButton>
+                      <AdminButton
+                        size="sm"
+                        variant="secondary"
+                        disabled={pending}
+                        onClick={() =>
+                          void patchBranch(b.id, { isActive: !b.isActive })
+                        }
+                      >
+                        {b.isActive ? "إيقاف" : "تفعيل"}
+                      </AdminButton>
+                      <AdminButton
+                        size="sm"
+                        variant="danger"
+                        disabled={pending}
+                        onClick={() => void removeBranch(b.id)}
+                      >
+                        حذف
+                      </AdminButton>
+                    </div>
+                  </Surface>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ) : null}
 
       {tab === "employees" ? (
-        <section className="space-y-6">
-          <div className="border border-[var(--plum)]/12 bg-white p-5">
-            <h2 className="font-display t5 text-[var(--plum)]">إضافة موظف</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Field label="الاسم">
-                <input
-                  value={newEmp.name}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, name: e.target.value }))
-                  }
-                  className={fieldClass}
-                  placeholder="مثال: سارة أحمد"
-                />
-              </Field>
-              <Field label="فرع الدوام">
-                <select
-                  value={newEmp.branchId}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, branchId: e.target.value }))
-                  }
-                  className={fieldClass}
-                >
-                  <option value="">اختاري الفرع…</option>
-                  {activeBranches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="الهاتف">
-                <input
-                  value={newEmp.phone}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, phone: e.target.value }))
-                  }
-                  className={fieldClass}
-                  dir="ltr"
-                  placeholder="07xxxxxxxxx"
-                />
-              </Field>
-              <Field label="الدور">
-                <select
-                  value={newEmp.role}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({
-                      ...s,
-                      role: e.target.value as EmployeeRole,
-                    }))
-                  }
-                  className={fieldClass}
-                >
-                  {EMPLOYEE_ROLES.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="الراتب الأساسي (د.ع / شهر)">
-                <input
-                  type="number"
-                  min={0}
-                  step={10000}
-                  value={newEmp.baseSalary}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, baseSalary: e.target.value }))
-                  }
-                  className={fieldClass}
-                  dir="ltr"
-                />
-              </Field>
-              <Field label="تاريخ التعيين">
-                <input
-                  type="date"
-                  value={newEmp.hireDate}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, hireDate: e.target.value }))
-                  }
-                  className={fieldClass}
-                  dir="ltr"
-                />
-              </Field>
-              <Field label="ملاحظات">
-                <input
-                  value={newEmp.notes}
-                  onChange={(e) =>
-                    setNewEmp((s) => ({ ...s, notes: e.target.value }))
-                  }
-                  className={fieldClass}
-                />
-              </Field>
-            </div>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void addEmployee()}
-              className="t2 mt-4 border border-[var(--plum)] bg-[var(--plum)] px-4 py-2 text-[var(--ivory)] disabled:opacity-40"
-            >
-              إضافة الموظف
-            </button>
-          </div>
+        <section className="space-y-4">
+          {showAddEmployee ? (
+            <Surface className="admin-animate-in">
+              <h2 className="text-[14px] font-semibold text-[var(--admin-text)]">
+                إضافة موظف
+              </h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Field label="الاسم">
+                  <input
+                    value={newEmp.name}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, name: e.target.value }))
+                    }
+                    className={fieldClass}
+                    placeholder="مثال: سارة أحمد"
+                  />
+                </Field>
+                <Field label="فرع الدوام">
+                  <select
+                    value={newEmp.branchId}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, branchId: e.target.value }))
+                    }
+                    className={fieldClass}
+                  >
+                    <option value="">اختاري الفرع…</option>
+                    {activeBranches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="الهاتف">
+                  <input
+                    value={newEmp.phone}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, phone: e.target.value }))
+                    }
+                    className={fieldClass}
+                    dir="ltr"
+                    placeholder="07xxxxxxxxx"
+                  />
+                </Field>
+                <Field label="الدور">
+                  <select
+                    value={newEmp.role}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({
+                        ...s,
+                        role: e.target.value as EmployeeRole,
+                      }))
+                    }
+                    className={fieldClass}
+                  >
+                    {EMPLOYEE_ROLES.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="الراتب الأساسي (د.ع / شهر)">
+                  <input
+                    type="number"
+                    min={0}
+                    step={10000}
+                    value={newEmp.baseSalary}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, baseSalary: e.target.value }))
+                    }
+                    className={fieldClass}
+                    dir="ltr"
+                  />
+                </Field>
+                <Field label="تاريخ التعيين">
+                  <input
+                    type="date"
+                    value={newEmp.hireDate}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, hireDate: e.target.value }))
+                    }
+                    className={fieldClass}
+                    dir="ltr"
+                  />
+                </Field>
+                <Field label="ملاحظات">
+                  <input
+                    value={newEmp.notes}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, notes: e.target.value }))
+                    }
+                    className={fieldClass}
+                  />
+                </Field>
+              </div>
+              <AdminButton
+                className="mt-4"
+                disabled={pending}
+                onClick={() => void addEmployee()}
+              >
+                إضافة الموظف
+              </AdminButton>
+            </Surface>
+          ) : null}
 
           {employees.length === 0 ? (
-            <Empty text="لا يوجد موظفون بعد — أضيفي أول موظف أعلاه." />
+            <EmptyState
+              icon={Users}
+              title="لا يوجد موظفون بعد"
+              description="أضيفي أول موظف لبدء الحضور والرواتب."
+              action={
+                <AdminButton size="sm" onClick={() => setShowAddEmployee(true)}>
+                  إضافة موظف
+                </AdminButton>
+              }
+            />
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-2.5">
               {employees.map((e) => (
-                <li
-                  key={e.id}
-                  className="border border-[var(--plum)]/12 bg-white p-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`t1 px-2 py-1 ${
-                            e.isActive
-                              ? "bg-[var(--plum)] text-[var(--ivory)]"
-                              : "bg-[var(--mist)] text-[var(--muted)]"
-                          }`}
-                        >
-                          {e.isActive ? "نشط" : "موقوف"}
+                <li key={e.id}>
+                  <Surface>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--admin-plum)] text-[12px] font-semibold tracking-wide text-white">
+                          {initials(e.name)}
                         </span>
-                        <span className="t1 bg-[var(--blush)]/40 px-2 py-1 text-[var(--plum)]">
-                          {e.branchName}
-                        </span>
-                        <span className="t2 text-[var(--muted)]">
-                          {roleLabel(e.role)}
-                        </span>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge tone={e.isActive ? "success" : "neutral"}>
+                              {e.isActive ? "نشط" : "موقوف"}
+                            </Badge>
+                            <Badge tone="info">{e.branchName}</Badge>
+                            <span className="text-[11px] text-[var(--admin-text-muted)]">
+                              {roleLabel(e.role)}
+                            </span>
+                          </div>
+                          <h3 className="mt-1.5 text-[15px] font-semibold text-[var(--admin-text)]">
+                            {e.name}
+                          </h3>
+                          <p
+                            className="mt-0.5 text-[12px] text-[var(--admin-text-secondary)]"
+                            dir="ltr"
+                          >
+                            {e.phone || "بدون هاتف"} · تعيين {e.hireDate}
+                          </p>
+                        </div>
                       </div>
-                      <h3 className="font-display t5 mt-2 text-[var(--plum)]">
-                        {e.name}
-                      </h3>
-                      <p className="t3 text-[var(--muted)]" dir="ltr">
-                        {e.phone || "بدون هاتف"} · تعيين {e.hireDate}
+                      <p className="admin-num text-left text-[14px] font-semibold text-[var(--admin-text)]">
+                        {formatPrice(e.baseSalary)}
+                        <span className="block text-[11px] font-normal text-[var(--admin-text-muted)]">
+                          / شهر
+                        </span>
                       </p>
                     </div>
-                    <p className="t3 font-medium text-[var(--plum)]">
-                      {formatPrice(e.baseSalary)}
-                      <span className="t2 text-[var(--muted)]"> / شهر</span>
-                    </p>
-                  </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <Field label="الاسم">
-                      <input
-                        defaultValue={e.name}
-                        className={fieldClass}
-                        id={`name-${e.id}`}
-                      />
-                    </Field>
-                    <Field label="فرع الدوام">
-                      <select
-                        defaultValue={e.branchId}
-                        className={fieldClass}
-                        id={`branch-${e.id}`}
-                      >
-                        {branches.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
-                            {!b.isActive ? " (موقوف)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="الهاتف">
-                      <input
-                        defaultValue={e.phone}
-                        className={fieldClass}
-                        dir="ltr"
-                        id={`phone-${e.id}`}
-                      />
-                    </Field>
-                    <Field label="الدور">
-                      <select
-                        defaultValue={e.role}
-                        className={fieldClass}
-                        id={`role-${e.id}`}
-                      >
-                        {EMPLOYEE_ROLES.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.label}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="الراتب الأساسي">
-                      <input
-                        type="number"
-                        defaultValue={e.baseSalary}
-                        className={fieldClass}
-                        dir="ltr"
-                        id={`salary-${e.id}`}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={pending}
-                      className="t2 border border-[var(--plum)] bg-[var(--plum)] px-3 py-2 text-[var(--ivory)] disabled:opacity-40"
-                      onClick={() => {
-                        const name = (
-                          document.getElementById(
-                            `name-${e.id}`,
-                          ) as HTMLInputElement
-                        ).value.trim();
-                        const phone = (
-                          document.getElementById(
-                            `phone-${e.id}`,
-                          ) as HTMLInputElement
-                        ).value.trim();
-                        const role = (
-                          document.getElementById(
-                            `role-${e.id}`,
-                          ) as HTMLSelectElement
-                        ).value as EmployeeRole;
-                        const branchId = (
-                          document.getElementById(
-                            `branch-${e.id}`,
-                          ) as HTMLSelectElement
-                        ).value;
-                        const baseSalary = Number(
-                          (
-                            document.getElementById(
-                              `salary-${e.id}`,
-                            ) as HTMLInputElement
-                          ).value,
-                        );
-                        void patchEmployee(e.id, {
-                          name,
-                          phone,
-                          role,
-                          branchId,
-                          baseSalary,
-                        });
-                      }}
-                    >
-                      حفظ التعديلات
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pending}
-                      className="t2 border border-[var(--plum)]/20 bg-[var(--mist)] px-3 py-2 text-[var(--plum)] disabled:opacity-40"
-                      onClick={() =>
-                        void patchEmployee(e.id, { isActive: !e.isActive })
-                      }
-                    >
-                      {e.isActive ? "إيقاف" : "تفعيل"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pending}
-                      className="t2 border border-red-200 bg-red-50 px-3 py-2 text-red-800 disabled:opacity-40"
-                      onClick={() => void removeEmployee(e.id)}
-                    >
-                      حذف
-                    </button>
-                  </div>
+                    <details className="mt-3 border-t border-[var(--admin-border)] pt-3">
+                      <summary className="cursor-pointer text-[12px] text-[var(--admin-plum-soft)]">
+                        تعديل البيانات
+                      </summary>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <Field label="الاسم">
+                          <input
+                            defaultValue={e.name}
+                            className={fieldClass}
+                            id={`name-${e.id}`}
+                          />
+                        </Field>
+                        <Field label="فرع الدوام">
+                          <select
+                            defaultValue={e.branchId}
+                            className={fieldClass}
+                            id={`branch-${e.id}`}
+                          >
+                            {branches.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.name}
+                                {!b.isActive ? " (موقوف)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label="الهاتف">
+                          <input
+                            defaultValue={e.phone}
+                            className={fieldClass}
+                            dir="ltr"
+                            id={`phone-${e.id}`}
+                          />
+                        </Field>
+                        <Field label="الدور">
+                          <select
+                            defaultValue={e.role}
+                            className={fieldClass}
+                            id={`role-${e.id}`}
+                          >
+                            {EMPLOYEE_ROLES.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label="الراتب الأساسي">
+                          <input
+                            type="number"
+                            defaultValue={e.baseSalary}
+                            className={fieldClass}
+                            dir="ltr"
+                            id={`salary-${e.id}`}
+                          />
+                        </Field>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <AdminButton
+                          size="sm"
+                          disabled={pending}
+                          onClick={() => {
+                            const name = (
+                              document.getElementById(
+                                `name-${e.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim();
+                            const phone = (
+                              document.getElementById(
+                                `phone-${e.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim();
+                            const role = (
+                              document.getElementById(
+                                `role-${e.id}`,
+                              ) as HTMLSelectElement
+                            ).value as EmployeeRole;
+                            const branchId = (
+                              document.getElementById(
+                                `branch-${e.id}`,
+                              ) as HTMLSelectElement
+                            ).value;
+                            const baseSalary = Number(
+                              (
+                                document.getElementById(
+                                  `salary-${e.id}`,
+                                ) as HTMLInputElement
+                              ).value,
+                            );
+                            void patchEmployee(e.id, {
+                              name,
+                              phone,
+                              role,
+                              branchId,
+                              baseSalary,
+                            });
+                          }}
+                        >
+                          حفظ التعديلات
+                        </AdminButton>
+                        <AdminButton
+                          size="sm"
+                          variant="secondary"
+                          disabled={pending}
+                          onClick={() =>
+                            void patchEmployee(e.id, {
+                              isActive: !e.isActive,
+                            })
+                          }
+                        >
+                          {e.isActive ? "إيقاف" : "تفعيل"}
+                        </AdminButton>
+                        <AdminButton
+                          size="sm"
+                          variant="danger"
+                          disabled={pending}
+                          onClick={() => void removeEmployee(e.id)}
+                        >
+                          حذف
+                        </AdminButton>
+                      </div>
+                    </details>
+                  </Surface>
                 </li>
               ))}
             </ul>
@@ -969,77 +1100,87 @@ export function EmployeesAdmin({
       ) : null}
 
       {tab === "attendance" ? (
-        <section className="space-y-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <Field label="تاريخ الحضور">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => void reloadAttendance(e.target.value)}
-                className={`${fieldClass} max-w-xs`}
-                dir="ltr"
-              />
-            </Field>
-            <Field label="تصفية حسب الفرع">
-              <select
-                value={branchFilter}
-                onChange={(e) => setBranchFilter(e.target.value)}
-                className={`${fieldClass} max-w-xs`}
-              >
-                <option value="all">كل الفروع</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
+        <section className="space-y-4">
+          <Surface>
+            <div className="flex flex-wrap items-end gap-3">
+              <Field label="تاريخ الحضور">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => void reloadAttendance(e.target.value)}
+                  className={`${fieldClass} max-w-xs`}
+                  dir="ltr"
+                />
+              </Field>
+              <Field label="تصفية حسب الفرع">
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className={`${fieldClass} max-w-xs`}
+                >
+                  <option value="all">كل الفروع</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </Surface>
 
           {activeEmployees.length === 0 ? (
-            <Empty text="لا يوجد موظفون مطابقون — راجعي الفرع أو أضيفي موظفين." />
+            <EmptyState
+              icon={CalendarCheck}
+              title="لا يوجد موظفون مطابقون"
+              description="راجعي الفرع أو أضيفي موظفين نشطين."
+            />
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {activeEmployees.map((e) => {
                 const row = attendanceMap.get(e.id);
                 const status = row?.status;
                 return (
-                  <li
-                    key={e.id}
-                    className="border border-[var(--plum)]/12 bg-white p-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-display t4 text-[var(--plum)]">
-                          {e.name}
-                        </p>
-                        <p className="t2 text-[var(--muted)]">
-                          {e.branchName} · {roleLabel(e.role)}
-                          {status
-                            ? ` · ${attendanceLabel(status)}`
-                            : " · لم يُسجَّل بعد"}
-                        </p>
+                  <li key={e.id}>
+                    <Surface>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-soft)] text-[11px] font-semibold text-[var(--admin-plum)]">
+                            {initials(e.name)}
+                          </span>
+                          <div>
+                            <p className="text-[14px] font-semibold text-[var(--admin-text)]">
+                              {e.name}
+                            </p>
+                            <p className="mt-0.5 text-[12px] text-[var(--admin-text-secondary)]">
+                              {e.branchName} · {roleLabel(e.role)}
+                              {status
+                                ? ` · ${attendanceLabel(status)}`
+                                : " · لم يُسجَّل بعد"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ATTENDANCE_STATUSES.map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              disabled={pending}
+                              onClick={() =>
+                                void setAttendanceStatus(e.id, s.id)
+                              }
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition disabled:opacity-40 ${
+                                status === s.id
+                                  ? "bg-[var(--admin-plum)] text-white"
+                                  : "border border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)]"
+                              }`}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {ATTENDANCE_STATUSES.map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            disabled={pending}
-                            onClick={() =>
-                              void setAttendanceStatus(e.id, s.id)
-                            }
-                            className={`t2 px-3 py-1.5 transition disabled:opacity-40 ${
-                              status === s.id
-                                ? "bg-[var(--plum)] text-[var(--ivory)]"
-                                : "border border-[var(--plum)]/15 bg-[var(--mist)] text-[var(--plum)]"
-                            }`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    </Surface>
                   </li>
                 );
               })}
@@ -1049,39 +1190,41 @@ export function EmployeesAdmin({
       ) : null}
 
       {tab === "payroll" ? (
-        <section className="space-y-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <Field label="شهر الراتب">
-              <input
-                type="month"
-                value={month}
-                onChange={(e) => void reloadPayroll(e.target.value)}
-                className={`${fieldClass} max-w-xs`}
-                dir="ltr"
-              />
-            </Field>
-            <Field label="تصفية حسب الفرع">
-              <select
-                value={branchFilter}
-                onChange={(e) => setBranchFilter(e.target.value)}
-                className={`${fieldClass} max-w-xs`}
-              >
-                <option value="all">كل الفروع</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <p className="t2 text-[var(--muted)]">
+        <section className="space-y-4">
+          <Surface>
+            <div className="flex flex-wrap items-end gap-3">
+              <Field label="شهر الراتب">
+                <input
+                  type="month"
+                  value={month}
+                  onChange={(e) => void reloadPayroll(e.target.value)}
+                  className={`${fieldClass} max-w-xs`}
+                  dir="ltr"
+                />
+              </Field>
+              <Field label="تصفية حسب الفرع">
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className={`${fieldClass} max-w-xs`}
+                >
+                  <option value="all">كل الفروع</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <p className="mt-3 text-[12px] text-[var(--admin-text-muted)]">
               الحساب: راتب أساسي ÷ {PAYROLL_DAYS} − غياب/نصف يوم − سلف وخصومات +
               مكافآت.
             </p>
-          </div>
+          </Surface>
 
-          <div className="border border-[var(--plum)]/12 bg-white p-5">
-            <h2 className="font-display t5 text-[var(--plum)]">
+          <Surface>
+            <h2 className="text-[14px] font-semibold text-[var(--admin-text)]">
               إضافة سلفة / مكافأة / خصم
             </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1098,10 +1241,10 @@ export function EmployeesAdmin({
                 >
                   <option value="">اختاري…</option>
                   {employees
-                    .filter((e) => e.isActive)
-                    .map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name} · {e.branchName}
+                    .filter((emp) => emp.isActive)
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} · {emp.branchName}
                       </option>
                     ))}
                 </select>
@@ -1146,117 +1289,120 @@ export function EmployeesAdmin({
                 />
               </Field>
             </div>
-            <button
-              type="button"
+            <AdminButton
+              className="mt-4"
               disabled={pending}
               onClick={() => void addSalaryItem()}
-              className="t2 mt-4 border border-[var(--plum)] bg-[var(--plum)] px-4 py-2 text-[var(--ivory)] disabled:opacity-40"
             >
               إضافة البند
-            </button>
-          </div>
+            </AdminButton>
+          </Surface>
 
           {filteredPayroll.length === 0 ? (
-            <Empty text="لا يوجد موظفون لهذا الفرع/الشهر." />
+            <EmptyState
+              icon={Wallet}
+              title="لا توجد رواتب لهذا الفرع/الشهر"
+              description="أضيفي موظفين نشطين أولاً."
+            />
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {filteredPayroll.map((r) => (
-                <li
-                  key={r.employeeId}
-                  className="border border-[var(--plum)]/12 bg-white p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-display t4 text-[var(--plum)]">
-                        {r.employeeName}
-                      </h3>
-                      <p className="t2 text-[var(--muted)]">
-                        {r.branchName} · {roleLabel(r.role)} · أساسي{" "}
-                        {formatPrice(r.baseSalary)}
-                      </p>
-                      <p className="t2 mt-1 text-[var(--muted)]">
-                        حاضر {r.presentDays} · متأخر {r.lateDays} · نصف{" "}
-                        {r.halfDays} · إجازة {r.leaveDays} · غياب {r.absentDays}
-                      </p>
+                <li key={r.employeeId}>
+                  <Surface>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-soft)] text-[11px] font-semibold text-[var(--admin-plum)]">
+                          {initials(r.employeeName)}
+                        </span>
+                        <div>
+                          <h3 className="text-[14px] font-semibold text-[var(--admin-text)]">
+                            {r.employeeName}
+                          </h3>
+                          <p className="mt-0.5 text-[12px] text-[var(--admin-text-secondary)]">
+                            {r.branchName} · {roleLabel(r.role)} · أساسي{" "}
+                            {formatPrice(r.baseSalary)}
+                          </p>
+                          <p className="mt-1 text-[11px] text-[var(--admin-text-muted)]">
+                            حاضر {r.presentDays} · متأخر {r.lateDays} · نصف{" "}
+                            {r.halfDays} · إجازة {r.leaveDays} · غياب{" "}
+                            {r.absentDays}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-left">
+                        <p className="admin-num text-[15px] font-semibold text-[var(--admin-text)]">
+                          {formatPrice(r.netSalary)}
+                        </p>
+                        <p className="text-[11px] text-[var(--admin-text-muted)]">
+                          صافي
+                        </p>
+                        {r.attendanceDeduction > 0 ? (
+                          <p className="mt-1 text-[11px] text-[var(--admin-danger)]">
+                            خصم حضور −{formatPrice(r.attendanceDeduction)}
+                          </p>
+                        ) : null}
+                        {r.advances > 0 ? (
+                          <p className="text-[11px] text-[var(--admin-text-muted)]">
+                            سلف −{formatPrice(r.advances)}
+                          </p>
+                        ) : null}
+                        {r.bonuses > 0 ? (
+                          <p className="text-[11px] text-[var(--admin-success)]">
+                            مكافآت +{formatPrice(r.bonuses)}
+                          </p>
+                        ) : null}
+                        {r.deductions > 0 ? (
+                          <p className="text-[11px] text-[var(--admin-danger)]">
+                            خصومات −{formatPrice(r.deductions)}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="t3 font-medium text-[var(--plum)]">
-                        صافي {formatPrice(r.netSalary)}
-                      </p>
-                      {r.attendanceDeduction > 0 ? (
-                        <p className="t2 text-[var(--muted)]">
-                          خصم حضور −{formatPrice(r.attendanceDeduction)}
-                        </p>
-                      ) : null}
-                      {r.advances > 0 ? (
-                        <p className="t2 text-[var(--muted)]">
-                          سلف −{formatPrice(r.advances)}
-                        </p>
-                      ) : null}
-                      {r.bonuses > 0 ? (
-                        <p className="t2 text-[var(--muted)]">
-                          مكافآت +{formatPrice(r.bonuses)}
-                        </p>
-                      ) : null}
-                      {r.deductions > 0 ? (
-                        <p className="t2 text-[var(--muted)]">
-                          خصومات −{formatPrice(r.deductions)}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
+                  </Surface>
                 </li>
               ))}
             </ul>
           )}
 
           {salaryItems.length > 0 ? (
-            <div>
-              <h3 className="font-display t5 text-[var(--plum)]">
+            <Surface>
+              <h3 className="text-[14px] font-semibold text-[var(--admin-text)]">
                 بنود الشهر ({month || currentMonthKey()})
               </h3>
               <ul className="mt-3 space-y-2">
                 {salaryItems.map((item) => (
                   <li
                     key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-2 border border-[var(--plum)]/10 bg-[var(--mist)] px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] px-3 py-2.5"
                   >
                     <div>
-                      <p className="t3 text-[var(--plum)]">
+                      <p className="text-[13px] font-medium text-[var(--admin-text)]">
                         {item.employeeName} · {salaryTypeLabel(item.type)} ·{" "}
-                        {formatPrice(item.amount)}
+                        <span className="admin-num">
+                          {formatPrice(item.amount)}
+                        </span>
                       </p>
-                      <p className="t2 text-[var(--muted)]">
+                      <p className="mt-0.5 text-[11px] text-[var(--admin-text-muted)]">
                         {item.date}
                         {item.reason ? ` · ${item.reason}` : ""}
                       </p>
                     </div>
-                    <button
-                      type="button"
+                    <AdminButton
+                      size="sm"
+                      variant="ghost"
                       disabled={pending}
                       onClick={() => void removeSalaryItem(item.id)}
-                      className="t2 text-red-800 disabled:opacity-40"
+                      className="text-[var(--admin-danger)]"
                     >
                       حذف
-                    </button>
+                    </AdminButton>
                   </li>
                 ))}
               </ul>
-            </div>
+            </Surface>
           ) : null}
         </section>
       ) : null}
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border border-[var(--plum)]/15 bg-white px-4 py-4 text-right">
-      <div className="t2 text-[var(--muted)]">{label}</div>
-      <div className="font-display t5 mt-1 font-medium text-[var(--plum)]">
-        {value}
-      </div>
     </div>
   );
 }
@@ -1269,17 +1415,9 @@ function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="t2 text-[var(--muted)]">{label}</span>
+    <label className="block text-[12px] text-[var(--admin-text-secondary)]">
+      {label}
       {children}
     </label>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return (
-    <div className="border border-[var(--plum)]/15 bg-[var(--mist)] px-6 py-16 text-center">
-      <p className="t4 text-[var(--plum)]">{text}</p>
-    </div>
   );
 }

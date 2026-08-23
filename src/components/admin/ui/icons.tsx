@@ -31,6 +31,8 @@ import {
   Store,
   LogOut,
   Menu,
+  CalendarCheck,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavId } from "@/lib/admin/nav";
@@ -99,6 +101,8 @@ export {
   ChartColumn,
   FileText,
   Settings,
+  CalendarCheck,
+  Wallet,
 };
 
 export type { LucideIcon };
