@@ -11,9 +11,11 @@ import {
   socialLinks,
 } from "@/lib/social-links";
 import { cn } from "@/lib/utils";
+import { isAuthRoute } from "@/components/auth/auth-utils";
 
 export function FloatingContact() {
   const pathname = usePathname();
+  if (isAuthRoute(pathname)) return null;
   const { locale } = useLocale();
   const ar = locale !== "en";
   const [open, setOpen] = useState(false);

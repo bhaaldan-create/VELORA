@@ -1,39 +1,48 @@
 "use client";
 
-import Link from "next/link";
+import { ArrowLeft, Mail, User } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { authCopy } from "@/components/auth/auth-copy";
+import { AUTH_FETCH, safeNext } from "@/components/auth/auth-utils";
+import { AuthButton } from "@/components/auth/AuthButton";
+import {
+  AuthErrorMessage,
+  AuthInfoMessage,
+  AuthSuccessMessage,
+} from "@/components/auth/AuthMessages";
+import { InputField } from "@/components/auth/InputField";
+import { OTPInput } from "@/components/auth/OTPInput";
+import { PasswordInput } from "@/components/auth/PasswordInput";
+import { PasswordStrength } from "@/components/auth/PasswordStrength";
+import { PhoneInputField } from "@/components/auth/PhoneInputField";
+import { SocialLogin } from "@/components/auth/SocialLogin";
 import {
   useCustomerAuth,
   type CustomerPublic,
 } from "@/context/CustomerAuthContext";
+import { useLocale } from "@/context/LocaleContext";
+import { validateAuthEmail } from "@/lib/auth-email";
 import {
   iraqMobileError,
   maskIraqMobileInput,
 } from "@/lib/phone";
-import { validateAuthEmail } from "@/lib/auth-email";
 
-const AUTH_FETCH: RequestInit = { credentials: "include" };
-
-function safeNext(raw: string | null) {
-  if (!raw) return "/account";
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/account";
-  if (raw.startsWith("/admin")) return "/account";
-  return raw;
-}
-
-type Step = "details" | "otp";
+type Step = "details" | "verify";
 
 export function CustomerRegisterForm() {
   const router = useRouter();
   const search = useSearchParams();
   const { customer, loading, setCustomer } = useCustomerAuth();
+  const { locale } = useLocale();
+  const copy = authCopy(locale);
+
   const [step, setStep] = useState<Step>("details");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailVerificationToken, setEmailVerificationToken] = useState<
@@ -43,6 +52,8 @@ export function CustomerRegisterForm() {
   const [otpHint, setOtpHint] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
+  const [socialNote, setSocialNote] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const nextPath = useMemo(() => safeNext(search.get("next")), [search]);
@@ -50,7 +61,6 @@ export function CustomerRegisterForm() {
 
   useEffect(() => {
     if (loading) return;
-
     let cancelled = false;
     void (async () => {
       try {
@@ -70,7 +80,6 @@ export function CustomerRegisterForm() {
         if (!cancelled) setCustomer(null);
       }
     })();
-
     return () => {
       cancelled = true;
     };
@@ -82,14 +91,19 @@ export function CustomerRegisterForm() {
     return () => window.clearTimeout(t);
   }, [cooldown]);
 
+  function showError(message: string) {
+    setError(message);
+    setShake(true);
+    window.setTimeout(() => setShake(false), 400);
+  }
+
   async function sendOtp() {
     const validated = validateAuthEmail(email);
     if (!validated.ok) {
-      setError(validated.error);
+      showError(validated.error);
       return;
     }
-    const normalizedEmail = validated.email;
-    setEmail(normalizedEmail);
+    setEmail(validated.email);
     setSubmitting(true);
     setError(null);
     setDevCode(null);
@@ -100,10 +114,7 @@ export function CustomerRegisterForm() {
         ...AUTH_FETCH,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          purpose: "register",
-        }),
+        body: JSON.stringify({ email: validated.email, purpose: "register" }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -112,17 +123,16 @@ export function CustomerRegisterForm() {
         message?: string;
       };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "تعذّر إرسال رمز التحقق.");
+        throw new Error(data.error || copy.sending);
       }
       if (data.devCode) setDevCode(data.devCode);
       if (data.message) setOtpHint(data.message);
       setEmailVerified(false);
       setOtp("");
-      setStep("otp");
+      setStep("verify");
       setCooldown(60);
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إرسال الرمز.");
+      showError(err instanceof Error ? err.message : copy.sending);
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +141,7 @@ export function CustomerRegisterForm() {
   async function verifyOtp() {
     const validated = validateAuthEmail(email);
     if (!validated.ok) {
-      setError(validated.error);
+      showError(validated.error);
       return;
     }
     setSubmitting(true);
@@ -149,17 +159,17 @@ export function CustomerRegisterForm() {
         verificationToken?: string;
       };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "رمز غير صحيح.");
+        throw new Error(data.error || copy.confirmOtpCta);
       }
       if (!data.verificationToken) {
-        throw new Error("تعذّر حفظ التحقق. أعيدي تأكيد الرمز.");
+        throw new Error(copy.mustVerifyEmail);
       }
       setEmail(validated.email);
       setEmailVerified(true);
       setEmailVerificationToken(data.verificationToken);
       setDevCode(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر التحقق.");
+      showError(err instanceof Error ? err.message : copy.confirmOtpCta);
       setEmailVerified(false);
     } finally {
       setSubmitting(false);
@@ -169,16 +179,16 @@ export function CustomerRegisterForm() {
   async function createAccount() {
     const validated = validateAuthEmail(email);
     if (!validated.ok) {
-      setError(validated.error);
+      showError(validated.error);
       return;
     }
     const err = iraqMobileError(phone);
     if (err) {
-      setError(err);
+      showError(err);
       return;
     }
     if (!emailVerificationToken) {
-      setError("يجب تأكيد رمز البريد أولاً قبل إنشاء الحساب.");
+      showError(copy.mustVerifyEmail);
       setEmailVerified(false);
       return;
     }
@@ -203,13 +213,13 @@ export function CustomerRegisterForm() {
         customer?: CustomerPublic;
       };
       if (!res.ok || !data.ok || !data.customer) {
-        throw new Error(data.error || "تعذّر إنشاء الحساب.");
+        throw new Error(data.error || copy.signupCta);
       }
       setCustomer(data.customer);
       router.replace(nextPath);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إنشاء الحساب.");
+      showError(err instanceof Error ? err.message : copy.signupCta);
     } finally {
       setSubmitting(false);
     }
@@ -219,7 +229,11 @@ export function CustomerRegisterForm() {
     e.preventDefault();
     if (step === "details") {
       if (!fullName.trim() || !email.trim() || password.length < 8) {
-        setError("أكملي جميع الحقول بشكل صحيح.");
+        showError(copy.completeFields);
+        return;
+      }
+      if (confirmPassword && confirmPassword !== password) {
+        showError(copy.passwordMismatch);
         return;
       }
       await sendOtp();
@@ -233,222 +247,181 @@ export function CustomerRegisterForm() {
   }
 
   if (loading) {
-    return <p className="t3 text-[var(--muted)]">جارٍ تحميل صفحة التسجيل…</p>;
+    return <p className="text-center text-[var(--velora-mauve)]">{copy.loading}</p>;
   }
 
   if (customer) {
-    return <p className="t3 text-[var(--muted)]">جارٍ فتح حسابكِ…</p>;
+    return (
+      <p className="text-center text-[var(--velora-mauve)]">{copy.redirecting}</p>
+    );
+  }
+
+  if (step === "verify") {
+    return (
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div className="text-center">
+          <h2 className="font-display text-xl font-semibold text-[var(--velora-plum)]">
+            {emailVerified ? copy.verifySuccess : copy.verifyTitle}
+          </h2>
+          <p className="mt-2 text-[0.9375rem] text-[var(--velora-mauve)]">
+            {emailVerified ? copy.verifySuccessPhone : copy.verifySubtitle}
+          </p>
+          <div className="mt-4 flex justify-center">
+            <span className="auth-email-badge">{email}</span>
+          </div>
+          <button
+            type="button"
+            className="mt-3 text-[0.8125rem] text-[var(--velora-plum)] underline-offset-4 hover:underline"
+            onClick={() => {
+              setStep("details");
+              setEmailVerified(false);
+              setEmailVerificationToken(null);
+              setOtp("");
+              setPhone("");
+              setDevCode(null);
+              setError(null);
+            }}
+          >
+            {copy.editDetails}
+          </button>
+        </div>
+
+        {emailVerified ? (
+          <>
+            <AuthSuccessMessage message={`${copy.emailVerified} ✓`} />
+            <PhoneInputField
+              label={copy.phoneLabel}
+              hint={copy.phoneHint}
+              value={phone}
+              onChange={(v) => setPhone(maskIraqMobileInput(v))}
+              placeholder={copy.phonePlaceholder}
+              disabled={submitting}
+              error={phone.length >= 11 ? phoneError : null}
+            />
+          </>
+        ) : (
+          <>
+            {otpHint ? <AuthInfoMessage message={otpHint} /> : null}
+            {devCode ? (
+              <AuthInfoMessage message={`${copy.devCode} ${devCode}`} />
+            ) : (
+              <AuthInfoMessage message={copy.checkInbox} />
+            )}
+            <OTPInput
+              value={otp}
+              onChange={setOtp}
+              disabled={submitting}
+              autoFocus
+            />
+            <div className="flex justify-center">
+              <button
+                type="button"
+                disabled={submitting || cooldown > 0}
+                onClick={() => void sendOtp()}
+                className="text-[0.875rem] text-[var(--velora-plum)] underline-offset-4 hover:underline disabled:opacity-40"
+              >
+                {cooldown > 0 ? copy.resendIn(cooldown) : copy.resend}
+              </button>
+            </div>
+          </>
+        )}
+
+        {error ? <AuthErrorMessage message={error} shake={shake} /> : null}
+
+        <AuthButton
+          loading={submitting}
+          disabled={
+            !emailVerified
+              ? otp.length !== 6
+              : Boolean(phoneError) || phone.length < 11
+          }
+          trailing={
+            <ArrowLeft size={18} className="opacity-80 rtl:rotate-180" aria-hidden />
+          }
+        >
+          {submitting
+            ? copy.processing
+            : emailVerified
+              ? copy.signupCta
+              : copy.confirmOtpCta}
+        </AuthButton>
+      </form>
+    );
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto w-full max-w-md space-y-6">
+    <form onSubmit={onSubmit} className="space-y-5">
+      <InputField
+        label={copy.fullName}
+        type="text"
+        autoComplete="name"
+        required
+        value={fullName}
+        onChange={(e) => setFullName(e.target.value)}
+        placeholder={copy.fullNamePlaceholder}
+        disabled={submitting}
+        icon={<User size={18} aria-hidden />}
+      />
+
+      <InputField
+        label={copy.email}
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder={copy.emailPlaceholder}
+        disabled={submitting}
+        hint={copy.otpOnlyHint}
+        dir="ltr"
+        icon={<Mail size={18} aria-hidden />}
+      />
+
       <div>
-        <p className="t1 font-medium tracking-[0.18em] text-[var(--muted)]">
-          حسابي
-        </p>
-        <h1 className="font-display t7 mt-2 font-semibold text-[var(--plum)]">
-          إنشاء حساب
-        </h1>
-        <p className="t3 mt-2 text-[var(--muted)]">
-          {step === "details"
-            ? "أدخلي بريدكِ الإلكتروني — سيرسل فريق VELORA Beauty رمز التحقق إلى نفس البريد."
-            : emailVerified
-              ? "تم التحقق من بريدكِ. أدخلي رقم الجوال للتوصيل ثم أنشئي الحساب."
-              : `أدخلي رمز التحقق الذي أرسله فريق VELORA إلى ${email}`}
-        </p>
+        <PasswordInput
+          label={copy.password}
+          value={password}
+          onChange={setPassword}
+          placeholder={copy.passwordPlaceholder}
+          autoComplete="new-password"
+          disabled={submitting}
+          hint={copy.passwordMin}
+        />
+        <PasswordStrength password={password} locale={locale} />
       </div>
 
-      {step === "details" ? (
-        <>
-          <label className="block">
-            <span className="t2 text-[var(--muted)]">الاسم الكامل</span>
-            <input
-              type="text"
-              required
-              autoComplete="name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              disabled={submitting}
-              className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-            />
-          </label>
+      <PasswordInput
+        label={copy.confirmPassword}
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+        placeholder={copy.confirmPasswordPlaceholder}
+        autoComplete="new-password"
+        disabled={submitting}
+        id="auth-confirm-password"
+      />
 
-          <label className="block">
-            <span className="t2 text-[var(--muted)]">البريد الإلكتروني</span>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={submitting}
-              dir="ltr"
-              placeholder="you@example.com"
-              className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-            />
-            <span className="t2 mt-1 block text-[var(--muted)]">
-              رمز التحقق يُرسل إلى هذا البريد فقط
-            </span>
-          </label>
+      {socialNote ? <AuthInfoMessage message={socialNote} /> : null}
+      {error ? <AuthErrorMessage message={error} shake={shake} /> : null}
 
-          <label className="block">
-            <span className="t2 text-[var(--muted)]">كلمة المرور</span>
-            <input
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={submitting}
-              dir="ltr"
-              className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-            />
-            <span className="t2 mt-1 block text-[var(--muted)]">
-              8 أحرف على الأقل
-            </span>
-          </label>
-        </>
-      ) : (
-        <>
-          <div className="border border-[var(--plum)]/12 bg-[var(--mist)] px-4 py-3">
-            <p className="t3 text-[var(--ink)]/80">
-              البريد:{" "}
-              <span dir="ltr" className="font-medium text-[var(--plum)]">
-                {email}
-              </span>
-            </p>
-            <button
-              type="button"
-              className="t2 mt-2 text-[var(--plum)] underline-offset-4 hover:underline"
-              onClick={() => {
-                setStep("details");
-                setEmailVerified(false);
-                setEmailVerificationToken(null);
-                setOtp("");
-                setPhone("");
-                setDevCode(null);
-              }}
-            >
-              تعديل البيانات
-            </button>
-          </div>
-
-          {devCode ? (
-            <div className="space-y-2">
-              {otpHint ? (
-                <p className="t2 text-[var(--muted)]">{otpHint}</p>
-              ) : null}
-              <div className="t3 border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
-                رمز التحقق:{" "}
-                <span dir="ltr" className="text-lg font-semibold tracking-[0.25em]">
-                  {devCode}
-                </span>
-              </div>
-            </div>
-          ) : !emailVerified ? (
-            <div className="t3 border border-[var(--plum)]/20 bg-[var(--mist)] px-4 py-3 text-[var(--ink)]">
-              {otpHint ||
-                "تحققي من بريدكِ — الرسالة من فريق VELORA Beauty (وراجعي الرسائل غير المرغوب فيها)."}
-            </div>
-          ) : null}
-
-          {!emailVerified ? (
-            <label className="block">
-              <span className="t2 text-[var(--muted)]">رمز التحقق</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                required
-                maxLength={6}
-                value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                disabled={submitting}
-                placeholder="------"
-                dir="ltr"
-                className="t4 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 tracking-[0.35em] outline-none focus:border-[var(--plum)] disabled:opacity-60"
-              />
-            </label>
-          ) : (
-            <>
-              <div className="t3 border border-green-200 bg-green-50 px-4 py-3 text-green-900">
-                تم التحقق من البريد ✓
-              </div>
-              <label className="block">
-                <span className="t2 text-[var(--muted)]">
-                  رقم الجوال للتوصيل (لا يُستخدم لرمز التحقق)
-                </span>
-                <input
-                  type="tel"
-                  required
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(maskIraqMobileInput(e.target.value))}
-                  disabled={submitting}
-                  placeholder="07XXXXXXXXX"
-                  dir="ltr"
-                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-                />
-                {phoneError && phone.length >= 11 ? (
-                  <span className="t2 mt-1 block text-red-700">{phoneError}</span>
-                ) : null}
-              </label>
-            </>
-          )}
-
-          {!emailVerified ? (
-            <button
-              type="button"
-              disabled={submitting || cooldown > 0}
-              onClick={() => void sendOtp()}
-              className="t2 text-[var(--plum)] underline-offset-4 hover:underline disabled:opacity-40"
-            >
-              {cooldown > 0 ? `إعادة الإرسال بعد ${cooldown}ث` : "إعادة إرسال الرمز"}
-            </button>
-          ) : null}
-        </>
-      )}
-
-      {error ? (
-        <div className="t3 border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-          {error}
-        </div>
-      ) : null}
-
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={
-          submitting ||
-          (step === "otp" &&
-            !emailVerified &&
-            otp.length !== 6) ||
-          (step === "otp" &&
-            emailVerified &&
-            (Boolean(phoneError) || phone.length < 11))
+      <AuthButton
+        loading={submitting}
+        trailing={
+          <ArrowLeft size={18} className="opacity-80 rtl:rotate-180" aria-hidden />
         }
       >
-        {submitting
-          ? "جارٍ المعالجة…"
-          : step === "details"
-            ? "إرسال رمز التحقق إلى البريد"
-            : emailVerified
-              ? "إنشاء الحساب"
-              : "تأكيد الرمز"}
-      </Button>
+        {submitting ? copy.sending : copy.sendOtpCta}
+      </AuthButton>
 
-      <p className="t3 text-center text-[var(--muted)]">
-        لديكِ حساب؟{" "}
-        <Link
-          href={`/login?next=${encodeURIComponent(nextPath)}`}
-          className="text-[var(--plum)] underline-offset-4 hover:underline"
-        >
-          تسجيل الدخول بالبريد
-        </Link>
-      </p>
+      <SocialLogin
+        onUnavailable={() =>
+          setSocialNote(
+            locale === "en"
+              ? "Add OAuth keys in environment to enable social sign-in."
+              : "أضيفي مفاتيح OAuth في إعدادات البيئة لتفعيل الدخول الاجتماعي.",
+          )
+        }
+        onError={(message) => setSocialNote(message)}
+      />
     </form>
   );
 }

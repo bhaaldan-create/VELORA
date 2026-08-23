@@ -172,7 +172,7 @@ export function publicCustomer(customer: {
   id: string;
   email: string;
   fullName: string;
-  phone: string;
+  phone: string | null;
   address: string;
   createdAt?: Date;
 }) {
@@ -180,7 +180,7 @@ export function publicCustomer(customer: {
     id: customer.id,
     email: customer.email,
     fullName: customer.fullName,
-    phone: customer.phone,
+    phone: customer.phone ?? "",
     address: customer.address,
   };
 }

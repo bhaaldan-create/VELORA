@@ -1,21 +1,22 @@
 import { Suspense } from "react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { CustomerLoginForm } from "@/components/auth/CustomerLoginForm";
+import { authCopy } from "@/components/auth/auth-copy";
 
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   return (
-    <main
-      className="mx-auto flex min-h-[70vh] max-w-5xl items-center px-5 py-16 sm:px-8"
-      dir="rtl"
-    >
+    <AuthLayout activeTab="login">
       <Suspense
         fallback={
-          <p className="t3 text-[var(--muted)]">جارٍ تحميل صفحة الدخول…</p>
+          <p className="text-center text-[var(--velora-mauve)]">
+            {authCopy("ar").loading}
+          </p>
         }
       >
         <CustomerLoginForm />
       </Suspense>
-    </main>
+    </AuthLayout>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "@/lib/customer-auth";
 
 const schema = z.object({
-  currentPassword: z.string().min(1),
+  currentPassword: z.string().optional().default(""),
   newPassword: z.string().min(8).max(72),
 });
 
@@ -46,6 +46,20 @@ export async function POST(req: Request) {
         { ok: false, error: "الحساب غير موجود." },
         { status: 404 },
       );
+    }
+
+    if (!customer.passwordHash) {
+      // حساب OAuth بدون كلمة مرور — تعيين أول كلمة مرور
+      const passwordHash = await hashPassword(parsed.data.newPassword);
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: {
+          passwordHash,
+          authProvider:
+            customer.googleId || customer.appleId ? "linked" : "password",
+        },
+      });
+      return Response.json({ ok: true, created: true });
     }
 
     const valid = await verifyPassword(

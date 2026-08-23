@@ -4,10 +4,12 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
+import { SiteMain } from "@/components/layout/SiteMain";
 import { Providers } from "@/components/layout/Providers";
 import { FloatingContact } from "@/components/contact/FloatingContact";
 import { brand } from "@/constants/brand";
 import "./globals.css";
+import "./auth.css";
 
 /** خط عربي/لاتيني حديث موحّد للواجهة */
 const body = IBM_Plex_Sans_Arabic({
@@ -91,7 +93,7 @@ export default function RootLayout({
         <Providers>
           <NativeAppShell />
           <Header />
-          <main className="min-w-0 flex-1 overflow-x-clip pb-20 lg:pb-0">{children}</main>
+          <SiteMain>{children}</SiteMain>
           <Footer />
           <FloatingContact />
           <PrimaryBottomNav />

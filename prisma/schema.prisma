@@ -145,12 +145,19 @@ model SalaryItem {
 model Customer {
   id            String                 @id @default(cuid())
   email         String                 @unique
-  passwordHash  String
+  /// اختياري لحسابات Google / Apple
+  passwordHash  String?
   fullName      String
-  /// جوال عراقي بصيغة 9647XXXXXXXXX
-  phone         String                 @unique
+  /// جوال عراقي بصيغة 9647XXXXXXXXX — اختياري عند الدخول عبر OAuth
+  phone         String?                @unique
   phoneVerified Boolean                @default(false)
   address       String                 @default("")
+  /// معرّف Google (sub) إن وُجد
+  googleId      String?                @unique
+  /// معرّف Apple (sub) إن وُجد
+  appleId       String?                @unique
+  /// password | google | apple | linked
+  authProvider  String                 @default("password")
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]

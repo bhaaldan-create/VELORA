@@ -20,10 +20,12 @@ export async function listAdminCustomers(): Promise<AdminCustomerRow[]> {
   ]);
 
   return customers.map((c) => {
-    const phoneDigits = c.phone.replace(/\D/g, "");
+    const phone = c.phone ?? "";
+    const phoneDigits = phone.replace(/\D/g, "");
     const email = c.email.toLowerCase();
     const related = orders.filter((o) => {
       const op = o.order.phone.replace(/\D/g, "");
+      if (!phoneDigits) return o.order.email.toLowerCase() === email;
       return (
         o.order.email.toLowerCase() === email ||
         op.endsWith(phoneDigits.slice(-10)) ||
@@ -41,7 +43,7 @@ export async function listAdminCustomers(): Promise<AdminCustomerRow[]> {
       id: c.id,
       fullName: c.fullName,
       email: c.email,
-      phone: c.phone,
+      phone,
       address: c.address,
       createdAt: c.createdAt.toISOString(),
       ordersCount: related.length,

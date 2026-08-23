@@ -1,0 +1,548 @@
+/* VELORA Auth — Luxury design tokens */
+:root {
+  --velora-plum: #35213a;
+  --velora-plum-dark: #2a1a2e;
+  --velora-plum-light: #4a334f;
+  --velora-mauve: #8e7e8e;
+  --velora-ivory: #faf7f5;
+  --velora-white: #ffffff;
+  --velora-blush: #f3e8e5;
+  --velora-border: #e6dfdd;
+  --velora-success: #5a8f72;
+  --velora-success-bg: #eef6f0;
+  --velora-error: #9e4f57;
+  --velora-error-bg: #faf0f1;
+  --velora-radius: 16px;
+  --velora-radius-sm: 14px;
+  --velora-shadow: 0 24px 64px rgba(53, 33, 58, 0.08);
+  --velora-shadow-soft: 0 8px 32px rgba(53, 33, 58, 0.06);
+  --velora-focus: 0 0 0 3px rgba(53, 33, 58, 0.12);
+  --auth-transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-page {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--velora-ivory);
+  color: var(--velora-plum);
+  overflow-x: clip;
+}
+
+.auth-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(243, 232, 229, 0.7), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(233, 223, 214, 0.45), transparent 50%),
+    linear-gradient(180deg, #faf7f5 0%, #f8f3f0 45%, #faf7f5 100%);
+  z-index: 0;
+}
+
+.auth-bg-floral {
+  position: fixed;
+  top: 0;
+  inset-inline-end: 0;
+  width: min(42vw, 320px);
+  height: min(50vh, 420px);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-bg-cosmetic {
+  position: fixed;
+  top: 1.5rem;
+  inset-inline-start: 1rem;
+  width: 72px;
+  height: 72px;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-satin-curve {
+  position: fixed;
+  bottom: -8%;
+  inset-inline-start: -10%;
+  width: 70%;
+  height: 40%;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--velora-border);
+  border-radius: calc(var(--velora-radius) + 4px);
+  box-shadow: var(--velora-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  animation: authFadeIn 420ms ease-out both;
+}
+
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes authShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.auth-shake {
+  animation: authShake 380ms ease-in-out;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--velora-border);
+  margin-bottom: 1.75rem;
+}
+
+.auth-tab {
+  flex: 1;
+  position: relative;
+  padding: 0.75rem 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--velora-mauve);
+  text-align: center;
+  transition: color var(--auth-transition);
+}
+
+.auth-tab:hover {
+  color: var(--velora-plum);
+}
+
+.auth-tab[aria-selected="true"] {
+  color: var(--velora-plum);
+  font-weight: 600;
+}
+
+.auth-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  inset-inline: 15%;
+  height: 2px;
+  background: var(--velora-plum);
+  border-radius: 2px;
+  animation: authTabLine 280ms ease-out;
+}
+
+@keyframes authTabLine {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.auth-field {
+  display: block;
+  margin-bottom: 1.125rem;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--velora-plum);
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  inset-inline-start: 1rem;
+  color: var(--velora-mauve);
+  pointer-events: none;
+  display: flex;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 52px;
+  padding-inline: 2.75rem 1rem;
+  border: 1px solid var(--velora-border);
+  border-radius: var(--velora-radius-sm);
+  background: var(--velora-white);
+  font-size: 1rem;
+  color: var(--velora-plum);
+  transition:
+    border-color var(--auth-transition),
+    box-shadow var(--auth-transition);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--velora-plum);
+  box-shadow: var(--velora-focus);
+}
+
+.auth-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-input-action {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: var(--velora-mauve);
+  transition:
+    color var(--auth-transition),
+    background var(--auth-transition);
+}
+
+.auth-input-action:hover {
+  color: var(--velora-plum);
+  background: var(--velora-blush);
+}
+
+.auth-btn {
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: var(--velora-radius-sm);
+  background: var(--velora-plum);
+  color: var(--velora-white);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--auth-transition),
+    transform 150ms ease,
+    opacity var(--auth-transition);
+}
+
+.auth-btn:hover:not(:disabled) {
+  background: var(--velora-plum-light);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.auth-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-btn-spinner {
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: authSpin 650ms linear infinite;
+}
+
+@keyframes authSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.auth-checkbox-box {
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid var(--velora-border);
+  border-radius: 5px;
+  background: var(--velora-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--auth-transition),
+    border-color var(--auth-transition),
+    transform 150ms ease;
+}
+
+.auth-checkbox input:checked + .auth-checkbox-box {
+  background: var(--velora-plum);
+  border-color: var(--velora-plum);
+}
+
+.auth-checkbox input:checked + .auth-checkbox-box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.auth-checkbox-box svg {
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.auth-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  color: var(--velora-mauve);
+  font-size: 0.8125rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--velora-border);
+}
+
+.auth-social-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  border: 1px solid var(--velora-border);
+  border-radius: 12px;
+  background: var(--velora-white);
+  color: var(--velora-plum);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    border-color var(--auth-transition),
+    box-shadow var(--auth-transition),
+    transform 150ms ease;
+}
+
+.auth-social-btn:hover:not(:disabled) {
+  border-color: rgba(53, 33, 58, 0.25);
+  box-shadow: var(--velora-shadow-soft);
+}
+
+.auth-social-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.auth-social-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-otp-grid {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  direction: ltr;
+}
+
+.auth-otp-cell {
+  width: 2.75rem;
+  height: 3.25rem;
+  border: 1px solid var(--velora-border);
+  border-radius: 12px;
+  background: var(--velora-white);
+  text-align: center;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--velora-plum);
+  transition:
+    border-color var(--auth-transition),
+    box-shadow var(--auth-transition),
+    transform 150ms ease;
+}
+
+@media (min-width: 400px) {
+  .auth-otp-cell {
+    width: 3rem;
+    height: 3.5rem;
+  }
+}
+
+.auth-otp-cell:focus {
+  outline: none;
+  border-color: var(--velora-plum);
+  box-shadow: var(--velora-focus);
+  transform: translateY(-1px);
+}
+
+.auth-email-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--velora-border);
+  background: var(--velora-blush);
+  color: var(--velora-plum);
+  font-weight: 500;
+  direction: ltr;
+}
+
+.auth-status {
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.auth-status--error {
+  background: var(--velora-error-bg);
+  color: var(--velora-error);
+  border: 1px solid rgba(158, 79, 87, 0.15);
+}
+
+.auth-status--success {
+  background: var(--velora-success-bg);
+  color: var(--velora-success);
+  border: 1px solid rgba(90, 143, 114, 0.2);
+}
+
+.auth-status--info {
+  background: var(--velora-blush);
+  color: var(--velora-plum);
+  border: 1px solid var(--velora-border);
+}
+
+.auth-strength-bar {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.auth-strength-segment {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--velora-border);
+  transition: background var(--auth-transition);
+}
+
+.auth-strength-segment.is-active-1 {
+  background: #c4a484;
+}
+
+.auth-strength-segment.is-active-2 {
+  background: #8e7e8e;
+}
+
+.auth-strength-segment.is-active-3 {
+  background: var(--velora-success);
+}
+
+.auth-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--velora-mauve);
+  transition:
+    color var(--auth-transition),
+    background var(--auth-transition);
+}
+
+.auth-lang-btn:hover {
+  color: var(--velora-plum);
+  background: rgba(53, 33, 58, 0.05);
+}
+
+.auth-wa-float {
+  position: fixed;
+  z-index: 50;
+  inset-inline-end: 1rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 999px;
+  background: var(--velora-plum);
+  color: #9fd4b8;
+  box-shadow: 0 12px 32px rgba(53, 33, 58, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 300ms ease;
+}
+
+.auth-wa-float:hover {
+  transform: scale(1.05);
+}
+
+.auth-wa-float:active {
+  transform: scale(0.95);
+}
+
+.auth-sparkle {
+  display: inline-block;
+  color: var(--velora-mauve);
+  opacity: 0.65;
+  animation: authSparkle 3s ease-in-out infinite;
+}
+
+@keyframes authSparkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}

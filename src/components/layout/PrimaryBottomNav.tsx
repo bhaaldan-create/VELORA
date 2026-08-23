@@ -7,6 +7,7 @@ import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { useCheckoutUI } from "@/context/CheckoutUIContext";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
+import { isAuthRoute } from "@/components/auth/auth-utils";
 
 function IconHome({ active }: { active: boolean }) {
   return (
@@ -114,6 +115,7 @@ export function PrimaryBottomNav() {
   const { t } = useLocale();
 
   if (pathname.startsWith("/admin")) return null;
+  if (isAuthRoute(pathname)) return null;
   if (immersive) return null;
 
   const labels = {

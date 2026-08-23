@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { IconInstagram, IconWhatsApp } from "@/components/contact/SocialIcons";
 import { PaymentMethodsRow } from "@/components/payments/PaymentMethods";
@@ -13,8 +14,11 @@ import {
 } from "@/lib/social-links";
 import { formatPrice } from "@/lib/utils";
 import { DELIVERY_FEE_IQD, WASEET_CARRIER } from "@/lib/shipping";
+import { isAuthRoute } from "@/components/auth/auth-utils";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (isAuthRoute(pathname)) return null;
   const { t, locale } = useLocale();
   const ar = locale !== "en";
   const waUrl = getDefaultWhatsAppUrl(ar ? "ar" : "en");

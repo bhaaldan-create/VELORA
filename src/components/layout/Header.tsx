@@ -9,9 +9,11 @@ import { useCart } from "@/context/CartContext";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
+import { isAuthRoute } from "@/components/auth/auth-utils";
 
 export function Header() {
   const pathname = usePathname();
+  if (isAuthRoute(pathname)) return null;
   const { itemCount } = useCart();
   const { customer, loading } = useCustomerAuth();
   const { t } = useLocale();

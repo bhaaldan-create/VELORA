@@ -34,6 +34,20 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!customer.passwordHash) {
+      const via =
+        customer.googleId || customer.appleId
+          ? "Google أو Apple"
+          : "الحساب الاجتماعي";
+      return Response.json(
+        {
+          ok: false,
+          error: `هذا الحساب يستخدم تسجيل الدخول عبر ${via}. اختاري الزر المناسب أدناه.`,
+        },
+        { status: 401 },
+      );
+    }
+
     const valid = await verifyPassword(
       parsed.data.password,
       customer.passwordHash,
