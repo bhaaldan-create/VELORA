@@ -626,6 +626,18 @@ export function AccountSettings() {
                   <button
                     type="button"
                     className="acc-action"
+                    onClick={() => router.push("/account/notifications")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="spark" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "الإشعارات" : "Notifications"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
                     onClick={() => goTo("wishlist")}
                   >
                     <span className="bubble">

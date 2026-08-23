@@ -161,6 +161,7 @@ model Customer {
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]
+  notifications CustomerNotification[]
 }
 
 /// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
@@ -212,6 +213,41 @@ model HomeCategoryConfig {
   data      Json
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+}
+
+/// تعميم إشعار من الأدمن إلى الزبائن
+model NotificationCampaign {
+  id         String                 @id @default(cuid())
+  titleAr    String
+  bodyAr     String
+  titleEn    String?
+  bodyEn     String?
+  href       String?
+  createdBy  String?
+  createdAt  DateTime               @default(now())
+  recipients CustomerNotification[]
+
+  @@index([createdAt])
+}
+
+/// إشعار في صندوق الزبونة
+model CustomerNotification {
+  id         String                @id @default(cuid())
+  customerId String
+  customer   Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  campaignId String?
+  campaign   NotificationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  titleAr    String
+  bodyAr     String
+  titleEn    String?
+  bodyEn     String?
+  href       String?
+  readAt     DateTime?
+  createdAt  DateTime              @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([customerId, readAt])
+  @@index([campaignId])
 }
 
 /// طلبات المتجر — تُحفظ في PostgreSQL (لا يعمل تخزين الملفات على Vercel)

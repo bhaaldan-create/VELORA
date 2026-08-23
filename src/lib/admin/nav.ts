@@ -10,6 +10,7 @@ export type AdminNavId =
   | "employees"
   | "branches"
   | "marketing"
+  | "notifications"
   | "homepage"
   | "club"
   | "analytics"
@@ -112,6 +113,14 @@ export const ADMIN_NAV: AdminNavItem[] = [
     labelAr: "التسويق",
     labelEn: "Marketing",
     icon: "marketing",
+    group: "insights",
+  },
+  {
+    id: "notifications",
+    href: "/admin/notifications",
+    labelAr: "الإشعارات",
+    labelEn: "Notifications",
+    icon: "notifications",
     group: "insights",
   },
   {

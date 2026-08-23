@@ -52,6 +52,7 @@ const NAV_ICONS: Record<AdminNavId, LucideIcon> = {
   employees: UserCog,
   branches: Building2,
   marketing: Megaphone,
+  notifications: Bell,
   homepage: Images,
   club: Gem,
   analytics: ChartColumn,
