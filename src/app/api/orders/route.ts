@@ -132,19 +132,8 @@ export async function POST(req: Request) {
     return Response.json({
       ok: true,
       orderId,
-      emailedTo: ORDER_EMAIL_TO,
       emailed: result.emailed,
-      provider: result.provider,
       paymentStatus: order.paymentStatus,
-      superQiAccount: order.superQiAccount,
-      inbox: "/admin/orders",
-      message: result.emailed
-        ? undefined
-        : isWaylPaymentMethod(order.paymentMethod)
-          ? "سيُحوَّل الدفع إلى صفحة Wayl الآمنة بعد إنشاء الطلب."
-          : isSuperQiPaymentMethod(order.paymentMethod)
-            ? "تم حفظ الطلب. سيتحقق الفريق من وصول التحويل إلى سوبر كي."
-            : "تم حفظ الطلب في صندوق الطلبات. افتحي /admin/orders للمتابعة.",
     });
   } catch (error) {
     console.error("[orders] failed", error);

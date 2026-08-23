@@ -279,7 +279,6 @@ export function CheckoutForm({
 
       setSelectedPaymentLabel(paymentMethodLabel);
       setOrderId(json.orderId ?? null);
-      if (json.message) setNotice(json.message);
       clearCart();
       setPhase("success");
     } catch (err) {
