@@ -17,9 +17,16 @@ function smtpPort() {
   return Number.isFinite(n) ? n : 587;
 }
 
+const DEFAULT_SMTP_USER = "orders@velorabeautyiq.me";
+
+export function getSmtpUser() {
+  return process.env.SMTP_USER?.trim() || DEFAULT_SMTP_USER;
+}
+
 export function getMailFromAddress() {
-  const from = process.env.MAIL_FROM?.trim() || process.env.SMTP_USER?.trim();
-  return from || "";
+  return (
+    process.env.MAIL_FROM?.trim() || getSmtpUser() || DEFAULT_SMTP_USER
+  );
 }
 
 /** اسم المرسل الظاهر للزبائن — ثابت لضمان عدم ظهور اسم حساب Google الشخصي */
@@ -30,15 +37,17 @@ export function getMailFromName() {
 }
 
 export function isSmtpConfigured() {
-  return Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim());
+  return Boolean(process.env.SMTP_PASS?.trim());
 }
 
 export function getSmtpConfigIssue(): string | null {
-  if (!process.env.SMTP_USER?.trim()) {
-    return "SMTP_USER غير مضبوط (مثال: noreply@velorabeautyiq.me).";
-  }
   if (!process.env.SMTP_PASS?.trim()) {
-    return "SMTP_PASS غير مضبوط — أنشئي App Password من Google Workspace.";
+    return [
+      "SMTP_PASS غير مضبوط على Vercel.",
+      "من حساب orders@velorabeautyiq.me في Google:",
+      "myaccount.google.com/apppasswords",
+      "أنشئي App Password وأضيفيه في Vercel → Settings → Environment Variables → SMTP_PASS (Production).",
+    ].join(" ");
   }
   return null;
 }
@@ -51,7 +60,7 @@ function getTransport() {
       port: smtpPort(),
       secure: smtpPort() === 465,
       auth: {
-        user: process.env.SMTP_USER!.trim(),
+        user: getSmtpUser(),
         pass: process.env.SMTP_PASS!.trim(),
       },
     });
