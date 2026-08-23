@@ -1,5 +1,3 @@
-import { normalizeAuthEmail } from "@/lib/email-otp";
-
 /** أخطاء شائعة في كتابة نطاق البريد */
 const DOMAIN_TYPOS: Record<string, string> = {
   "gmail.con": "gmail.com",
@@ -22,6 +20,12 @@ const DOMAIN_TYPOS: Record<string, string> = {
 export type AuthEmailValidation =
   | { ok: true; email: string }
   | { ok: false; error: string };
+
+export function normalizeAuthEmail(raw: string | undefined | null) {
+  const email = raw?.trim().toLowerCase() ?? "";
+  if (!email || !email.includes("@")) return "";
+  return email;
+}
 
 export function validateAuthEmail(
   raw: string | undefined | null,

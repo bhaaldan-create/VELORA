@@ -4,7 +4,7 @@ import {
   createCustomerSessionToken,
   verifyCustomerSessionToken,
 } from "@/lib/customer-auth";
-import { validateAuthEmail } from "@/lib/auth-email";
+import { normalizeAuthEmail, validateAuthEmail } from "@/lib/auth-email";
 import { getSmtpConfigIssue, isSmtpConfigured, sendOtpEmail } from "@/lib/smtp";
 
 const REFRESH_PAGE_HINT =
@@ -21,12 +21,6 @@ function otpPepper() {
     process.env.ADMIN_SESSION_SECRET?.trim() ||
     "velora-otp-dev"
   );
-}
-
-export function normalizeAuthEmail(raw: string | undefined | null) {
-  const email = raw?.trim().toLowerCase() ?? "";
-  if (!email || !email.includes("@")) return "";
-  return email;
 }
 
 /** يتطلب البريد الذي أدخلتهِ الزبونة — لا إرسال عبر رقم الجوال */
