@@ -8,11 +8,6 @@ import {
   useCustomerAuth,
   type CustomerPublic,
 } from "@/context/CustomerAuthContext";
-import {
-  formatIraqMobileLocal,
-  iraqMobileError,
-  maskIraqMobileInput,
-} from "@/lib/phone";
 import { useLocale } from "@/context/LocaleContext";
 
 function safeNext(raw: string | null) {
@@ -22,7 +17,7 @@ function safeNext(raw: string | null) {
   return raw;
 }
 
-type Step = "phone" | "otp";
+type Step = "email" | "otp";
 
 export function CustomerLoginForm() {
   const router = useRouter();
@@ -31,8 +26,8 @@ export function CustomerLoginForm() {
   const { locale } = useLocale();
   const ar = locale !== "en";
 
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
   const [otpHint, setOtpHint] = useState<string | null>(null);
@@ -41,7 +36,6 @@ export function CustomerLoginForm() {
   const [submitting, setSubmitting] = useState(false);
 
   const nextPath = useMemo(() => safeNext(search.get("next")), [search]);
-  const phoneError = phone ? iraqMobileError(phone) : null;
 
   useEffect(() => {
     if (loading) return;
@@ -78,9 +72,9 @@ export function CustomerLoginForm() {
   }, [cooldown]);
 
   async function sendOtp() {
-    const err = iraqMobileError(phone);
-    if (err) {
-      setError(err);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes("@")) {
+      setError(ar ? "أدخلي بريداً إلكترونياً صالحاً." : "Enter a valid email.");
       return;
     }
     setSubmitting(true);
@@ -88,21 +82,22 @@ export function CustomerLoginForm() {
     setDevCode(null);
     setOtpHint(null);
     try {
-      const res = await fetch("/api/auth/phone/send-otp", {
+      const res = await fetch("/api/auth/email/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, purpose: "login" }),
+        body: JSON.stringify({ email: normalizedEmail, purpose: "login" }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
         devCode?: string;
         message?: string;
+        channel?: "email" | "dev";
       };
       if (!res.ok || !data.ok) {
         throw new Error(
           data.error ||
-            (ar ? "تعذّر إرسال الرمز عبر واتساب." : "Could not send the code."),
+            (ar ? "تعذّر إرسال رمز التحقق." : "Could not send the code."),
         );
       }
       if (data.devCode) setDevCode(data.devCode);
@@ -121,10 +116,13 @@ export function CustomerLoginForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/login/phone", {
+      const res = await fetch("/api/auth/login/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code: otp }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: otp,
+        }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -148,7 +146,7 @@ export function CustomerLoginForm() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step === "phone") {
+    if (step === "email") {
       await sendOtp();
       return;
     }
@@ -181,36 +179,31 @@ export function CustomerLoginForm() {
           {ar ? "تسجيل الدخول" : "Sign in"}
         </h1>
         <p className="t3 mt-2 text-[var(--muted)]">
-          {step === "phone"
+          {step === "email"
             ? ar
-              ? "أدخلي رقم هاتفكِ المسجّل — سنرسل رمزاً عبر واتساب."
-              : "Enter your registered phone — we’ll send a WhatsApp code."
+              ? "أدخلي بريدكِ الإلكتروني — سنرسل رمز تحقق من VELORA Beauty."
+              : "Enter your email — we’ll send a verification code from VELORA Beauty."
             : ar
-              ? `أدخلي الرمز المرسل إلى ${formatIraqMobileLocal(phone) || phone}`
-              : `Enter the code sent to ${formatIraqMobileLocal(phone) || phone}`}
+              ? `أدخلي الرمز المرسل إلى ${email}`
+              : `Enter the code sent to ${email}`}
         </p>
       </div>
 
-      {step === "phone" ? (
+      {step === "email" ? (
         <label className="block">
           <span className="t2 text-[var(--muted)]">
-            {ar ? "رقم الهاتف" : "Phone number"}
+            {ar ? "البريد الإلكتروني" : "Email"}
           </span>
           <input
-            type="tel"
+            type="email"
             required
-            inputMode="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(maskIraqMobileInput(e.target.value))}
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={submitting}
             dir="ltr"
-            placeholder="07XXXXXXXXX"
             className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
           />
-          {phoneError ? (
-            <p className="t2 mt-2 text-red-700">{phoneError}</p>
-          ) : null}
         </label>
       ) : (
         <div className="space-y-4">
@@ -236,7 +229,13 @@ export function CustomerLoginForm() {
 
           {otpHint ? (
             <p className="t2 text-[var(--muted)]">{otpHint}</p>
-          ) : null}
+          ) : (
+            <p className="t2 text-[var(--muted)]">
+              {ar
+                ? "راجعي البريد وصندوق الرسائل غير المرغوب فيها."
+                : "Check your inbox and spam folder."}
+            </p>
+          )}
           {devCode ? (
             <p className="t2 rounded-xl border border-[var(--plum)]/15 bg-[var(--mist)] px-3 py-2 text-[var(--plum)]">
               {ar ? "رمز مؤقت:" : "Dev code:"}{" "}
@@ -265,14 +264,14 @@ export function CustomerLoginForm() {
               type="button"
               disabled={submitting}
               onClick={() => {
-                setStep("phone");
+                setStep("email");
                 setOtp("");
                 setError(null);
                 setDevCode(null);
               }}
               className="t2 text-[var(--muted)] underline-offset-4 hover:underline"
             >
-              {ar ? "تغيير الرقم" : "Change number"}
+              {ar ? "تغيير البريد" : "Change email"}
             </button>
           </div>
         </div>
@@ -284,19 +283,23 @@ export function CustomerLoginForm() {
         </div>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={submitting}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={submitting || (step === "otp" && otp.length !== 6)}
+      >
         {submitting
-          ? step === "phone"
+          ? step === "email"
             ? ar
               ? "جارٍ الإرسال…"
               : "Sending…"
             : ar
               ? "جارٍ الدخول…"
               : "Signing in…"
-          : step === "phone"
+          : step === "email"
             ? ar
-              ? "إرسال رمز واتساب"
-              : "Send WhatsApp code"
+              ? "إرسال رمز التحقق"
+              : "Send verification code"
             : ar
               ? "تأكيد الدخول"
               : "Confirm sign in"}

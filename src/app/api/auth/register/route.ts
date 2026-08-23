@@ -10,9 +10,9 @@ import {
 } from "@/lib/customer-auth";
 import { normalizeIraqMobile } from "@/lib/phone";
 import {
-  PHONE_VERIFY_COOKIE,
-  verifyPhoneVerifiedToken,
-} from "@/lib/phone-otp";
+  EMAIL_VERIFY_COOKIE,
+  verifyEmailVerifiedToken,
+} from "@/lib/email-otp";
 
 const schema = z.object({
   fullName: z.string().trim().min(2, "الاسم قصير جداً."),
@@ -42,22 +42,22 @@ export async function POST(req: Request) {
       );
     }
 
+    const email = parsed.data.email.toLowerCase();
     const jar = await cookies();
-    const verified = await verifyPhoneVerifiedToken(
-      jar.get(PHONE_VERIFY_COOKIE)?.value,
-      phone,
+    const verified = await verifyEmailVerifiedToken(
+      jar.get(EMAIL_VERIFY_COOKIE)?.value,
+      email,
     );
     if (!verified) {
       return Response.json(
         {
           ok: false,
-          error: "يجب التحقق من رقم الهاتف برمز OTP قبل إنشاء الحساب.",
+          error: "يجب التحقق من البريد الإلكتروني برمز OTP قبل إنشاء الحساب.",
         },
         { status: 403 },
       );
     }
 
-    const email = parsed.data.email.toLowerCase();
     const existingEmail = await prisma.customer.findUnique({ where: { email } });
     if (existingEmail) {
       return Response.json(
@@ -84,14 +84,14 @@ export async function POST(req: Request) {
         passwordHash,
         fullName: parsed.data.fullName,
         phone,
-        phoneVerified: true,
+        phoneVerified: false,
         address: parsed.data.address?.trim() || "",
       },
     });
 
     const token = await createCustomerSessionToken(customer.id);
     jar.set(CUSTOMER_COOKIE, token, customerCookieOptions());
-    jar.set(PHONE_VERIFY_COOKIE, "", {
+    jar.set(EMAIL_VERIFY_COOKIE, "", {
       ...customerCookieOptions(0),
       maxAge: 0,
     });

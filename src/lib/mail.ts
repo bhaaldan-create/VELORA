@@ -1,8 +1,9 @@
 import type { OrderPayload } from "@/lib/order-email";
 import { saveStoredOrder } from "@/lib/orders";
+import { isSmtpConfigured, sendTransactionalEmail } from "@/lib/smtp";
 
 export const ORDER_EMAIL_TO =
-  process.env.ORDER_EMAIL_TO?.trim() || "almassacompanyiraq@gmail.com";
+  process.env.ORDER_EMAIL_TO?.trim() || "orders@velorabeautyiq.me";
 
 export function getWebhookUrl() {
   return process.env.ORDER_WEBHOOK_URL?.trim() || "";
@@ -10,20 +11,31 @@ export function getWebhookUrl() {
 
 /** الطلبات تُحفظ دائماً في قاعدة البيانات — الإيميل اختياري */
 export function isMailConfigured() {
-  return true;
+  return isSmtpConfigured() || Boolean(getWebhookUrl());
 }
 
 export function getMailConfigIssue(): string | null {
-  return null;
+  if (isMailConfigured()) return null;
+  return "SMTP أو ORDER_WEBHOOK_URL غير مضبوط — الطلبات تُحفظ في لوحة الإدارة فقط.";
 }
 
 export type SendOrderResult = {
-  provider: "local" | "google-apps-script";
+  provider: "local" | "smtp" | "google-apps-script";
   emailed: boolean;
   orderId: string;
 };
 
 export async function sendOrderEmail(input: {
+  order: OrderPayload;
+  orderId: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<SendOrderResult> {
+  return sendOrderEmailViaProviders(input);
+}
+
+export async function sendOrderEmailViaProviders(input: {
   order: OrderPayload;
   orderId: string;
   subject: string;
@@ -41,6 +53,20 @@ export async function sendOrderEmail(input: {
     text,
     status: "new",
   });
+
+  if (isSmtpConfigured()) {
+    const mailed = await sendTransactionalEmail({
+      to: ORDER_EMAIL_TO,
+      subject,
+      text,
+      html,
+      replyTo: order.email,
+    });
+    if (mailed.ok) {
+      return { provider: "smtp", emailed: true, orderId };
+    }
+    console.error("[mail] smtp order notify failed", mailed.error);
+  }
 
   const webhook = getWebhookUrl();
   if (!webhook) {

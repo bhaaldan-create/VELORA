@@ -1,0 +1,149 @@
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
+
+export type SmtpSendResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+let cachedTransport: Transporter | null = null;
+
+function smtpHost() {
+  return process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+}
+
+function smtpPort() {
+  const raw = process.env.SMTP_PORT?.trim();
+  const n = raw ? Number(raw) : 587;
+  return Number.isFinite(n) ? n : 587;
+}
+
+export function getMailFromAddress() {
+  const from = process.env.MAIL_FROM?.trim() || process.env.SMTP_USER?.trim();
+  return from || "";
+}
+
+/** اسم المرسل الظاهر للزبائن — ثابت لضمان عدم ظهور اسم حساب Google الشخصي */
+export const VELORA_MAIL_FROM_NAME = "VELORA Beauty";
+
+export function getMailFromName() {
+  return VELORA_MAIL_FROM_NAME;
+}
+
+export function isSmtpConfigured() {
+  return Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim());
+}
+
+export function getSmtpConfigIssue(): string | null {
+  if (!process.env.SMTP_USER?.trim()) {
+    return "SMTP_USER غير مضبوط (مثال: noreply@velorabeautyiq.me).";
+  }
+  if (!process.env.SMTP_PASS?.trim()) {
+    return "SMTP_PASS غير مضبوط — أنشئي App Password من Google Workspace.";
+  }
+  return null;
+}
+
+function getTransport() {
+  if (!isSmtpConfigured()) return null;
+  if (!cachedTransport) {
+    cachedTransport = nodemailer.createTransport({
+      host: smtpHost(),
+      port: smtpPort(),
+      secure: smtpPort() === 465,
+      auth: {
+        user: process.env.SMTP_USER!.trim(),
+        pass: process.env.SMTP_PASS!.trim(),
+      },
+    });
+  }
+  return cachedTransport;
+}
+
+export async function sendTransactionalEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  replyTo?: string;
+}): Promise<SmtpSendResult> {
+  const issue = getSmtpConfigIssue();
+  if (issue) {
+    return { ok: false, error: issue };
+  }
+
+  const fromAddress = getMailFromAddress();
+  if (!fromAddress) {
+    return { ok: false, error: "MAIL_FROM أو SMTP_USER غير مضبوط." };
+  }
+
+  const transport = getTransport();
+  if (!transport) {
+    return { ok: false, error: "تعذّر تهيئة SMTP." };
+  }
+
+  const fromName = getMailFromName();
+
+  try {
+    await transport.sendMail({
+      from: `"${fromName}" <${fromAddress}>`,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+      replyTo: input.replyTo ?? fromAddress,
+    });
+    return { ok: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[smtp] send failed", message);
+    return { ok: false, error: mapSmtpSendError(message) };
+  }
+}
+
+function mapSmtpSendError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid login") || lower.includes("authentication")) {
+    return "فشل تسجيل الدخول إلى SMTP — تحققي من SMTP_USER و App Password.";
+  }
+  if (lower.includes("recipient address rejected") || lower.includes("mailbox")) {
+    return "عنوان البريد المستلم مرفوض.";
+  }
+  return message || "تعذّر إرسال البريد.";
+}
+
+export async function sendOtpEmail(
+  email: string,
+  code: string,
+  purpose: "register" | "login",
+): Promise<SmtpSendResult> {
+  const action =
+    purpose === "login" ? "تسجيل الدخول" : "إنشاء حسابكِ في VELORA";
+  const subject = `رمز التحقق — VELORA (${code})`;
+  const text = [
+    "VELORA Beauty",
+    "",
+    `رمز التحقق لـ ${action}: ${code}`,
+    "",
+    "صالح لمدة 5 دقائق. لا تشاركي هذا الرمز مع أحد.",
+    "",
+    "إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.",
+  ].join("\n");
+
+  const html = `
+    <div dir="rtl" style="font-family: Georgia, serif; color: #3d2b4a; max-width: 420px;">
+      <p style="letter-spacing: 0.12em; font-size: 12px; color: #8b6f8e;">VELORA Beauty</p>
+      <h1 style="font-size: 20px; margin: 0 0 12px;">رمز التحقق</h1>
+      <p style="margin: 0 0 16px; line-height: 1.6;">
+        استخدمي هذا الرمز لإكمال ${action}:
+      </p>
+      <p dir="ltr" style="font-size: 28px; letter-spacing: 0.35em; font-weight: 600; margin: 0 0 16px;">
+        ${code}
+      </p>
+      <p style="font-size: 13px; color: #6b5b6e; line-height: 1.5;">
+        صالح لمدة 5 دقائق. لا تشاركي الرمز مع أحد.
+      </p>
+    </div>
+  `;
+
+  return sendTransactionalEmail({ to: email, subject, text, html });
+}

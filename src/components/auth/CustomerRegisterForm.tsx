@@ -9,7 +9,6 @@ import {
   type CustomerPublic,
 } from "@/context/CustomerAuthContext";
 import {
-  formatIraqMobileLocal,
   iraqMobileError,
   maskIraqMobileInput,
 } from "@/lib/phone";
@@ -33,7 +32,7 @@ export function CustomerRegisterForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
   const [otpHint, setOtpHint] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -78,9 +77,9 @@ export function CustomerRegisterForm() {
   }, [cooldown]);
 
   async function sendOtp() {
-    const err = iraqMobileError(phone);
-    if (err) {
-      setError(err);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes("@")) {
+      setError("أدخلي بريداً إلكترونياً صالحاً.");
       return;
     }
     setSubmitting(true);
@@ -88,24 +87,27 @@ export function CustomerRegisterForm() {
     setDevCode(null);
     setOtpHint(null);
     try {
-      const res = await fetch("/api/auth/phone/send-otp", {
+      const res = await fetch("/api/auth/email/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, purpose: "register" }),
+        body: JSON.stringify({
+          email: normalizedEmail,
+          purpose: "register",
+        }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
         devCode?: string;
         message?: string;
-        channel?: string;
+        channel?: "email" | "dev";
       };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "تعذّر إرسال الرمز عبر واتساب.");
+        throw new Error(data.error || "تعذّر إرسال رمز التحقق.");
       }
       if (data.devCode) setDevCode(data.devCode);
       if (data.message) setOtpHint(data.message);
-      setPhoneVerified(false);
+      setEmailVerified(false);
       setOtp("");
       setStep("otp");
       setCooldown(60);
@@ -121,20 +123,20 @@ export function CustomerRegisterForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/phone/verify-otp", {
+      const res = await fetch("/api/auth/email/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code: otp }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), code: otp }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "رمز غير صحيح.");
       }
-      setPhoneVerified(true);
+      setEmailVerified(true);
       setDevCode(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التحقق.");
-      setPhoneVerified(false);
+      setEmailVerified(false);
     } finally {
       setSubmitting(false);
     }
@@ -174,10 +176,14 @@ export function CustomerRegisterForm() {
         setError("أكملي جميع الحقول بشكل صحيح.");
         return;
       }
+      if (phoneError) {
+        setError(phoneError);
+        return;
+      }
       await sendOtp();
       return;
     }
-    if (!phoneVerified) {
+    if (!emailVerified) {
       await verifyOtp();
       return;
     }
@@ -203,8 +209,8 @@ export function CustomerRegisterForm() {
         </h1>
         <p className="t3 mt-2 text-[var(--muted)]">
           {step === "details"
-            ? "سجّلي بياناتكِ ثم أكّدي رقم الجوال برمز يصل عبر واتساب."
-            : `أدخلي رمز التحقق المرسل عبر واتساب إلى ${formatIraqMobileLocal(phone) || phone}`}
+            ? "سجّلي بياناتكِ ثم أكّدي بريدكِ الإلكتروني برمز يصل من VELORA Beauty."
+            : `أدخلي رمز التحقق المرسل إلى ${email}`}
         </p>
       </div>
 
@@ -252,7 +258,7 @@ export function CustomerRegisterForm() {
               className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
             />
             <span className="t2 mt-1 block text-[var(--muted)]">
-              يجب أن يبدأ بـ 07 ويتكوّن من 11 رقماً
+              للتواصل والطلبات — رمز التحقق يُرسل إلى بريدكِ فقط
             </span>
             {phoneError && phone.length >= 11 ? (
               <span className="t2 mt-1 block text-red-700">{phoneError}</span>
@@ -281,9 +287,9 @@ export function CustomerRegisterForm() {
         <>
           <div className="border border-[var(--plum)]/12 bg-[var(--mist)] px-4 py-3">
             <p className="t3 text-[var(--ink)]/80">
-              الرقم:{" "}
+              البريد:{" "}
               <span dir="ltr" className="font-medium text-[var(--plum)]">
-                {formatIraqMobileLocal(phone)}
+                {email}
               </span>
             </p>
             <button
@@ -291,12 +297,12 @@ export function CustomerRegisterForm() {
               className="t2 mt-2 text-[var(--plum)] underline-offset-4 hover:underline"
               onClick={() => {
                 setStep("details");
-                setPhoneVerified(false);
+                setEmailVerified(false);
                 setOtp("");
                 setDevCode(null);
               }}
             >
-              تعديل الرقم
+              تعديل البيانات
             </button>
           </div>
 
@@ -313,13 +319,13 @@ export function CustomerRegisterForm() {
               </div>
             </div>
           ) : (
-            <div className="t3 border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-3 text-[var(--ink)]">
+            <div className="t3 border border-[var(--plum)]/20 bg-[var(--mist)] px-4 py-3 text-[var(--ink)]">
               {otpHint ||
-                "تم إرسال الرمز عبر واتساب — افتحي المحادثة وأدخلي الرمز هنا."}
+                "تم إرسال الرمز من VELORA Beauty — راجعي البريد وصندوق الرسائل غير المرغوب فيها."}
             </div>
           )}
 
-          {!phoneVerified ? (
+          {!emailVerified ? (
             <label className="block">
               <span className="t2 text-[var(--muted)]">رمز التحقق</span>
               <input
@@ -339,7 +345,7 @@ export function CustomerRegisterForm() {
             </label>
           ) : (
             <div className="t3 border border-green-200 bg-green-50 px-4 py-3 text-green-900">
-              تم التحقق من الرقم ✓ — اضغطي لإنشاء الحساب.
+              تم التحقق من البريد ✓ — اضغطي لإنشاء الحساب.
             </div>
           )}
 
@@ -366,14 +372,14 @@ export function CustomerRegisterForm() {
         disabled={
           submitting ||
           (step === "details" && Boolean(phoneError)) ||
-          (step === "otp" && !phoneVerified && otp.length !== 6)
+          (step === "otp" && !emailVerified && otp.length !== 6)
         }
       >
         {submitting
           ? "جارٍ المعالجة…"
           : step === "details"
-            ? "إرسال الرمز عبر واتساب"
-            : phoneVerified
+            ? "إرسال رمز التحقق"
+            : emailVerified
               ? "إنشاء الحساب"
               : "تأكيد الرمز"}
       </Button>

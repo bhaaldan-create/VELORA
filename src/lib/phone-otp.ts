@@ -5,6 +5,7 @@ import {
   verifyCustomerSessionToken,
 } from "@/lib/customer-auth";
 import { normalizeIraqMobile } from "@/lib/phone";
+import { isSmtpConfigured, sendOtpEmail } from "@/lib/smtp";
 import {
   isWhatsAppOtpConfigured,
   sendWhatsAppOtp,
@@ -37,12 +38,20 @@ export async function shouldRevealOtpInResponse() {
   const flag = process.env.OTP_DEV_REVEAL?.trim().toLowerCase();
   if (flag === "0" || flag === "false" || flag === "no") return false;
   if (flag === "1" || flag === "true" || flag === "yes") return true;
-  return process.env.NODE_ENV !== "production" && !(await isWhatsAppOtpConfigured());
+  const deliveryReady =
+    isSmtpConfigured() || (await isWhatsAppOtpConfigured());
+  return process.env.NODE_ENV !== "production" && !deliveryReady;
+}
+
+function normalizeEmail(raw: string | undefined | null) {
+  const email = raw?.trim().toLowerCase() ?? "";
+  if (!email || !email.includes("@")) return "";
+  return email;
 }
 
 export async function createAndStoreOtp(
   phoneRaw: string,
-  opts?: { purpose?: "register" | "login" },
+  opts?: { purpose?: "register" | "login"; email?: string },
 ) {
   const purpose = opts?.purpose ?? "register";
   const phone = normalizeIraqMobile(phoneRaw);
@@ -96,9 +105,29 @@ export async function createAndStoreOtp(
 
   console.info(`[otp] purpose=${purpose} phone=${phone}`);
 
-  const wa = await sendWhatsAppOtp(phone, code);
   const reveal = await shouldRevealOtpInResponse();
   const actionWord = purpose === "login" ? "الدخول" : "التسجيل";
+  const emailTarget =
+    normalizeEmail(opts?.email) ||
+    normalizeEmail(existingCustomer?.email) ||
+    "";
+
+  if (emailTarget && isSmtpConfigured()) {
+    const mailed = await sendOtpEmail(emailTarget, code, purpose);
+    if (mailed.ok) {
+      return {
+        ok: true as const,
+        phone,
+        expiresInSec: Math.floor(OTP_TTL_MS / 1000),
+        channel: "email" as const,
+        message: `تم إرسال رمز التحقق إلى ${emailTarget} — راجعي البريد (وصندوق الرسائل غير المرغوب فيها).`,
+        devCode: undefined,
+      };
+    }
+    console.warn("[otp] email send failed, trying whatsapp", mailed.error);
+  }
+
+  const wa = await sendWhatsAppOtp(phone, code);
 
   if (!wa.ok) {
     if (
@@ -107,7 +136,7 @@ export async function createAndStoreOtp(
       reveal ||
       process.env.NODE_ENV !== "production"
     ) {
-      console.warn("[otp] revealing code — whatsapp unavailable", wa.error);
+      console.warn("[otp] revealing code — delivery unavailable", wa.error);
       return {
         ok: true as const,
         phone,
@@ -116,14 +145,18 @@ export async function createAndStoreOtp(
         devCode: code,
         message: wa.deliveryBlocked
           ? `${wa.error} مؤقتاً: استخدمي الرمز الظاهر بالأسفل لإكمال ${actionWord}.`
-          : wa.missingConfig && reveal
-            ? "وضع التطوير: واتساب غير مضبوط بعد — استخدمي الرمز الظاهر بالأسفل."
-            : `تعذّر إرسال واتساب مؤقتاً — استخدمي الرمز الظاهر بالأسفل.`,
+          : !isSmtpConfigured() && wa.missingConfig && reveal
+            ? "وضع التطوير: البريد وواتساب غير مضبوطين — استخدمي الرمز الظاهر بالأسفل."
+            : `تعذّر إرسال الرمز — استخدمي الرمز الظاهر بالأسفل لإكمال ${actionWord}.`,
       };
     }
     return {
       ok: false as const,
-      error: wa.error || "تعذّر إرسال الرمز عبر واتساب.",
+      error:
+        wa.error ||
+        (isSmtpConfigured()
+          ? "تعذّر إرسال الرمز عبر البريد وواتساب."
+          : "تعذّر إرسال الرمز عبر واتساب."),
     };
   }
 

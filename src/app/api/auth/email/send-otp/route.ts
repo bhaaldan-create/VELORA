@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { createAndStoreOtp } from "@/lib/phone-otp";
-import { iraqMobileError, normalizeIraqMobile } from "@/lib/phone";
+import {
+  createAndStoreEmailOtp,
+  normalizeAuthEmail,
+} from "@/lib/email-otp";
 
 const schema = z.object({
-  phone: z.string().min(1),
+  email: z.string().trim().email(),
   purpose: z.enum(["register", "login"]).optional().default("register"),
-  email: z.string().trim().email().optional(),
 });
 
 export async function POST(req: Request) {
@@ -14,22 +15,21 @@ export async function POST(req: Request) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return Response.json(
-        { ok: false, error: "أدخلي رقم الهاتف." },
+        { ok: false, error: "أدخلي بريداً إلكترونياً صالحاً." },
         { status: 400 },
       );
     }
 
-    const err = iraqMobileError(parsed.data.phone);
-    if (err || !normalizeIraqMobile(parsed.data.phone)) {
+    const email = normalizeAuthEmail(parsed.data.email);
+    if (!email) {
       return Response.json(
-        { ok: false, error: err || "رقم الهاتف غير صالح." },
+        { ok: false, error: "البريد الإلكتروني غير صالح." },
         { status: 400 },
       );
     }
 
-    const result = await createAndStoreOtp(parsed.data.phone, {
+    const result = await createAndStoreEmailOtp(email, {
       purpose: parsed.data.purpose,
-      email: parsed.data.email,
     });
     if (!result.ok) {
       return Response.json({ ok: false, error: result.error }, { status: 400 });
@@ -37,14 +37,14 @@ export async function POST(req: Request) {
 
     return Response.json({
       ok: true,
-      phone: result.phone,
+      email: result.email,
       expiresInSec: result.expiresInSec,
       channel: result.channel,
       message: result.message,
       ...(result.devCode ? { devCode: result.devCode } : {}),
     });
   } catch (error) {
-    console.error("[auth/phone/send-otp]", error);
+    console.error("[auth/email/send-otp]", error);
     return Response.json(
       { ok: false, error: "تعذّر إرسال رمز التحقق." },
       { status: 500 },
