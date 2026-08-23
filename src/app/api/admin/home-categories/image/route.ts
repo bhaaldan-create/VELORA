@@ -2,6 +2,7 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { categoryCardMediaUrl } from "@/lib/admin/media-url";
 import {
   isUploadBlob,
   persistAdminImage,
@@ -14,6 +15,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -72,10 +74,14 @@ export async function POST(req: Request) {
     cards[index] = { ...cards[index]!, imageUrl: persisted.url };
     await saveHomeCategoryConfig({ ...config, cards });
 
+    const imageUrl = persisted.url.startsWith("data:")
+      ? categoryCardMediaUrl(cardId, Date.now())
+      : persisted.url;
+
     return Response.json({
       ok: true,
       cardId,
-      imageUrl: persisted.url,
+      imageUrl,
     });
   } catch (error) {
     console.error("[admin/home-categories/image] POST", error);

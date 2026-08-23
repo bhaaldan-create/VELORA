@@ -2,6 +2,7 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { heroSlideMediaUrl } from "@/lib/admin/media-url";
 import {
   isUploadBlob,
   persistAdminImage,
@@ -14,6 +15,7 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -80,12 +82,17 @@ export async function POST(req: Request) {
 
     await saveHomeHeroConfig({ ...config, slides });
 
-    // Lightweight response — avoid returning multi‑MB configs that break the client
+    const clientVariant = variant === "mobile" ? "mobile" : "desktop";
+    const imageUrl =
+      persisted.url.startsWith("data:")
+        ? heroSlideMediaUrl(slideId, clientVariant, Date.now())
+        : persisted.url;
+
     return Response.json({
       ok: true,
       slideId,
       variant,
-      imageUrl: persisted.url,
+      imageUrl,
     });
   } catch (error) {
     console.error("[admin/home-hero/image] POST", error);

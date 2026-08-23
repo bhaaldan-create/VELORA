@@ -1,5 +1,6 @@
 import {
   getHomeHeroConfig,
+  heroConfigForClient,
   saveHomeHeroConfig,
 } from "@/lib/home/config";
 import { DEFAULT_HOME_HERO } from "@/lib/home/default-config";
@@ -8,7 +9,7 @@ import type { HomeHeroConfig } from "@/lib/home/types";
 export async function GET() {
   try {
     const config = await getHomeHeroConfig();
-    return Response.json({ ok: true, config });
+    return Response.json({ ok: true, config: heroConfigForClient(config) });
   } catch (error) {
     console.error("[admin/home-hero] GET", error);
     return Response.json(
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
       );
     }
     const config = await saveHomeHeroConfig(body.config);
-    return Response.json({ ok: true, config });
+    return Response.json({ ok: true, config: heroConfigForClient(config) });
   } catch (error) {
     console.error("[admin/home-hero] PUT", error);
     const detail =

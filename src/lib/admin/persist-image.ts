@@ -71,6 +71,11 @@ async function compressImage(
     return { buffer: outBuffer, mime: "image/jpeg", ext: "jpg" };
   } catch (error) {
     console.warn("[persistAdminImage] sharp compress skipped:", error);
+    if (buffer.length > 2 * 1024 * 1024) {
+      throw new Error(
+        "تعذّر ضغط الصورة. جرّبي JPG بحجم أقل أو أعيدي تشغيل السيرفر.",
+      );
+    }
     return {
       buffer,
       mime: inputMime,

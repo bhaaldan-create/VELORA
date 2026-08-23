@@ -12,7 +12,12 @@ import {
   getNewArrivals,
   getProductsByCategory,
 } from "@/lib/catalog";
-import { getHomeCategoryConfig, getHomeHeroConfig } from "@/lib/home/config";
+import {
+  categoryConfigForClient,
+  getHomeCategoryConfig,
+  getHomeHeroConfig,
+  heroConfigForClient,
+} from "@/lib/home/config";
 
 export default async function HomePage() {
   const [
@@ -39,9 +44,9 @@ export default async function HomePage() {
 
   return (
     <div className="home-premium bg-[var(--ivory)]">
-      <Hero config={heroConfig} />
+      <Hero config={heroConfigForClient(heroConfig)} />
       <TrustBar />
-      <CategoryShowcase cards={categoryConfig.cards} />
+      <CategoryShowcase cards={categoryConfigForClient(categoryConfig).cards} />
       <PromoBanner />
 
       <ProductRail

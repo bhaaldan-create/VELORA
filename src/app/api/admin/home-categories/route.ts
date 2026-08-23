@@ -1,4 +1,5 @@
 import {
+  categoryConfigForClient,
   getHomeCategoryConfig,
   saveHomeCategoryConfig,
 } from "@/lib/home/config";
@@ -8,7 +9,7 @@ import type { HomeCategoryConfig } from "@/lib/home/types";
 export async function GET() {
   try {
     const config = await getHomeCategoryConfig();
-    return Response.json({ ok: true, config });
+    return Response.json({ ok: true, config: categoryConfigForClient(config) });
   } catch (error) {
     console.error("[admin/home-categories] GET", error);
     return Response.json(
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
       );
     }
     const config = await saveHomeCategoryConfig(body.config);
-    return Response.json({ ok: true, config });
+    return Response.json({ ok: true, config: categoryConfigForClient(config) });
   } catch (error) {
     console.error("[admin/home-categories] PUT", error);
     return Response.json(

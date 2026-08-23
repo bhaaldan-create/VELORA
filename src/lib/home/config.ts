@@ -1,3 +1,8 @@
+import {
+  categoryCardMediaUrl,
+  heroSlideMediaUrl,
+  resolveClientImageUrl,
+} from "@/lib/admin/media-url";
 import { prisma } from "@/lib/db";
 import {
   DEFAULT_HOME_CATEGORIES,
@@ -110,12 +115,20 @@ export async function saveHomeHeroConfig(
       typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
     const incomingMobile =
       typeof raw.imageUrlMobile === "string" ? raw.imageUrlMobile.trim() : "";
+    const keepDesktop =
+      !incomingImage ||
+      incomingImage.startsWith("data:") ||
+      incomingImage.startsWith("/api/media/");
+    const keepMobile =
+      !incomingMobile ||
+      incomingMobile.startsWith("data:") ||
+      incomingMobile.startsWith("/api/media/");
 
     return {
       ...slide,
-      // Empty / omitted image → keep whatever is already saved
-      imageUrl: incomingImage || fallback.imageUrl,
-      imageUrlMobile: incomingMobile || fallback.imageUrlMobile,
+      // Empty / ephemeral client URL → keep whatever is already saved in DB
+      imageUrl: keepDesktop ? fallback.imageUrl : incomingImage,
+      imageUrlMobile: keepMobile ? fallback.imageUrlMobile : incomingMobile,
     };
   });
 
@@ -140,6 +153,41 @@ export async function saveHomeHeroConfig(
 export function activeHeroSlides(config: HomeHeroConfig): HomeHeroSlide[] {
   const enabled = config.slides.filter((s) => s.enabled && s.imageUrl);
   return enabled.length ? enabled : config.slides.slice(0, 1);
+}
+
+/** يحوّل data URLs إلى روابط /api/media خفيفة للعرض في الواجهة */
+export function heroConfigForClient(config: HomeHeroConfig): HomeHeroConfig {
+  return {
+    ...config,
+    slides: config.slides.map((slide) => ({
+      ...slide,
+      imageUrl: resolveClientImageUrl(
+        slide.imageUrl,
+        heroSlideMediaUrl(slide.id, "desktop"),
+      ),
+      imageUrlMobile: slide.imageUrlMobile
+        ? resolveClientImageUrl(
+            slide.imageUrlMobile,
+            heroSlideMediaUrl(slide.id, "mobile"),
+          )
+        : slide.imageUrlMobile,
+    })),
+  };
+}
+
+export function categoryConfigForClient(
+  config: HomeCategoryConfig,
+): HomeCategoryConfig {
+  return {
+    ...config,
+    cards: config.cards.map((card) => ({
+      ...card,
+      imageUrl: resolveClientImageUrl(
+        card.imageUrl,
+        categoryCardMediaUrl(card.id),
+      ),
+    })),
+  };
 }
 
 function sanitizeCategoryCard(
@@ -213,10 +261,14 @@ export async function saveHomeCategoryConfig(
     const card = sanitizeCategoryCard(raw, fallback);
     const incomingImage =
       typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
+    const keepImage =
+      !incomingImage ||
+      incomingImage.startsWith("data:") ||
+      incomingImage.startsWith("/api/media/");
 
     return {
       ...card,
-      imageUrl: incomingImage || fallback.imageUrl,
+      imageUrl: keepImage ? fallback.imageUrl : incomingImage,
     };
   });
 

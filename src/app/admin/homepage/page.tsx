@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PageHeader, Surface } from "@/components/admin/ui/primitives";
+import { isEphemeralClientImageUrl } from "@/lib/admin/media-url";
+import { parseJsonResponse } from "@/lib/admin/parse-json-response";
 import {
   DEFAULT_HOME_CATEGORIES,
   DEFAULT_HOME_HERO,
@@ -54,9 +56,11 @@ export default function AdminHomepagePage() {
         ...config,
         slides: config.slides.map((s) => ({
           ...s,
-          imageUrl: s.imageUrl.startsWith("data:") ? "" : s.imageUrl,
-          imageUrlMobile: s.imageUrlMobile?.startsWith("data:")
-            ? ""
+          imageUrl: isEphemeralClientImageUrl(s.imageUrl) ? "" : s.imageUrl,
+          imageUrlMobile: s.imageUrlMobile
+            ? isEphemeralClientImageUrl(s.imageUrlMobile)
+              ? ""
+              : s.imageUrlMobile
             : s.imageUrlMobile,
         })),
       };
@@ -65,11 +69,11 @@ export default function AdminHomepagePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config: payload }),
       });
-      const data = (await res.json()) as {
+      const data = await parseJsonResponse<{
         ok?: boolean;
         config?: HomeHeroConfig;
         error?: string;
-      };
+      }>(res);
       if (!res.ok || !data.ok) {
         setError(data.error || "فشل الحفظ.");
         return;
@@ -96,7 +100,7 @@ export default function AdminHomepagePage() {
         ...categories,
         cards: categories.cards.map((c) => ({
           ...c,
-          imageUrl: c.imageUrl.startsWith("data:") ? "" : c.imageUrl,
+          imageUrl: isEphemeralClientImageUrl(c.imageUrl) ? "" : c.imageUrl,
         })),
       };
       const res = await fetch("/api/admin/home-categories", {
@@ -104,11 +108,11 @@ export default function AdminHomepagePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config: payload }),
       });
-      const data = (await res.json()) as {
+      const data = await parseJsonResponse<{
         ok?: boolean;
         config?: HomeCategoryConfig;
         error?: string;
-      };
+      }>(res);
       if (!res.ok || !data.ok) {
         setError(data.error || "فشل حفظ الفئات.");
         return;
@@ -159,11 +163,11 @@ export default function AdminHomepagePage() {
         method: "POST",
         body: form,
       });
-      const data = (await res.json()) as {
+      const data = await parseJsonResponse<{
         ok?: boolean;
         imageUrl?: string;
         error?: string;
-      };
+      }>(res);
       if (!res.ok || !data.ok || !data.imageUrl) {
         setError(data.error || "فشل رفع الصورة.");
         return;
@@ -206,11 +210,11 @@ export default function AdminHomepagePage() {
         method: "POST",
         body: form,
       });
-      const data = (await res.json()) as {
+      const data = await parseJsonResponse<{
         ok?: boolean;
         imageUrl?: string;
         error?: string;
-      };
+      }>(res);
       if (!res.ok || !data.ok || !data.imageUrl) {
         setError(data.error || "فشل رفع صورة الفئة.");
         return;
