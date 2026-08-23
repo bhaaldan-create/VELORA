@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Bodoni_Moda, IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -96,7 +97,9 @@ export default function RootLayout({
           <SiteMain>{children}</SiteMain>
           <Footer />
           <FloatingContact />
-          <PrimaryBottomNav />
+          <Suspense fallback={null}>
+            <PrimaryBottomNav />
+          </Suspense>
         </Providers>
       </body>
     </html>

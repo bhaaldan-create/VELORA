@@ -60,10 +60,10 @@ export function FloatingContact() {
   const isCartPage = pathname === "/cart";
   const isCheckoutPage = pathname === "/checkout";
   const bottomOffset = isCartPage
-    ? "calc(10.5rem + env(safe-area-inset-bottom))"
+    ? "calc(7.5rem + env(safe-area-inset-bottom))"
     : isCheckoutPage
-      ? "calc(10.5rem + env(safe-area-inset-bottom))"
-      : "calc(5.75rem + env(safe-area-inset-bottom))";
+      ? "calc(7.5rem + env(safe-area-inset-bottom))"
+      : "calc(5.25rem + env(safe-area-inset-bottom))";
 
   return (
     <div
@@ -172,21 +172,18 @@ export function FloatingContact() {
         title={ar ? "تواصلي معنا" : "Contact us"}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "group flex h-12 min-w-12 items-center justify-center gap-2 rounded-full",
-          "border border-[var(--plum)]/15 bg-[var(--plum)] px-4 text-[var(--btn-fg)]",
-          "shadow-[0_12px_32px_rgba(58,24,54,0.22)]",
-          "transition-transform duration-300 ease-out",
-          "hover:scale-[1.03] active:scale-[0.96]",
+          "group flex h-11 w-11 items-center justify-center rounded-full",
+          "border border-[var(--plum)]/12 bg-[var(--plum)] text-[var(--btn-fg)]",
+          "shadow-[0_10px_28px_rgba(50,22,47,0.18)]",
+          "transition-transform duration-250 ease-out",
+          "hover:scale-[1.04] active:scale-[0.95]",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]",
         )}
       >
         <IconWhatsApp
-          size={18}
-          className="text-[#9fd4b8] transition-transform duration-300 group-active:scale-90"
+          size={17}
+          className="text-[#a8d9c0] transition-transform duration-250 group-active:scale-90"
         />
-        <span className="hidden text-[0.8rem] font-medium tracking-[0.04em] sm:inline">
-          WhatsApp
-        </span>
       </button>
     </div>
   );

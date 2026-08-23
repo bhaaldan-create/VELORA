@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
@@ -10,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ClubLogo } from "@/components/club/ClubLogo";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { useCart } from "@/context/CartContext";
@@ -22,7 +22,8 @@ import { useTheme, type ThemeMode } from "@/context/ThemeContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { formatIraqMobileLocal } from "@/lib/phone";
 import { getProductBrand } from "@/lib/product-brand";
-import { cn, formatPrice } from "@/lib/utils";
+import { getDefaultWhatsAppUrl } from "@/lib/social-links";
+import { cn } from "@/lib/utils";
 import type { CategorySlug, Product } from "@/types";
 
 type AccountSection =
@@ -100,9 +101,6 @@ function progressIndex(status: string) {
   return 0;
 }
 
-const TIMELINE_AR = ["تم الطلب", "قيد التجهيز", "في الطريق", "تم التسليم"];
-const TIMELINE_EN = ["Placed", "Preparing", "On the way", "Delivered"];
-
 export function AccountSettings() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -138,6 +136,35 @@ export function AccountSettings() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
 
   const [wishProducts, setWishProducts] = useState<WishProduct[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!customer) return;
+    try {
+      setAvatarUrl(
+        window.localStorage.getItem(`velora-avatar-${customer.id}`),
+      );
+    } catch {
+      setAvatarUrl(null);
+    }
+  }, [customer]);
+
+  function onAvatarSelected(file: File | undefined) {
+    if (!file || !customer) return;
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const data = String(reader.result || "");
+      if (!data) return;
+      try {
+        window.localStorage.setItem(`velora-avatar-${customer.id}`, data);
+      } catch {
+        /* ignore quota */
+      }
+      setAvatarUrl(data);
+    };
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     if (!loading && !customer) {
@@ -291,9 +318,24 @@ export function AccountSettings() {
   }
 
   const name = firstName(customer.fullName, ar);
-  const latest = myOrders[0] ?? null;
-  const inTransit = myOrders.filter((o) => o.status !== "delivered").length;
-  const timeline = ar ? TIMELINE_AR : TIMELINE_EN;
+  const pointsValue = myOrders.length * 120 + wishCount * 10;
+  const orderStages = {
+    placed: myOrders.filter((o) => progressIndex(o.status) === 0).length,
+    preparing: myOrders.filter((o) => progressIndex(o.status) === 1).length,
+    shipping: myOrders.filter((o) => progressIndex(o.status) === 2).length,
+    delivered: myOrders.filter((o) => progressIndex(o.status) === 3).length,
+  };
+  const hotStage =
+    orderStages.shipping > 0
+      ? "shipping"
+      : orderStages.preparing > 0
+        ? "preparing"
+        : orderStages.placed > 0
+          ? "placed"
+          : "delivered";
+  const initial = name.slice(0, 1).toUpperCase();
+  const helpUrl = getDefaultWhatsAppUrl(ar ? "ar" : "en") || "/advisor";
+  const couponCount = Math.min(5, Math.floor(pointsValue / 200));
 
   function toProduct(p: WishProduct): Product {
     return {
@@ -356,9 +398,12 @@ export function AccountSettings() {
               })}
               <Link
                 href="/account/club"
-                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-gradient-to-l from-[#f3edf7] to-white px-4 py-2.5 text-start text-[0.9rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:border-[var(--account-orchid)]/50"
+                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-gradient-to-l from-[#f5f1ee] to-white px-3 py-2 text-start text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:border-[var(--account-orchid)]/50"
               >
-                {ar ? "نادي الجمال" : "Beauty Club"}
+                <span className="flex items-center gap-2.5">
+                  <ClubLogo height={28} />
+                  <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
+                </span>
               </Link>
             </nav>
 
@@ -376,249 +421,320 @@ export function AccountSettings() {
         <div className="min-w-0 flex-1 space-y-8">
           {section === "overview" ? (
             <>
-              {/* Hero */}
-              <section className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)] bg-white">
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background:
-                      "radial-gradient(ellipse 50% 80% at 100% 50%, rgba(212,196,224,0.35), transparent 55%), linear-gradient(135deg, #FBFAFC 0%, #F7F2F9 100%)",
-                  }}
-                />
-                <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-10 lg:p-10">
-                  <div>
-                    <p className="font-latin text-[11px] font-medium tracking-[0.22em] text-[var(--account-orchid)] uppercase">
-                      My VELORA
-                    </p>
-                    <h1 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.6rem)] font-semibold text-[var(--account-plum)]">
+              {/* Profile hero */}
+              <section className="acc-hero">
+                <div className="acc-hero-inner">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="acc-greeting">
                       {ar ? `مرحباً، ${name}` : `Welcome, ${name}`}
                     </h1>
-                    <p className="mt-3 text-[1rem] text-[var(--account-muted)]">
+                    <p className="acc-welcome">
+                      <AccIcon name="heart" size={14} />
                       {ar
-                        ? "يسعدنا أن نراكِ مجدداً في VELORA."
+                        ? "يسعدنا أن نراك مجدداً في VELORA."
                         : "We’re glad to see you again at VELORA."}
                     </p>
-                    <p className="font-latin mt-6 text-[0.95rem] leading-relaxed tracking-wide text-[var(--account-plum)]/70">
-                      Your beauty.
-                      <br />
-                      Your rituals.
-                      <br />
-                      Your VELORA.
-                    </p>
+                    <button
+                      type="button"
+                      className="acc-edit-btn"
+                      onClick={() => goTo("profile")}
+                    >
+                      {ar ? "تعديل الملف الشخصي" : "Edit profile"}
+                      <AccIcon name="edit" size={13} />
+                    </button>
                   </div>
-                  <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[24px] lg:mx-0 lg:max-w-none">
-                    <Image
-                      src="/brand/account-hero.jpg"
-                      alt=""
-                      fill
-                      className="object-cover object-[center_20%]"
-                      sizes="(max-width: 1024px) 90vw, 380px"
-                      priority
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(58,24,54,0.12)] to-transparent" />
+
+                  <div className="acc-avatar-wrap">
+                    <div className="acc-avatar-ring">
+                      <div className="acc-avatar-inner">
+                        {avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={avatarUrl} alt="" />
+                        ) : (
+                          initial
+                        )}
+                      </div>
+                    </div>
+                    <label className="acc-avatar-cam" title={ar ? "صورة الملف" : "Profile photo"}>
+                      <AccIcon name="camera" size={13} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        aria-label={ar ? "رفع صورة الملف" : "Upload profile photo"}
+                        onChange={(e) => {
+                          onAvatarSelected(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
                   </div>
+                </div>
+
+                <div className="acc-philosophy" aria-label="VELORA philosophy">
+                  <span>
+                    <AccIcon name="spark" size={13} />
+                    {ar ? "جمالكِ" : "Your beauty"}
+                  </span>
+                  <i aria-hidden />
+                  <span>
+                    <AccIcon name="leaf" size={13} />
+                    {ar ? "طقوسكِ" : "Your rituals"}
+                  </span>
+                  <i aria-hidden />
+                  <span>
+                    <AccIcon name="diamond" size={13} />
+                    {ar ? "فيلورا" : "Your VELORA"}
+                  </span>
                 </div>
               </section>
 
               {/* Stats */}
-              <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                  label={ar ? "طلباتك" : "Orders"}
-                  value={String(myOrders.length).padStart(2, "0")}
-                  icon="bag"
-                />
-                <StatCard
-                  label={ar ? "قائمة الأمنيات" : "Wishlist"}
-                  value={String(wishCount).padStart(2, "0")}
-                  icon="heart"
-                  onClick={() => goTo("wishlist")}
-                />
-                <StatCard
-                  label={ar ? "نقاط VELORA" : "VELORA points"}
-                  value={(myOrders.length * 120 + wishCount * 10 || 0).toLocaleString(
-                    ar ? "ar-IQ" : "en-US",
-                  )}
-                  icon="spark"
-                  onClick={() => router.push("/account/club")}
-                />
-                <StatCard
-                  label={ar ? "طلبات قيد الوصول" : "On the way"}
-                  value={String(inTransit).padStart(2, "0")}
-                  icon="truck"
-                />
+              <section className="acc-card mt-5 sm:mt-6">
+                <div className="acc-stats">
+                  <button
+                    type="button"
+                    className="acc-stat"
+                    onClick={() => goTo("wishlist")}
+                  >
+                    <span className="ico">
+                      <AccIcon name="heart" size={16} />
+                    </span>
+                    <p className="num">{wishCount}</p>
+                    <p className="lbl">{ar ? "المفضلة" : "Saved"}</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-stat"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="ico">
+                      <AccIcon name="ticket" size={16} />
+                    </span>
+                    <p className="num">{couponCount}</p>
+                    <p className="lbl">{ar ? "الكوبونات" : "Coupons"}</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-stat"
+                    onClick={() => router.push("/account/club")}
+                  >
+                    <span className="ico">
+                      <AccIcon name="points" size={16} />
+                    </span>
+                    <p className="num">
+                      {pointsValue.toLocaleString(ar ? "ar-IQ" : "en-US")}
+                    </p>
+                    <p className="lbl">{ar ? "النقاط" : "Points"}</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-stat"
+                    onClick={() => goTo("orders")}
+                  >
+                    <span className="ico">
+                      <AccIcon name="package" size={16} />
+                    </span>
+                    <p className="num">{myOrders.length}</p>
+                    <p className="lbl">{ar ? "الطلبات" : "Orders"}</p>
+                  </button>
+                </div>
               </section>
 
-              {/* Latest order */}
-              <section className="rounded-[24px] border border-[var(--account-border)] bg-white p-6 sm:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <h2 className="font-display text-[1.25rem] font-semibold text-[var(--account-plum)]">
-                      {ar ? "آخر طلب" : "Latest order"}
-                    </h2>
-                    {latest ? (
-                      <p className="font-latin mt-1 text-[0.85rem] text-[var(--account-muted)]" dir="ltr">
-                        #{latest.orderId}
-                      </p>
-                    ) : null}
-                  </div>
-                  {latest ? (
-                    <Link
-                      href={`/track/${latest.orderId}`}
-                      className="rounded-full bg-[var(--account-plum)] px-5 py-2.5 text-[0.85rem] font-medium text-white"
-                    >
-                      {ar ? "تتبعي الطلب" : "Track order"}
-                    </Link>
-                  ) : null}
+              {/* Orders timeline */}
+              <section className="acc-card mt-5 sm:mt-6">
+                <div className="acc-section-head">
+                  <h2>{ar ? "طلباتي" : "My orders"}</h2>
+                  <button
+                    type="button"
+                    className="linkish"
+                    onClick={() => goTo("orders")}
+                  >
+                    {ar ? "عرض جميع الطلبات ←" : "View all orders →"}
+                  </button>
                 </div>
-
                 {ordersLoading ? (
-                  <p className="mt-6 text-[0.9rem] text-[var(--account-muted)]">
+                  <p className="text-[0.85rem] text-[var(--account-muted)]">
                     {ar ? "جارٍ التحميل…" : "Loading…"}
                   </p>
-                ) : latest ? (
-                  <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_1.1fr]">
-                    <div>
-                      <ul className="space-y-3">
-                        {(latest.items || []).map((item, i) => (
-                          <li
-                            key={`${item.nameAr}-${i}`}
-                            className="flex items-center justify-between gap-3 border-b border-[var(--account-border)] pb-3 text-[0.9rem]"
-                          >
-                            <span className="text-[var(--account-plum)]">
-                              {ar ? item.nameAr : item.name}
-                              <span className="ms-2 text-[var(--account-muted)]">
-                                ×{item.quantity}
-                              </span>
-                            </span>
-                            <span className="font-latin text-[var(--account-muted)]" dir="ltr">
-                              {formatPrice(item.price * item.quantity)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-4 text-[1.05rem] font-semibold text-[var(--account-plum)]">
-                        {ar ? "الإجمالي" : "Total"}: {latest.totalLabel}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[0.8rem] text-[var(--account-muted)]">
-                        {ar ? "رحلة طلبكِ" : "Order journey"}
-                      </p>
-                      <ol className="mt-4 space-y-0">
-                        {timeline.map((label, i) => {
-                          const active = i <= progressIndex(latest.status);
-                          return (
-                            <li key={label} className="flex gap-3">
-                              <div className="flex flex-col items-center">
-                                <span
-                                  className={cn(
-                                    "flex h-3.5 w-3.5 rounded-full border-2",
-                                    active
-                                      ? "border-[var(--account-plum)] bg-[var(--account-orchid)]"
-                                      : "border-[var(--account-border)] bg-white",
-                                  )}
-                                />
-                                {i < timeline.length - 1 ? (
-                                  <span
-                                    className={cn(
-                                      "my-1 w-px flex-1 min-h-[28px]",
-                                      active && i < progressIndex(latest.status)
-                                        ? "bg-[var(--account-orchid)]"
-                                        : "bg-[var(--account-border)]",
-                                    )}
-                                  />
-                                ) : null}
-                              </div>
-                              <span
-                                className={cn(
-                                  "pb-5 text-[0.9rem]",
-                                  active
-                                    ? "font-medium text-[var(--account-plum)]"
-                                    : "text-[var(--account-muted)]",
-                                )}
-                              >
-                                {label}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ol>
-                    </div>
-                  </div>
                 ) : (
-                  <div className="mt-8 rounded-[18px] border border-dashed border-[var(--account-border)] px-5 py-10 text-center">
-                    <p className="text-[0.95rem] text-[var(--account-muted)]">
+                  <div className="acc-order-rail">
+                    {(
+                      [
+                        {
+                          id: "placed" as const,
+                          ar: "قيد الطلب",
+                          en: "Placed",
+                          icon: "bag" as const,
+                          n: orderStages.placed,
+                        },
+                        {
+                          id: "preparing" as const,
+                          ar: "قيد التجهيز",
+                          en: "Preparing",
+                          icon: "spark" as const,
+                          n: orderStages.preparing,
+                        },
+                        {
+                          id: "shipping" as const,
+                          ar: "قيد التوصيل",
+                          en: "Shipping",
+                          icon: "truck" as const,
+                          n: orderStages.shipping,
+                        },
+                        {
+                          id: "delivered" as const,
+                          ar: "تم التوصيل",
+                          en: "Delivered",
+                          icon: "check" as const,
+                          n: orderStages.delivered,
+                        },
+                      ] as const
+                    ).map((stage) => (
+                      <div
+                        key={stage.id}
+                        className={`acc-order-stage ${hotStage === stage.id ? "is-hot" : ""}`}
+                      >
+                        <div className="dot">
+                          <AccIcon name={stage.icon} size={15} />
+                        </div>
+                        <p className="cnt">{stage.n}</p>
+                        <p className="cap">{ar ? stage.ar : stage.en}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!ordersLoading && !myOrders.length ? (
+                  <div className="mt-5 text-center">
+                    <p className="text-[0.85rem] text-[var(--account-muted)]">
                       {ar
                         ? "لا توجد طلبات بعد — ابدئي رحلتكِ من المتجر."
-                        : "No orders yet — begin your edit in the shop."}
+                        : "No orders yet — begin your journey in the shop."}
                     </p>
                     <Link
                       href="/shop"
-                      className="mt-4 inline-block text-[0.875rem] text-[var(--account-plum)] underline underline-offset-4"
+                      className="mt-3 inline-block text-[0.8rem] text-[var(--account-plum)] underline underline-offset-4"
                     >
                       {ar ? "تسوّقي الآن" : "Shop now"}
                     </Link>
                   </div>
-                )}
+                ) : null}
               </section>
 
-              {/* Ritual / LARSA */}
-              <section className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)]">
-                <div className="absolute inset-0">
-                  <Image
-                    src="/brand/account-ritual.jpg"
-                    alt=""
-                    fill
-                    className="object-cover object-[center_25%]"
-                    sizes="100vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-[rgba(58,24,54,0.55)] via-[rgba(58,24,54,0.35)] to-[rgba(248,244,251,0.75)]" />
-                </div>
-                <div className="relative grid gap-6 p-6 sm:p-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-                  <div className="max-w-lg text-white">
-                    <h2 className="font-display text-[clamp(1.5rem,3vw,2.1rem)] font-semibold">
-                      {ar ? "طقسك الجمالي" : "Your beauty ritual"}
-                    </h2>
-                    <p className="mt-3 text-[0.95rem] text-white/80">
-                      {ar
-                        ? "اكتشفي المنتجات التي تناسب احتياجاتك."
-                        : "Discover products that match your needs."}
-                    </p>
-                    <Link
-                      href="/advisor"
-                      className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.875rem] font-medium text-[var(--account-plum)]"
-                    >
-                      {ar ? "ابدئي مع لارسا" : "Begin with LARSA"}
-                      <span aria-hidden>✦</span>
-                    </Link>
-                  </div>
-                  <div className="rounded-[20px] border border-white/35 bg-white/20 p-5 text-white backdrop-blur-md lg:justify-self-end lg:w-full lg:max-w-xs">
-                    <p className="font-latin text-[11px] tracking-[0.2em] uppercase">
-                      LARSA
-                    </p>
-                    <p className="mt-2 text-[1.05rem] font-medium">
-                      {ar ? "مستشارتك الذكية" : "Your smart advisor"}
-                    </p>
-                    <p className="mt-1 text-[0.85rem] text-white/75">
-                      {ar ? "للعناية والجمال" : "for care & beauty"}
-                    </p>
-                  </div>
+              {/* Quick actions */}
+              <section className="mt-5 sm:mt-6">
+                <div className="acc-actions">
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("wishlist")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="heart" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "المفضلة" : "Favorites"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="card" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "طرق الدفع" : "Payments"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("addresses")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="pin" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "العناوين" : "Addresses"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="settings" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "الإعدادات" : "Settings"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="shield" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "الخصوصية والأمان" : "Privacy"}
+                    </span>
+                  </button>
+                  <a
+                    href={helpUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="acc-action"
+                  >
+                    <span className="bubble">
+                      <AccIcon name="support" size={17} />
+                    </span>
+                    <span className="title">
+                      {ar ? "مركز المساعدة" : "Help center"}
+                    </span>
+                  </a>
                 </div>
               </section>
 
-              {/* Lower grid */}
-              <section className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6 lg:col-span-1">
-                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
+              {/* Loyalty */}
+              <section className="acc-loyalty mt-5 sm:mt-6 text-center">
+                <div className="flex justify-center">
+                  <ClubLogo height={40} />
+                </div>
+                <p className="mt-4 text-[0.65rem] tracking-[0.2em] uppercase opacity-75">
+                  VELORA POINTS
+                </p>
+                <h2 className="mt-2 text-[1.15rem] font-semibold">
+                  {ar ? "برنامج نقاط VELORA" : "VELORA Points Program"}
+                </h2>
+                <p className="mx-auto mt-2 max-w-sm text-[0.84rem] leading-relaxed opacity-80">
+                  {ar
+                    ? "تجميعك لنقاطك واستبدالها بمكافآت حصرية"
+                    : "Collect points and redeem exclusive beauty rewards."}
+                </p>
+                <div className="acc-loyalty-ring">
+                  <p className="num">
+                    {pointsValue.toLocaleString(ar ? "ar-IQ" : "en-US")}
+                  </p>
+                  <p className="unit">{ar ? "نقطة" : "points"}</p>
+                </div>
+                <Link href="/account/club" className="acc-loyalty-cta">
+                  {ar ? "عرض نقاطي" : "View my points"}
+                  <span aria-hidden>←</span>
+                </Link>
+              </section>
+
+              {/* Compact extras */}
+              <section className="mt-5 grid gap-4 sm:mt-6 lg:grid-cols-2">
+                <div className="acc-card">
+                  <h3 className="text-[0.95rem] font-semibold text-[var(--account-plum)]">
                     {ar ? "محفوظاتك الجميلة" : "Your saved pieces"}
                   </h3>
-                  <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">
-                    {ar
-                      ? "الأشياء التي أحببتِها ولم تختاريها بعد."
-                      : "Pieces you loved but haven’t chosen yet."}
-                  </p>
-                  <div className="mt-5 space-y-4">
-                    {wishProducts.slice(0, 3).map((p) => (
+                  <div className="mt-4 space-y-3">
+                    {wishProducts.slice(0, 2).map((p) => (
                       <WishRow
                         key={p.id}
                         product={p}
@@ -628,7 +744,7 @@ export function AccountSettings() {
                       />
                     ))}
                     {!wishProducts.length ? (
-                      <p className="py-6 text-center text-[0.85rem] text-[var(--account-muted)]">
+                      <p className="py-4 text-center text-[0.82rem] text-[var(--account-muted)]">
                         {ar ? "قائمتكِ فارغة حالياً." : "Your list is empty for now."}
                       </p>
                     ) : null}
@@ -636,106 +752,32 @@ export function AccountSettings() {
                   <button
                     type="button"
                     onClick={() => goTo("wishlist")}
-                    className="mt-4 text-[0.8rem] text-[var(--account-plum)] underline underline-offset-4"
+                    className="mt-3 text-[0.78rem] text-[var(--account-plum)] underline underline-offset-4"
                   >
                     {ar ? "عرض الكل" : "View all"}
                   </button>
                 </div>
 
-                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6">
-                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
-                    {ar ? "عناوين التوصيل" : "Delivery addresses"}
+                <div className="acc-card">
+                  <h3 className="text-[0.95rem] font-semibold text-[var(--account-plum)]">
+                    {ar ? "لارسا" : "LARSA"}
                   </h3>
-                  <div className="mt-5 rounded-[16px] border border-[var(--account-border)] bg-[var(--account-lilac)]/40 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-[0.95rem] font-medium text-[var(--account-plum)]">
-                          {ar ? "المنزل" : "Home"}
-                        </p>
-                        <p className="mt-1 text-[0.85rem] text-[var(--account-muted)]">
-                          {customer.address ||
-                            (ar ? "أضيفي عنوانكِ الافتراضي" : "Add your default address")}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-white px-2.5 py-1 text-[10px] text-[var(--account-plum)] ring-1 ring-[var(--account-border)]">
-                        {ar ? "افتراضي" : "Default"}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => goTo("addresses")}
-                    className="mt-4 text-[0.85rem] text-[var(--account-plum)]"
+                  <p className="mt-2 text-[0.84rem] text-[var(--account-muted)]">
+                    {ar
+                      ? "مستشارتك الشخصية لاكتشاف روتين جمالكِ."
+                      : "Your personal guide to discovering your beauty ritual."}
+                  </p>
+                  <Link
+                    href="/advisor"
+                    className="acc-edit-btn mt-4"
                   >
-                    {ar ? "+ إضافة عنوان جديد" : "+ Add a new address"}
-                  </button>
-                </div>
-
-                <div className="rounded-[22px] border border-[var(--account-border)] bg-white p-5 sm:p-6">
-                  <h3 className="font-display text-[1.1rem] font-semibold text-[var(--account-plum)]">
-                    {ar ? "معلوماتك" : "Your details"}
-                  </h3>
-                  <div className="mt-5 flex items-center gap-3">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--account-lilac)] font-latin text-lg font-semibold text-[var(--account-plum)]">
-                      {name.slice(0, 1).toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-[var(--account-plum)]">
-                        {customer.fullName}
-                      </p>
-                      <p className="truncate text-[0.8rem] text-[var(--account-muted)]" dir="ltr">
-                        {customer.email}
-                      </p>
-                      <p className="text-[0.8rem] text-[var(--account-muted)]" dir="ltr">
-                        {formatIraqMobileLocal(customer.phone) || customer.phone}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => goTo("profile")}
-                    className="mt-5 rounded-full border border-[var(--account-border)] px-4 py-2 text-[0.85rem] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
-                  >
-                    {ar ? "تعديل المعلومات" : "Edit details"}
-                  </button>
+                    {ar ? "تحدثي مع لارسا" : "Talk to LARSA"}
+                    <AccIcon name="spark" size={13} />
+                  </Link>
                 </div>
               </section>
 
-              {/* Beauty Club CTA */}
-              <section
-                className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)] px-6 py-9 sm:px-10"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #F3EDF7 0%, #FBFAFC 42%, #EDE4F2 100%)",
-                }}
-              >
-                <div
-                  className="pointer-events-none absolute -end-8 -top-10 h-40 w-40 rounded-full opacity-40"
-                  style={{
-                    background:
-                      "radial-gradient(circle, rgba(196,176,208,0.55), transparent 70%)",
-                  }}
-                />
-                <p className="font-brand relative text-[1.05rem] tracking-[0.24em] text-[var(--account-plum)]">
-                  VELORA
-                </p>
-                <h2 className="font-latin relative mt-2 text-[1.4rem] font-semibold tracking-[0.08em] text-[var(--account-plum)]">
-                  VELORA BEAUTY CLUB
-                </h2>
-                <p className="relative mt-3 max-w-md text-[0.95rem] leading-relaxed text-[var(--account-muted)]">
-                  {ar
-                    ? "أكثر من نقاط… إنها تجربتكِ مع VELORA. ادخلي عالم الامتيازات الفاخر."
-                    : "More than points. A beauty experience. Enter your private membership world."}
-                </p>
-                <Link
-                  href="/account/club"
-                  className="relative mt-7 inline-flex items-center justify-center rounded-full bg-[var(--account-plum)] px-6 py-3 text-[0.82rem] font-medium tracking-[0.1em] text-white transition-transform duration-200 hover:scale-[1.02] hover:bg-[var(--account-plum)]/90"
-                >
-                  {ar ? "ادخلي نادي VELORA" : "Enter VELORA Beauty Club"}
-                </Link>
-              </section>
-
-              <section className="rounded-[22px] border border-[rgba(168,62,72,0.12)] bg-gradient-to-l from-[#fdf6f7] to-white p-5 sm:p-6">
+              <section className="mt-5 rounded-[22px] border border-[rgba(168,62,72,0.12)] bg-gradient-to-l from-[#fdf6f7] to-white p-5 sm:mt-6 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-[0.95rem] font-semibold text-[#9b3440]">
@@ -1070,45 +1112,154 @@ function LogoutIcon() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  onClick,
+function AccIcon({
+  name,
+  size = 18,
 }: {
-  label: string;
-  value: string;
-  icon: "bag" | "heart" | "spark" | "truck";
-  onClick?: () => void;
+  name:
+    | "heart"
+    | "spark"
+    | "leaf"
+    | "diamond"
+    | "edit"
+    | "camera"
+    | "ticket"
+    | "points"
+    | "package"
+    | "bag"
+    | "truck"
+    | "check"
+    | "card"
+    | "pin"
+    | "settings"
+    | "shield"
+    | "support";
+  size?: number;
 }) {
-  const className =
-    "rounded-[20px] border border-[var(--account-border)] bg-white px-5 py-5 text-start transition-colors duration-300";
-  const body = (
-    <>
-      <div className="flex items-start justify-between">
-        <MiniIcon name={icon} />
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--account-orchid)]" />
-      </div>
-      <p className="font-latin mt-4 text-[1.85rem] font-semibold tracking-tight text-[var(--account-plum)]">
-        {value}
-      </p>
-      <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">{label}</p>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn(className, "hover:border-[var(--account-orchid)]/50 hover:bg-[var(--account-lilac)]/30")}
-      >
-        {body}
-      </button>
-    );
+  const s = {
+    fill: "none" as const,
+    stroke: "currentColor",
+    strokeWidth: 1.45,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (name) {
+    case "heart":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M12 20s-7-4.35-7-9.1A3.85 3.85 0 0112 7.2a3.85 3.85 0 017 3.7C19 15.65 12 20 12 20z" />
+        </svg>
+      );
+    case "spark":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M12 3.5l1.1 5.2L18 10l-4.9 1.3L12 16.5l-1.1-5.2L6 10l4.9-1.3L12 3.5z" />
+        </svg>
+      );
+    case "leaf":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M5 14c6-1 10-5 12-11-6 2-11 6-12 11z" />
+          <path d="M7 17c2-3 5-5 9-6" />
+        </svg>
+      );
+    case "diamond":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M12 3.5L20 9.5 12 20.5 4 9.5 12 3.5z" />
+        </svg>
+      );
+    case "edit":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M4.5 16.5 15.8 5.2a1.8 1.8 0 012.5 2.5L7 19H4.5v-2.5z" />
+        </svg>
+      );
+    case "camera":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M4.5 8.5h3l1.5-2h6l1.5 2h3v10h-15v-10z" />
+          <circle cx="12" cy="13" r="3" />
+        </svg>
+      );
+    case "ticket":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M4 8.5a2 2 0 002 2 2 2 0 000 3 2 2 0 00-2 2v1.5h16V15.5a2 2 0 00-2-2 2 2 0 000-3 2 2 0 002-2V7H4v1.5z" />
+        </svg>
+      );
+    case "points":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <circle cx="12" cy="12" r="7.5" />
+          <path d="M12 8.5v7M9.5 12h5" />
+        </svg>
+      );
+    case "package":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M4.5 8.5 12 4.5l7.5 4V16L12 20l-7.5-4V8.5z" />
+          <path d="M12 12v8M4.5 8.5 12 12l7.5-3.5" />
+        </svg>
+      );
+    case "bag":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M6 8.5h12l-1 10.5H7L6 8.5z" />
+          <path d="M9 8.5V7a3 3 0 016 0v1.5" />
+        </svg>
+      );
+    case "truck":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M3.5 16.5V8.5h10v8" />
+          <path d="M13.5 10.5h4.2L20 13.8v2.7h-1.2" />
+          <circle cx="7.2" cy="16.8" r="1.6" />
+          <circle cx="16.8" cy="16.8" r="1.6" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M5.5 12.5l4 4 9-10" />
+        </svg>
+      );
+    case "card":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <rect x="3.5" y="6.5" width="17" height="11" rx="2" />
+          <path d="M3.5 10.5h17" />
+        </svg>
+      );
+    case "pin":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" />
+          <circle cx="12" cy="11" r="2.2" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M5.8 5.8l1.6 1.6M16.6 16.6l1.6 1.6M18.2 5.8l-1.6 1.6M7.4 16.6l-1.6 1.6" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M12 3.5l7 3v5.2c0 4.6-3 7.8-7 9-4-1.2-7-4.4-7-9V6.5l7-3z" />
+        </svg>
+      );
+    case "support":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M5 18.5l1.8-2.2A7.5 7.5 0 1118.5 12v1.2A7.5 7.5 0 017.8 18L5 18.5z" />
+        </svg>
+      );
+    default:
+      return null;
   }
-
-  return <div className={className}>{body}</div>;
 }
 
 function WishGridCard({
@@ -1142,7 +1293,7 @@ function WishGridCard({
           aria-label="wishlist"
           className="absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--account-plum)] backdrop-blur-sm"
         >
-          ♥
+          <AccIcon name="heart" size={15} />
         </button>
       </div>
       <div className="p-4">
@@ -1318,39 +1469,5 @@ function ServiceStrip({ ar }: { ar: boolean }) {
         </div>
       ))}
     </section>
-  );
-}
-
-function MiniIcon({ name }: { name: "bag" | "heart" | "spark" | "truck" }) {
-  const common = "text-[var(--account-plum)]";
-  if (name === "heart") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
-        <path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.8C19 15.6 12 20 12 20Z" stroke="currentColor" strokeWidth="1.3" />
-      </svg>
-    );
-  }
-  if (name === "spark") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
-        <path d="M12 3 13.2 9.2 19.5 10.5 13.2 11.8 12 18 10.8 11.8 4.5 10.5 10.8 9.2 12 3Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  if (name === "truck") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
-        <path d="M3 7h11v10H3V7Z" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M14 10h4l3 3v4h-7v-7Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-        <circle cx="7" cy="18" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-        <circle cx="17" cy="18" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={common} aria-hidden>
-      <path d="M4 8h16l-1.2 11.2A2 2 0 0 1 16.81 21H7.19a2 2 0 0 1-1.99-1.8L4 8Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      <path d="M8 8V6.5A4 4 0 0 1 12 2.5 4 4 0 0 1 16 6.5V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
   );
 }

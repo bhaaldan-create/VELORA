@@ -198,6 +198,14 @@ model ClubProgramConfig {
   createdAt DateTime @default(now())
 }
 
+/// إعدادات هيرو الصفحة الرئيسية (شرائح + صور قابلة للتعديل من الأدمن)
+model HomeHeroConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 /// طلبات المتجر — تُحفظ في PostgreSQL (لا يعمل تخزين الملفات على Vercel)
 model Order {
   id            String    @id

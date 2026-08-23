@@ -49,13 +49,13 @@
   --larsa-orbit: #b9a3bc;
 
   /* My VELORA — soft orchid account identity */
-  --account-bg: #fbfafc;
+  --account-bg: #fbfaf8;
   --account-lilac: #f3edf7;
-  --account-orchid: #c4b0d0;
+  --account-orchid: #c9b8d0;
   --account-dust: #d4c4e0;
   --account-plum: #3a1836;
-  --account-muted: #6d526c;
-  --account-border: rgba(58, 24, 54, 0.1);
+  --account-muted: #7a6578;
+  --account-border: rgba(58, 24, 54, 0.08);
 }
 
 /* مظهر ليلي دافئ — يحافظ على هوية VELORA دون توهج بنفسجي */
@@ -322,6 +322,24 @@ html[data-locale="en"] .font-display {
 @media (prefers-reduced-motion: reduce) {
   .motion-safe\:animate-\[larsa-orbit_4\.5s_linear_infinite\] {
     animation: none !important;
+  }
+}
+
+/* Homepage premium hero — inset card like reference mockup */
+.home-hero {
+  min-height: clamp(340px, 52svh, 520px);
+  box-shadow: 0 14px 40px rgba(50, 22, 47, 0.06);
+}
+
+@media (min-width: 640px) {
+  .home-hero {
+    min-height: clamp(380px, 48svh, 480px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-hero {
+    min-height: clamp(400px, 44vh, 460px);
   }
 }
 

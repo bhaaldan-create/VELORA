@@ -34,6 +34,7 @@ import {
   Menu,
   CalendarCheck,
   Wallet,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavId } from "@/lib/admin/nav";
@@ -51,6 +52,7 @@ const NAV_ICONS: Record<AdminNavId, LucideIcon> = {
   employees: UserCog,
   branches: Building2,
   marketing: Megaphone,
+  homepage: Images,
   club: Gem,
   analytics: ChartColumn,
   reports: FileText,

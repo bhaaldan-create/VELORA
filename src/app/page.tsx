@@ -1,9 +1,10 @@
+import { CategoryShowcase } from "@/components/home/CategoryShowcase";
 import { GlobalOrigins } from "@/components/home/GlobalOrigins";
 import { Hero } from "@/components/home/Hero";
 import { LarsaPremium } from "@/components/home/LarsaPremium";
 import { ProductRail } from "@/components/home/ProductRail";
-import { ShopByCategory } from "@/components/home/ShopByCategory";
-import { TrustBenefits } from "@/components/home/TrustBenefits";
+import { PromoBanner } from "@/components/home/PromoBanner";
+import { TrustBar } from "@/components/home/TrustBar";
 import { ContactHelpCard } from "@/components/contact/ContactHelpCard";
 import {
   getBestsellers,
@@ -11,10 +12,12 @@ import {
   getNewArrivals,
   getProductsByCategory,
 } from "@/lib/catalog";
+import { getHomeHeroConfig } from "@/lib/home/config";
 
 export default async function HomePage() {
-  const [newArrivals, bestsellers, skincare, makeup, hair, body, fragrance] =
+  const [heroConfig, newArrivals, bestsellers, skincare, makeup, hair, body, fragrance] =
     await Promise.all([
+      getHomeHeroConfig(),
       getNewArrivals(12),
       getBestsellers(12),
       getProductsByCategory("skincare"),
@@ -25,11 +28,21 @@ export default async function HomePage() {
     ]);
 
   return (
-    <>
-      <Hero />
-      <GlobalOrigins />
+    <div className="home-premium bg-[var(--ivory)]">
+      <Hero config={heroConfig} />
+      <TrustBar />
+      <CategoryShowcase />
+      <PromoBanner />
 
-      <ShopByCategory />
+      <ProductRail
+        title="الأكثر مبيعاً"
+        titleEn="Bestsellers"
+        subtitle="اختيارات العميلات الأكثر حباً"
+        subtitleEn="The pieces clients reach for most"
+        products={bestsellers}
+        href="/shop"
+        tone="ivory"
+      />
 
       <ProductRail
         title="وصل حديثاً"
@@ -41,15 +54,7 @@ export default async function HomePage() {
         tone="mist"
       />
 
-      <ProductRail
-        title="الأكثر مبيعاً"
-        titleEn="Bestsellers"
-        subtitle="اختيارات العميلات الأكثر حباً"
-        subtitleEn="The pieces clients reach for most"
-        products={bestsellers}
-        href="/shop"
-        tone="ivory"
-      />
+      <GlobalOrigins />
 
       <ProductRail
         title="العناية بالبشرة"
@@ -104,8 +109,7 @@ export default async function HomePage() {
       ) : null}
 
       <LarsaPremium />
-      <TrustBenefits />
       <ContactHelpCard />
-    </>
+    </div>
   );
 }

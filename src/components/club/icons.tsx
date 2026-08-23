@@ -154,6 +154,25 @@ export function IconCheck({ className, size = 18 }: IconProps) {
   );
 }
 
+export function IconCrown({ className, size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden {...stroke}>
+      <path d="M4.5 16.5h15l-1.2-7.5L14 12l-2-6.5L10 12 5.7 9l-1.2 7.5z" />
+      <path d="M6 18.5h12" />
+    </svg>
+  );
+}
+
+export function IconHistory({ className, size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden {...stroke}>
+      <path d="M5.5 12a6.5 6.5 0 111.2 3.8" />
+      <path d="M5.5 8.5V12H9" />
+      <path d="M12 8.5V12l2.5 1.5" />
+    </svg>
+  );
+}
+
 export function TierIcon({
   id,
   className,
@@ -206,6 +225,10 @@ export function ClubIcon({
       return <IconClock className={className} size={size} />;
     case "bag":
       return <IconBag className={className} size={size} />;
+    case "crown":
+      return <IconCrown className={className} size={size} />;
+    case "history":
+      return <IconHistory className={className} size={size} />;
     case "spark":
     default:
       return <IconSpark className={className} size={size} />;

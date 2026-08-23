@@ -85,9 +85,9 @@ export const primaryNavLinks = [
 /** شريط الجوال */
 export const bottomNavLinks = [
   { href: "/", labelAr: "الرئيسية", id: "home" as const },
-  { href: "/shop", labelAr: "التسوق", id: "shop" as const },
+  { href: "/cart", labelAr: "السلة", id: "cart" as const },
   { href: "/search", labelAr: "بحث", id: "search" as const },
-  { href: "/advisor", labelAr: "لارسا", id: "advisor" as const },
+  { href: "/account/wishlist", labelAr: "المفضلة", id: "wishlist" as const },
   { href: "/account", labelAr: "حسابي", id: "account" as const },
 ] as const;
 

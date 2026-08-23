@@ -33,15 +33,20 @@ export function ProductCard({
         : null;
 
   return (
-    <article className={cn("group flex h-full flex-col", className)}>
-      <div className="relative overflow-hidden bg-[var(--mist)]/60">
+    <article
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-[22px] border border-[var(--plum)]/8 bg-[color-mix(in_srgb,var(--ivory)_92%,white)] shadow-[0_10px_28px_rgba(50,22,47,0.04)] transition-shadow duration-300 hover:shadow-[0_16px_36px_rgba(50,22,47,0.07)]",
+        className,
+      )}
+    >
+      <div className="relative overflow-hidden bg-[var(--mist)]/40">
         <WishlistHeartButton
           productId={product.id}
-          className="absolute top-3 end-3 bg-[var(--ivory)]/90 backdrop-blur-sm"
+          className="absolute top-3 end-3 z-10 bg-[var(--ivory)]/90 backdrop-blur-sm"
         />
 
         {badge ? (
-          <span className="absolute top-3 start-3 z-10 bg-[var(--ivory)]/95 px-2 py-1 text-[10px] font-medium tracking-[0.12em] text-[var(--plum)] uppercase">
+          <span className="absolute top-3 start-3 z-10 rounded-full bg-[var(--ivory)]/95 px-2.5 py-1 text-[10px] font-medium tracking-[0.12em] text-[var(--plum)] uppercase">
             {badge}
           </span>
         ) : null}
@@ -58,7 +63,7 @@ export function ProductCard({
         </Link>
       </div>
 
-      <div className="flex flex-1 flex-col pt-4">
+      <div className="flex flex-1 flex-col p-4 pt-3.5">
         <p
           className="text-[10px] font-medium tracking-[0.18em] text-[var(--muted)] uppercase"
           dir="ltr"
@@ -83,11 +88,11 @@ export function ProductCard({
             type="button"
             onClick={() => addItem(product)}
             className={cn(
-              "w-full border border-[var(--plum)]/15 bg-transparent px-3 py-2.5",
+              "w-full rounded-full border border-[var(--plum)]/15 bg-transparent px-3 py-2.5",
               "text-[11px] font-medium tracking-[0.14em] text-[var(--plum)] uppercase",
               "transition-all duration-300",
               "hover:border-[var(--plum)]/40 hover:bg-[var(--plum)] hover:text-[var(--btn-fg)]",
-              "md:translate-y-1 md:opacity-90 md:group-hover:translate-y-0 md:group-hover:opacity-100",
+              "active:scale-[0.98]",
             )}
           >
             {t.addToBag}
