@@ -354,6 +354,12 @@ export function AccountSettings() {
                   </button>
                 );
               })}
+              <Link
+                href="/account/club"
+                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-gradient-to-l from-[#f3edf7] to-white px-4 py-2.5 text-start text-[0.9rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:border-[var(--account-orchid)]/50"
+              >
+                {ar ? "نادي الجمال" : "Beauty Club"}
+              </Link>
             </nav>
 
             <div className="mt-8 hidden lg:block">
@@ -433,6 +439,7 @@ export function AccountSettings() {
                     ar ? "ar-IQ" : "en-US",
                   )}
                   icon="spark"
+                  onClick={() => router.push("/account/club")}
                 />
                 <StatCard
                   label={ar ? "طلبات قيد الوصول" : "On the way"}
@@ -694,31 +701,38 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              {/* Beauty Club */}
+              {/* Beauty Club CTA */}
               <section
-                className="overflow-hidden rounded-[24px] border border-[var(--account-border)] px-6 py-8 sm:px-10"
+                className="relative overflow-hidden rounded-[28px] border border-[var(--account-border)] px-6 py-9 sm:px-10"
                 style={{
                   background:
-                    "linear-gradient(135deg, #F3EDF7 0%, #FBFAFC 45%, #EDE4F2 100%)",
+                    "linear-gradient(145deg, #F3EDF7 0%, #FBFAFC 42%, #EDE4F2 100%)",
                 }}
               >
-                <p className="font-brand text-[1.1rem] tracking-[0.2em] text-[var(--account-plum)]">
+                <div
+                  className="pointer-events-none absolute -end-8 -top-10 h-40 w-40 rounded-full opacity-40"
+                  style={{
+                    background:
+                      "radial-gradient(circle, rgba(196,176,208,0.55), transparent 70%)",
+                  }}
+                />
+                <p className="font-brand relative text-[1.05rem] tracking-[0.24em] text-[var(--account-plum)]">
                   VELORA
                 </p>
-                <h2 className="font-latin mt-2 text-[1.35rem] font-semibold tracking-[0.06em] text-[var(--account-plum)]">
+                <h2 className="font-latin relative mt-2 text-[1.4rem] font-semibold tracking-[0.08em] text-[var(--account-plum)]">
                   VELORA BEAUTY CLUB
                 </h2>
-                <p className="mt-3 max-w-md text-[0.95rem] text-[var(--account-muted)]">
+                <p className="relative mt-3 max-w-md text-[0.95rem] leading-relaxed text-[var(--account-muted)]">
                   {ar
-                    ? "انضمي إلى نادي فيلورا وتمتعي بمزايا حصرية."
-                    : "Join the VELORA club and enjoy exclusive privileges."}
+                    ? "أكثر من نقاط… إنها تجربتكِ مع VELORA. ادخلي عالم الامتيازات الفاخر."
+                    : "More than points. A beauty experience. Enter your private membership world."}
                 </p>
-                <button
-                  type="button"
-                  className="mt-6 rounded-full bg-[var(--account-plum)] px-5 py-2.5 text-[0.85rem] font-medium text-white"
+                <Link
+                  href="/account/club"
+                  className="relative mt-7 inline-flex items-center justify-center rounded-full bg-[var(--account-plum)] px-6 py-3 text-[0.82rem] font-medium tracking-[0.1em] text-white transition-transform duration-200 hover:scale-[1.02] hover:bg-[var(--account-plum)]/90"
                 >
-                  {ar ? "اكتشفي المزيد" : "Discover more"}
-                </button>
+                  {ar ? "ادخلي نادي VELORA" : "Enter VELORA Beauty Club"}
+                </Link>
               </section>
 
               <section className="rounded-[22px] border border-[rgba(168,62,72,0.12)] bg-gradient-to-l from-[#fdf6f7] to-white p-5 sm:p-6">

@@ -10,6 +10,7 @@ import {
   UserCog,
   Building2,
   Megaphone,
+  Gem,
   ChartColumn,
   FileText,
   Settings,
@@ -50,6 +51,7 @@ const NAV_ICONS: Record<AdminNavId, LucideIcon> = {
   employees: UserCog,
   branches: Building2,
   marketing: Megaphone,
+  club: Gem,
   analytics: ChartColumn,
   reports: FileText,
   settings: Settings,
@@ -103,6 +105,7 @@ export {
   Settings,
   CalendarCheck,
   Wallet,
+  Gem,
 };
 
 export type { LucideIcon };
