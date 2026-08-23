@@ -73,28 +73,35 @@ model Branch {
   @@index([isActive, sortOrder])
 }
 
-/// موظف في متجر VELORA — للوحة الإدارة (حضور ورواتب)
+/// موظف في متجر VELORA — للوحة الإدارة (حضور ورواتب وتسجيل دخول)
 model Employee {
-  id          String   @id @default(cuid())
-  name        String
-  phone       String   @default("")
+  id           String    @id @default(cuid())
+  name         String
+  phone        String    @default("")
   /// الدور: manager | cashier | warehouse | delivery | advisor | other
-  role        String   @default("other")
+  role         String    @default("other")
   /// الراتب الأساسي الشهري بالدينار العراقي
-  baseSalary  Int      @default(0)
-  hireDate    String
-  isActive    Boolean  @default(true)
-  notes       String   @default("")
-  branchId    String
-  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  baseSalary   Int       @default(0)
+  hireDate     String
+  isActive     Boolean   @default(true)
+  notes        String    @default("")
+  /// اسم مستخدم لتسجيل الدخول إلى لوحة الإدارة (اختياري)
+  username     String?   @unique
+  /// كلمة المرور مشفّرة PBKDF2 — لا تُعاد للواجهة أبداً
+  passwordHash String?
+  /// آخر نشاط داخل لوحة الإدارة (لمؤشر «نشط على الموقع»)
+  lastSeenAt   DateTime?
+  branchId     String
+  branch       Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   attendances Attendance[]
   salaryItems SalaryItem[]
 
   @@index([isActive, role])
   @@index([branchId])
+  @@index([lastSeenAt])
 }
 
 /// سجل حضور يومي لموظف

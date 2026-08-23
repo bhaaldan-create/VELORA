@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { isEmployeeOnline } from "@/lib/admin-auth";
+import { hashPassword } from "@/lib/customer-auth";
 import {
   ATTENDANCE_STATUSES,
   DEFAULT_BRANCHES,
@@ -48,6 +50,9 @@ function mapEmployee(row: {
   hireDate: string;
   isActive: boolean;
   notes: string;
+  username: string | null;
+  passwordHash: string | null;
+  lastSeenAt: Date | null;
   branchId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -64,9 +69,17 @@ function mapEmployee(row: {
     notes: row.notes,
     branchId: row.branchId,
     branchName: row.branch.name,
+    username: row.username,
+    hasLogin: Boolean(row.username && row.passwordHash),
+    isOnline: isEmployeeOnline(row.lastSeenAt),
+    lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function normalizeUsername(raw: string) {
+  return raw.trim();
 }
 
 function mapAttendance(row: {
@@ -131,6 +144,120 @@ export async function ensureDefaultBranches() {
         sortOrder: b.sortOrder,
       },
     });
+  }
+}
+
+const DEFAULT_STAFF_LOGINS = [
+  {
+    username: "MuhammadBahaa",
+    password: "tabarakeyes",
+    name: "محمد بهاء",
+    role: "manager" as EmployeeRole,
+  },
+  {
+    username: "Ahmedmazin",
+    password: "55668899",
+    name: "أحمد مازن",
+    role: "manager" as EmployeeRole,
+  },
+  {
+    username: "YousefWathiq",
+    password: "55772211",
+    name: "يوسف واثق",
+    role: "manager" as EmployeeRole,
+  },
+] as const;
+
+/** يضمن حسابات الدخول الابتدائية للفريق */
+export async function ensureDefaultStaffLogins() {
+  await ensureDefaultBranches();
+  const branch =
+    (await prisma.branch.findFirst({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    })) || (await prisma.branch.findFirst({ orderBy: { sortOrder: "asc" } }));
+  if (!branch) return;
+
+  for (const staff of DEFAULT_STAFF_LOGINS) {
+    const existing = await prisma.employee.findUnique({
+      where: { username: staff.username },
+    });
+    if (existing) {
+      if (!existing.passwordHash || !existing.isActive) {
+        await prisma.employee.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash:
+              existing.passwordHash || (await hashPassword(staff.password)),
+            isActive: true,
+            name: existing.name || staff.name,
+          },
+        });
+      }
+      continue;
+    }
+
+    const byName = await prisma.employee.findFirst({
+      where: { name: staff.name, username: null },
+    });
+    if (byName) {
+      await prisma.employee.update({
+        where: { id: byName.id },
+        data: {
+          username: staff.username,
+          passwordHash: await hashPassword(staff.password),
+          role: staff.role,
+          isActive: true,
+        },
+      });
+      continue;
+    }
+
+    await prisma.employee.create({
+      data: {
+        name: staff.name,
+        username: staff.username,
+        passwordHash: await hashPassword(staff.password),
+        role: staff.role,
+        baseSalary: 0,
+        hireDate: todayKey(),
+        phone: "",
+        notes: "حساب دخول لوحة الإدارة",
+        branchId: branch.id,
+        isActive: true,
+      },
+    });
+  }
+}
+
+export async function findEmployeeByUsername(username: string) {
+  const u = normalizeUsername(username);
+  if (!u) return null;
+  // case-insensitive match
+  const rows = await prisma.employee.findMany({
+    where: { username: { not: null } },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      passwordHash: true,
+      isActive: true,
+    },
+  });
+  const hit = rows.find(
+    (r) => r.username && r.username.toLowerCase() === u.toLowerCase(),
+  );
+  return hit ?? null;
+}
+
+export async function touchEmployeePresence(employeeId: string) {
+  try {
+    await prisma.employee.update({
+      where: { id: employeeId },
+      data: { lastSeenAt: new Date() },
+    });
+  } catch {
+    // موظف محذوف أو جلسة قديمة — تجاهل
   }
 }
 
@@ -210,6 +337,7 @@ export async function deleteBranch(id: string): Promise<
 
 export async function listEmployees(): Promise<AdminEmployee[]> {
   await ensureDefaultBranches();
+  await ensureDefaultStaffLogins();
   const rows = await prisma.employee.findMany({
     include: { branch: { select: { name: true } } },
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
@@ -225,11 +353,22 @@ export async function createEmployee(data: {
   hireDate?: string;
   notes?: string;
   branchId: string;
+  username?: string;
+  password?: string;
 }): Promise<AdminEmployee> {
   await ensureDefaultBranches();
   const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
   if (!branch || !branch.isActive) {
     throw new Error("الفرع غير موجود أو غير نشط.");
+  }
+
+  const username = data.username ? normalizeUsername(data.username) : null;
+  if (username) {
+    const taken = await prisma.employee.findUnique({ where: { username } });
+    if (taken) throw new Error("اسم المستخدم مستخدم مسبقاً.");
+  }
+  if (username && !data.password?.trim()) {
+    throw new Error("كلمة المرور مطلوبة مع اسم المستخدم.");
   }
 
   const row = await prisma.employee.create({
@@ -241,6 +380,11 @@ export async function createEmployee(data: {
       hireDate: data.hireDate || todayKey(),
       notes: (data.notes || "").trim(),
       branchId: data.branchId,
+      username,
+      passwordHash:
+        username && data.password?.trim()
+          ? await hashPassword(data.password.trim())
+          : null,
     },
     include: { branch: { select: { name: true } } },
   });
@@ -258,6 +402,9 @@ export async function updateEmployee(
     isActive: boolean;
     notes: string;
     branchId: string;
+    username: string | null;
+    password: string;
+    clearLogin: boolean;
   }>,
 ): Promise<AdminEmployee | null> {
   const existing = await prisma.employee.findUnique({ where: { id } });
@@ -268,6 +415,39 @@ export async function updateEmployee(
       where: { id: data.branchId },
     });
     if (!branch) throw new Error("الفرع غير موجود.");
+  }
+
+  let usernameUpdate: string | null | undefined;
+  if (data.clearLogin) {
+    usernameUpdate = null;
+  } else if (typeof data.username === "string") {
+    const u = normalizeUsername(data.username);
+    usernameUpdate = u || null;
+    if (usernameUpdate) {
+      const taken = await prisma.employee.findFirst({
+        where: { username: usernameUpdate, NOT: { id } },
+      });
+      if (taken) throw new Error("اسم المستخدم مستخدم مسبقاً.");
+    }
+  }
+
+  const nextUsername =
+    usernameUpdate !== undefined ? usernameUpdate : existing.username;
+
+  let passwordHash: string | null | undefined;
+  if (data.clearLogin) {
+    passwordHash = null;
+  } else if (typeof data.password === "string" && data.password.trim()) {
+    passwordHash = await hashPassword(data.password.trim());
+  } else if (usernameUpdate === null) {
+    passwordHash = null;
+  }
+
+  if (nextUsername && !existing.passwordHash && !passwordHash && !data.clearLogin) {
+    // تعيين يوزرنيم جديد بدون كلمة مرور غير مسموح
+    if (typeof data.password !== "string" || !data.password.trim()) {
+      throw new Error("أدخلي كلمة مرور عند تعيين اسم المستخدم.");
+    }
   }
 
   const row = await prisma.employee.update({
@@ -283,6 +463,8 @@ export async function updateEmployee(
       ...(typeof data.isActive === "boolean" ? { isActive: data.isActive } : {}),
       ...(typeof data.notes === "string" ? { notes: data.notes.trim() } : {}),
       ...(typeof data.branchId === "string" ? { branchId: data.branchId } : {}),
+      ...(usernameUpdate !== undefined ? { username: usernameUpdate } : {}),
+      ...(passwordHash !== undefined ? { passwordHash } : {}),
     },
     include: { branch: { select: { name: true } } },
   });

@@ -51,6 +51,13 @@ export type AdminEmployee = {
   notes: string;
   branchId: string;
   branchName: string;
+  /** اسم مستخدم الدخول — إن وُجد */
+  username: string | null;
+  /** هل لديه كلمة مرور مضبوطة */
+  hasLogin: boolean;
+  /** نشط الآن داخل لوحة الإدارة (آخر ظهور ≤ 5 دقائق) */
+  isOnline: boolean;
+  lastSeenAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

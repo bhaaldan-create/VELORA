@@ -472,3 +472,58 @@ html[data-locale="en"] .font-display {
   animation: admin-skeleton 1.4s ease infinite;
   border-radius: var(--admin-radius-sm);
 }
+
+/* Admin login gateway */
+.admin-login-input {
+  width: 100%;
+  height: 3rem;
+  border-radius: 12px;
+  border: 1px solid #e8e2e0;
+  background: #fff;
+  padding: 0 0.95rem;
+  font-size: 0.9375rem;
+  color: #342239;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-login-input::placeholder {
+  color: #b5abb2;
+}
+
+.admin-login-input:focus {
+  border-color: #49334f;
+  box-shadow: 0 0 0 3px rgba(73, 51, 79, 0.12);
+}
+
+.admin-login-submit {
+  display: flex;
+  width: 100%;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #342239;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    opacity 0.2s ease;
+}
+
+.admin-login-submit:hover:not(:disabled) {
+  background: #3e2944;
+}
+
+.admin-login-submit:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.admin-login-submit:disabled {
+  opacity: 0.45;
+}

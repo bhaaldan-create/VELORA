@@ -67,6 +67,16 @@ export function AdminShell({ title, subtitle, active, children }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // نبضة حضور كل دقيقة — مؤشر «نشط على الموقع»
+  useEffect(() => {
+    function beat() {
+      void fetch("/api/admin/presence", { method: "POST" }).catch(() => {});
+    }
+    beat();
+    const id = window.setInterval(beat, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("velora-admin-sidebar");

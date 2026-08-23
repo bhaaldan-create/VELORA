@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import {
   Building2,
   CalendarCheck,
@@ -88,6 +88,20 @@ export function EmployeesAdmin({
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [, startTransition] = useTransition();
 
+  // حدّث مؤشر الاتصال كل 30 ثانية
+  useEffect(() => {
+    if (tab !== "employees") return;
+    const id = window.setInterval(() => {
+      void fetch("/api/admin/employees")
+        .then((r) => r.json())
+        .then((json: { ok?: boolean; employees?: AdminEmployee[] }) => {
+          if (json.ok && json.employees) setEmployees(json.employees);
+        })
+        .catch(() => {});
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, [tab]);
+
   const activeBranches = useMemo(
     () => branches.filter((b) => b.isActive),
     [branches],
@@ -101,6 +115,8 @@ export function EmployeesAdmin({
     hireDate: todayKey(),
     notes: "",
     branchId: initialBranches.find((b) => b.isActive)?.id || "",
+    username: "",
+    password: "",
   });
 
   const [newBranch, setNewBranch] = useState({
@@ -236,6 +252,12 @@ export function EmployeesAdmin({
           hireDate: newEmp.hireDate,
           notes: newEmp.notes.trim(),
           branchId: newEmp.branchId,
+          ...(newEmp.username.trim()
+            ? {
+                username: newEmp.username.trim(),
+                password: newEmp.password,
+              }
+            : {}),
         }),
       });
       const json = (await res.json()) as {
@@ -264,6 +286,8 @@ export function EmployeesAdmin({
         hireDate: todayKey(),
         notes: "",
         branchId: newEmp.branchId,
+        username: "",
+        password: "",
       });
       setShowAddEmployee(false);
       toast.success("تم إضافة الموظف");
@@ -278,7 +302,14 @@ export function EmployeesAdmin({
     }
   }
 
-  async function patchEmployee(id: string, data: Partial<AdminEmployee>) {
+  async function patchEmployee(
+    id: string,
+    data: Partial<AdminEmployee> & {
+      password?: string;
+      clearLogin?: boolean;
+      username?: string | null;
+    },
+  ) {
     setPending(true);
     setError(null);
     try {
@@ -580,7 +611,7 @@ export function EmployeesAdmin({
     <div className="space-y-5">
       <PageHeader
         title="الموظفون"
-        description="الفريق، الحضور، الرواتب، والفروع — بنفس لغة VELORA Admin OS."
+        description="الفريق، الحضور، الرواتب، وحسابات الدخول — مع مؤشر الاتصال بالموقع."
         actions={
           tab === "employees" ? (
             <AdminButton
@@ -908,6 +939,31 @@ export function EmployeesAdmin({
                     className={fieldClass}
                   />
                 </Field>
+                <Field label="اسم المستخدم (دخول اللوحة)">
+                  <input
+                    value={newEmp.username}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, username: e.target.value }))
+                    }
+                    className={fieldClass}
+                    dir="ltr"
+                    placeholder="مثال: SaraAhmed"
+                    autoComplete="off"
+                  />
+                </Field>
+                <Field label="كلمة المرور">
+                  <input
+                    type="password"
+                    value={newEmp.password}
+                    onChange={(e) =>
+                      setNewEmp((s) => ({ ...s, password: e.target.value }))
+                    }
+                    className={fieldClass}
+                    dir="ltr"
+                    placeholder="٦ أحرف على الأقل"
+                    autoComplete="new-password"
+                  />
+                </Field>
               </div>
               <AdminButton
                 className="mt-4"
@@ -942,6 +998,7 @@ export function EmployeesAdmin({
                         </span>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
+                            <OnlineDot online={e.isOnline} />
                             <Badge tone={e.isActive ? "success" : "neutral"}>
                               {e.isActive ? "نشط" : "موقوف"}
                             </Badge>
@@ -949,6 +1006,9 @@ export function EmployeesAdmin({
                             <span className="text-[11px] text-[var(--admin-text-muted)]">
                               {roleLabel(e.role)}
                             </span>
+                            {e.hasLogin ? (
+                              <Badge tone="progress">حساب دخول</Badge>
+                            ) : null}
                           </div>
                           <h3 className="mt-1.5 text-[15px] font-semibold text-[var(--admin-text)]">
                             {e.name}
@@ -958,6 +1018,14 @@ export function EmployeesAdmin({
                             dir="ltr"
                           >
                             {e.phone || "بدون هاتف"} · تعيين {e.hireDate}
+                            {e.username ? ` · @${e.username}` : ""}
+                          </p>
+                          <p className="mt-1 text-[11px] text-[var(--admin-text-muted)]">
+                            {e.isOnline
+                              ? "نشط على الموقع الآن"
+                              : e.lastSeenAt
+                                ? `آخر ظهور ${new Date(e.lastSeenAt).toLocaleString("ar-IQ")}`
+                                : "غير متصل بالموقع"}
                           </p>
                         </div>
                       </div>
@@ -1025,6 +1093,30 @@ export function EmployeesAdmin({
                             id={`salary-${e.id}`}
                           />
                         </Field>
+                        <Field label="اسم المستخدم">
+                          <input
+                            defaultValue={e.username || ""}
+                            className={fieldClass}
+                            dir="ltr"
+                            id={`username-${e.id}`}
+                            placeholder="اختياري"
+                            autoComplete="off"
+                          />
+                        </Field>
+                        <Field label="كلمة مرور جديدة">
+                          <input
+                            type="password"
+                            className={fieldClass}
+                            dir="ltr"
+                            id={`password-${e.id}`}
+                            placeholder={
+                              e.hasLogin
+                                ? "اتركيها فارغة للإبقاء"
+                                : "٦ أحرف على الأقل"
+                            }
+                            autoComplete="new-password"
+                          />
+                        </Field>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <AdminButton
@@ -1058,17 +1150,45 @@ export function EmployeesAdmin({
                                 ) as HTMLInputElement
                               ).value,
                             );
+                            const username = (
+                              document.getElementById(
+                                `username-${e.id}`,
+                              ) as HTMLInputElement
+                            ).value.trim();
+                            const password = (
+                              document.getElementById(
+                                `password-${e.id}`,
+                              ) as HTMLInputElement
+                            ).value;
                             void patchEmployee(e.id, {
                               name,
                               phone,
                               role,
                               branchId,
                               baseSalary,
+                              username: username || null,
+                              ...(password.trim()
+                                ? { password: password.trim() }
+                                : {}),
                             });
                           }}
                         >
                           حفظ التعديلات
                         </AdminButton>
+                        {e.hasLogin ? (
+                          <AdminButton
+                            size="sm"
+                            variant="secondary"
+                            disabled={pending}
+                            onClick={() =>
+                              void patchEmployee(e.id, {
+                                clearLogin: true,
+                              })
+                            }
+                          >
+                            إزالة حساب الدخول
+                          </AdminButton>
+                        ) : null}
                         <AdminButton
                           size="sm"
                           variant="secondary"
@@ -1419,5 +1539,32 @@ function Field({
       {label}
       {children}
     </label>
+  );
+}
+
+function OnlineDot({ online }: { online: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] px-2 py-0.5 text-[10px] font-medium"
+      title={online ? "نشط على الموقع" : "غير متصل"}
+    >
+      <span
+        className={`size-2 rounded-full ${
+          online
+            ? "bg-[var(--admin-success)] shadow-[0_0_0_3px_var(--admin-success-bg)]"
+            : "bg-[#b0a6ad]"
+        }`}
+        aria-hidden
+      />
+      <span
+        className={
+          online
+            ? "text-[var(--admin-success)]"
+            : "text-[var(--admin-text-muted)]"
+        }
+      >
+        {online ? "متصل" : "غير متصل"}
+      </span>
+    </span>
   );
 }

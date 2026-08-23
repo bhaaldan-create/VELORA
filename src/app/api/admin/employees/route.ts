@@ -23,6 +23,8 @@ const createSchema = z.object({
   hireDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().max(500).optional(),
   branchId: z.string().min(1),
+  username: z.string().min(3).max(60).optional(),
+  password: z.string().min(6).max(120).optional(),
 });
 
 export async function POST(req: Request) {
@@ -43,7 +45,10 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("[admin/employees] POST failed", error);
     const message =
-      error instanceof Error && error.message.includes("الفرع")
+      error instanceof Error &&
+      (error.message.includes("الفرع") ||
+        error.message.includes("المستخدم") ||
+        error.message.includes("كلمة المرور"))
         ? error.message
         : "تعذّر إضافة الموظف.";
     return Response.json({ ok: false, error: message }, { status: 500 });
@@ -63,6 +68,9 @@ const patchSchema = z.object({
   isActive: z.boolean().optional(),
   notes: z.string().max(500).optional(),
   branchId: z.string().min(1).optional(),
+  username: z.string().min(3).max(60).nullable().optional(),
+  password: z.string().min(6).max(120).optional(),
+  clearLogin: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -96,7 +104,10 @@ export async function PATCH(req: Request) {
   } catch (error) {
     console.error("[admin/employees] PATCH failed", error);
     const message =
-      error instanceof Error && error.message.includes("الفرع")
+      error instanceof Error &&
+      (error.message.includes("الفرع") ||
+        error.message.includes("المستخدم") ||
+        error.message.includes("كلمة المرور"))
         ? error.message
         : "تعذّر تحديث الموظف.";
     return Response.json({ ok: false, error: message }, { status: 500 });
