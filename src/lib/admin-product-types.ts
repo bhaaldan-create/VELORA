@@ -18,6 +18,16 @@ export type AdminProduct = {
   updatedAt: string;
 };
 
+/** تفاصيل كاملة لمحرّر المنتج */
+export type AdminProductDetail = AdminProduct & {
+  description: string;
+  descriptionAr: string;
+  benefits: string[];
+  benefitsAr: string[];
+  ingredients: string[];
+  concerns: string[];
+};
+
 export type AdminProductStats = {
   all: number;
   active: number;
@@ -37,3 +47,10 @@ export function countAdminProductStats(products: AdminProduct[]): AdminProductSt
     onSale: products.filter((p) => p.discountPercent > 0).length,
   };
 }
+
+export const ADMIN_CATEGORY_LABELS: Record<string, string> = {
+  skincare: "العناية بالبشرة",
+  "body-care": "العناية بالجسم",
+  "hair-care": "العناية بالشعر",
+  makeup: "المكياج",
+};

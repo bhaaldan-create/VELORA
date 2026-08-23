@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   countAdminProductStats,
   createAdminProduct,
+  deleteAdminProduct,
+  getAdminProductById,
   listAdminProducts,
   updateAdminProduct,
 } from "@/lib/admin-products";
@@ -35,6 +37,18 @@ const stringListRequired = z
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+  const id = (searchParams.get("id") || "").trim();
+  if (id) {
+    const product = await getAdminProductById(id);
+    if (!product) {
+      return Response.json(
+        { ok: false, error: "المنتج غير موجود." },
+        { status: 404 },
+      );
+    }
+    return Response.json({ ok: true, product });
+  }
+
   const q = (searchParams.get("q") || "").trim().toLowerCase();
   const visibility = searchParams.get("visibility") || "all";
 
@@ -169,11 +183,39 @@ export async function PATCH(req: Request) {
       );
     }
 
-    return Response.json({ ok: true, product });
+    const detail = await getAdminProductById(id);
+    return Response.json({ ok: true, product: detail ?? product });
   } catch (error) {
     console.error("[admin/products] PATCH failed", error);
     const message =
       error instanceof Error ? error.message : "تعذّر تحديث المنتج.";
     return Response.json({ ok: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json();
+    const id = typeof body?.id === "string" ? body.id.trim() : "";
+    if (!id) {
+      return Response.json(
+        { ok: false, error: "معرّف المنتج مطلوب." },
+        { status: 400 },
+      );
+    }
+    const ok = await deleteAdminProduct(id);
+    if (!ok) {
+      return Response.json(
+        { ok: false, error: "المنتج غير موجود." },
+        { status: 404 },
+      );
+    }
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("[admin/products] DELETE failed", error);
+    return Response.json(
+      { ok: false, error: "تعذّر حذف المنتج." },
+      { status: 500 },
+    );
   }
 }

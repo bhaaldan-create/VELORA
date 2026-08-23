@@ -1,13 +1,28 @@
 import { prisma } from "@/lib/db";
-import type { AdminProduct } from "@/lib/admin-product-types";
+import type {
+  AdminProduct,
+  AdminProductDetail,
+} from "@/lib/admin-product-types";
 import { salePriceFromBase } from "@/lib/pricing";
 import type { CategorySlug, SkinConcern } from "@/types";
 
-export type { AdminProduct, AdminProductStats } from "@/lib/admin-product-types";
-export { countAdminProductStats } from "@/lib/admin-product-types";
+export type {
+  AdminProduct,
+  AdminProductDetail,
+  AdminProductStats,
+} from "@/lib/admin-product-types";
+export {
+  countAdminProductStats,
+  ADMIN_CATEGORY_LABELS,
+} from "@/lib/admin-product-types";
 
 const DEFAULT_TONE =
   "linear-gradient(145deg, #E8D5D8 0%, #C9A8B0 45%, #3D2640 100%)";
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => String(v).trim()).filter(Boolean);
+}
 
 function toAdminProduct(row: {
   id: string;
@@ -45,11 +60,52 @@ function toAdminProduct(row: {
   };
 }
 
+function toAdminProductDetail(row: {
+  id: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+  categorySlug: string;
+  price: number;
+  discountPercent: number;
+  stock: number;
+  isActive: boolean;
+  isBestseller: boolean;
+  isNew: boolean;
+  size: string;
+  imageUrl: string | null;
+  updatedAt: Date;
+  description: string;
+  descriptionAr: string;
+  benefitsJson: unknown;
+  benefitsArJson: unknown;
+  ingredientsJson: unknown;
+  concernsJson: unknown;
+}): AdminProductDetail {
+  return {
+    ...toAdminProduct(row),
+    description: row.description,
+    descriptionAr: row.descriptionAr,
+    benefits: asStringArray(row.benefitsJson),
+    benefitsAr: asStringArray(row.benefitsArJson),
+    ingredients: asStringArray(row.ingredientsJson),
+    concerns: asStringArray(row.concernsJson),
+  };
+}
+
 export async function listAdminProducts(): Promise<AdminProduct[]> {
   const rows = await prisma.product.findMany({
     orderBy: [{ categorySlug: "asc" }, { nameAr: "asc" }],
   });
   return rows.map(toAdminProduct);
+}
+
+export async function getAdminProductById(
+  id: string,
+): Promise<AdminProductDetail | null> {
+  const row = await prisma.product.findUnique({ where: { id } });
+  if (!row) return null;
+  return toAdminProductDetail(row);
 }
 
 export type AdminProductUpdate = {
@@ -233,4 +289,11 @@ export async function updateAdminProduct(
   });
 
   return toAdminProduct(row);
+}
+
+export async function deleteAdminProduct(id: string): Promise<boolean> {
+  const existing = await prisma.product.findUnique({ where: { id } });
+  if (!existing) return false;
+  await prisma.product.delete({ where: { id } });
+  return true;
 }
