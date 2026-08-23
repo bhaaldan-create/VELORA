@@ -1,4 +1,4 @@
-import { isWaylConfigured, verifyWaylApiKey, getWaylEnv, getWaylWebhookUrl } from "@/lib/wayl";
+import { isWaylConfigured, verifyWaylApiKey, getWaylEnv, getWaylWebhookUrl, isWaylStoreVerifiedFlag } from "@/lib/wayl";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,10 @@ export async function GET() {
     env: getWaylEnv(),
     webhookUrl: getWaylWebhookUrl(),
     apiKeyValid: verified.ok,
+    storeVerified: isWaylStoreVerifiedFlag(),
+    checkoutAvailable:
+      verified.ok &&
+      (getWaylEnv() === "test" || isWaylStoreVerifiedFlag()),
     error: verified.ok ? undefined : verified.error,
   });
 }

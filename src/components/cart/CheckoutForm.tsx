@@ -42,6 +42,7 @@ import {
   getOrderTotal,
   WASEET_CARRIER,
 } from "@/lib/shipping";
+import { mapCheckoutErrorToArabic, mapWaylErrorToArabic } from "@/lib/wayl";
 import { cn } from "@/lib/utils";
 
 type FlowPhase = "steps" | "countdown" | "processing" | "success" | "error";
@@ -255,10 +256,20 @@ export function CheckoutForm({
         };
 
         if (!linkRes.ok || !linkJson.ok || !linkJson.paymentUrl) {
-          throw new Error(
-            linkJson.error ||
-              "تم حفظ الطلب لكن تعذّر فتح صفحة الدفع. تواصلي معنا عبر واتساب.",
+          finalizeRef.current = false;
+          setPhase("steps");
+          setStep("payment");
+          setPaymentMethod("cod");
+          setError(
+            mapWaylErrorToArabic(
+              linkJson.error ||
+                "تم حفظ الطلب لكن تعذّر فتح صفحة الدفع. تواصلي معنا عبر واتساب.",
+            ),
           );
+          setNotice(
+            `تم حفظ طلبكِ برقم ${createdOrderId}. يمكنكِ إتمامه بالدفع عند الاستلام أو عبر واتساب.`,
+          );
+          return;
         }
 
         clearCart();
@@ -275,7 +286,9 @@ export function CheckoutForm({
       finalizeRef.current = false;
       setPhase("error");
       setError(
-        err instanceof Error ? err.message : "تعذّر إرسال الطلب.",
+        mapCheckoutErrorToArabic(
+          err instanceof Error ? err.message : "تعذّر إرسال الطلب.",
+        ),
       );
     }
   }, [
@@ -347,12 +360,7 @@ export function CheckoutForm({
   if (phase === "error") {
     return (
       <CheckoutImmersiveShell>
-        <CheckoutErrorState onRetry={retryAfterError} />
-        {error ? (
-          <p className="mx-auto mt-4 max-w-md px-5 text-center t3 text-[var(--muted)]">
-            {error}
-          </p>
-        ) : null}
+        <CheckoutErrorState onRetry={retryAfterError} message={error} />
       </CheckoutImmersiveShell>
     );
   }
@@ -525,24 +533,19 @@ export function CheckoutForm({
                   disabled={false}
                   onChange={setNotes}
                 />
-
-                <div className="pt-2 lg:hidden">{flowCta}</div>
               </>
             ) : null}
 
             {step === "payment" ? (
-              <>
-                <PremiumPaymentPicker
+              <PremiumPaymentPicker
                   methods={methods}
                   value={paymentMethod}
                   disabled={false}
-                  onChange={(id) => {
-                    setPaymentMethod(id);
-                    setError(null);
-                  }}
-                />
-                <div className="pt-2 lg:hidden">{flowCta}</div>
-              </>
+                onChange={(id) => {
+                  setPaymentMethod(id);
+                  setError(null);
+                }}
+              />
             ) : null}
 
             {step === "review" ? (
@@ -569,6 +572,15 @@ export function CheckoutForm({
                 className="rounded-[14px] border border-[var(--plum)]/15 bg-[var(--mist)] px-4 py-3 t3 text-[var(--plum)]"
               >
                 {error}
+              </div>
+            ) : null}
+
+            {notice ? (
+              <div
+                role="status"
+                className="rounded-[14px] border border-[var(--plum)]/12 bg-[var(--surface)] px-4 py-3 t3 text-[var(--plum)]/90"
+              >
+                {notice}
               </div>
             ) : null}
           </form>

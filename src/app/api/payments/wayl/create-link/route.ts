@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getStoredOrder } from "@/lib/orders";
-import { createWaylPaymentLink, isWaylConfigured } from "@/lib/wayl";
+import { createWaylPaymentLink, isWaylConfigured, mapWaylErrorToArabic } from "@/lib/wayl";
 
 const schema = z.object({
   orderId: z.string().min(4).max(64),
@@ -69,13 +69,12 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("[payments/wayl/create-link]", error);
+    const raw =
+      error instanceof Error ? error.message : "تعذّر إنشاء رابط الدفع.";
     return Response.json(
       {
         ok: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "تعذّر إنشاء رابط الدفع.",
+        error: mapWaylErrorToArabic(raw),
       },
       { status: 500 },
     );

@@ -52,6 +52,52 @@ export function isWaylConfigured() {
   return Boolean(getWaylApiKey());
 }
 
+/** Wayl payment links require a verified merchant store on live. */
+export function isWaylStoreVerifiedFlag() {
+  const flag = process.env.WAYL_STORE_VERIFIED?.trim().toLowerCase();
+  return flag === "true" || flag === "1" || flag === "yes";
+}
+
+export async function isWaylCheckoutAvailable() {
+  if (!isWaylConfigured()) return false;
+  const verified = await verifyWaylApiKey();
+  if (!verified.ok) return false;
+  if (getWaylEnv() === "test") return true;
+  return isWaylStoreVerifiedFlag();
+}
+
+/** User-facing Arabic messages — never expose raw API English to customers. */
+export function mapWaylErrorToArabic(message: string): string {
+  const m = message.toLowerCase();
+  if (
+    m.includes("store must be verified") ||
+    m.includes("verification process") ||
+    m.includes("complete the verification")
+  ) {
+    return "الدفع الإلكتروني عبر Wayl قيد التفعيل حالياً. يمكنكِ إتمام طلبكِ بالدفع عند الاستلام، أو التواصل معنا عبر واتساب لمساعدتكِ.";
+  }
+  if (m.includes("wayl_api_key") || m.includes("غير مضبوط")) {
+    return "بوابة الدفع الإلكتروني غير متاحة حالياً. اختاري الدفع عند الاستلام لإتمام طلبكِ.";
+  }
+  if (m.includes("minimum") || m.includes("1,000")) {
+    return "الحد الأدنى للدفع الإلكتروني هو 1,000 د.ع.";
+  }
+  if (m.includes("not found") || m.includes("غير موجود")) {
+    return "تعذّر العثور على الطلب. يرجى المحاولة مرة أخرى.";
+  }
+  return "تعذّر فتح صفحة الدفع الإلكتروني. اختاري الدفع عند الاستلام أو تواصلي معنا عبر واتساب.";
+}
+
+export function mapCheckoutErrorToArabic(message: string): string {
+  if (!message.trim()) {
+    return "حدث خطأ أثناء إرسال طلبك. يرجى المحاولة مرة أخرى.";
+  }
+  if (/[a-z]/i.test(message) && !message.includes("د.ع")) {
+    return mapWaylErrorToArabic(message);
+  }
+  return message;
+}
+
 export function getWaylWebhookUrl() {
   return `${getSiteOrigin()}/api/payments/wayl/webhook`;
 }

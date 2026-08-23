@@ -225,8 +225,10 @@ function WhatsAppInfoBlock() {
 
 export function CheckoutErrorState({
   onRetry,
+  message,
 }: {
   onRetry: () => void;
+  message?: string | null;
 }) {
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-5 py-16 text-center">
@@ -234,7 +236,8 @@ export function CheckoutErrorState({
         تعذر تأكيد الطلب
       </h1>
       <p className="t4 mt-4 leading-relaxed text-[var(--muted)]">
-        حدث خطأ أثناء إرسال طلبك. يرجى المحاولة مرة أخرى.
+        {message?.trim() ||
+          "حدث خطأ أثناء إرسال طلبك. يرجى المحاولة مرة أخرى."}
       </p>
       <button
         type="button"
