@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/db";
-import { DEFAULT_HOME_HERO } from "@/lib/home/default-config";
-import type { HomeHeroConfig, HomeHeroSlide } from "@/lib/home/types";
+import {
+  DEFAULT_HOME_CATEGORIES,
+  DEFAULT_HOME_HERO,
+} from "@/lib/home/default-config";
+import type {
+  HomeCategoryCard,
+  HomeCategoryConfig,
+  HomeHeroConfig,
+  HomeHeroSlide,
+} from "@/lib/home/types";
 
 const CONFIG_ID = "default";
 
@@ -99,4 +107,78 @@ export async function saveHomeHeroConfig(
 export function activeHeroSlides(config: HomeHeroConfig): HomeHeroSlide[] {
   const enabled = config.slides.filter((s) => s.enabled && s.imageUrl);
   return enabled.length ? enabled : config.slides.slice(0, 1);
+}
+
+function sanitizeCategoryCard(
+  raw: unknown,
+  fallback: HomeCategoryCard,
+): HomeCategoryCard {
+  if (!isObject(raw)) return fallback;
+  return {
+    id: typeof raw.id === "string" ? raw.id : fallback.id,
+    slug: typeof raw.slug === "string" ? raw.slug : fallback.slug,
+    enabled: typeof raw.enabled === "boolean" ? raw.enabled : fallback.enabled,
+    titleAr: typeof raw.titleAr === "string" ? raw.titleAr : fallback.titleAr,
+    titleEn: typeof raw.titleEn === "string" ? raw.titleEn : fallback.titleEn,
+    ctaAr: typeof raw.ctaAr === "string" ? raw.ctaAr : fallback.ctaAr,
+    ctaEn: typeof raw.ctaEn === "string" ? raw.ctaEn : fallback.ctaEn,
+    href: typeof raw.href === "string" ? raw.href : fallback.href,
+    imageUrl:
+      typeof raw.imageUrl === "string" && raw.imageUrl
+        ? raw.imageUrl
+        : fallback.imageUrl,
+    objectPosition:
+      typeof raw.objectPosition === "string"
+        ? raw.objectPosition
+        : fallback.objectPosition,
+  };
+}
+
+export function mergeHomeCategoryConfig(stored: unknown): HomeCategoryConfig {
+  const base = structuredClone(DEFAULT_HOME_CATEGORIES);
+  if (!isObject(stored)) return base;
+
+  const cardsIn = Array.isArray(stored.cards) ? stored.cards : null;
+  const cards =
+    cardsIn && cardsIn.length
+      ? cardsIn.map((c, i) =>
+          sanitizeCategoryCard(c, base.cards[i] ?? base.cards[0]!),
+        )
+      : base.cards;
+
+  return {
+    version: typeof stored.version === "number" ? stored.version : base.version,
+    cards,
+  };
+}
+
+export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
+  try {
+    const row = await prisma.homeCategoryConfig.findUnique({
+      where: { id: CONFIG_ID },
+    });
+    if (!row) return structuredClone(DEFAULT_HOME_CATEGORIES);
+    return mergeHomeCategoryConfig(row.data);
+  } catch {
+    return structuredClone(DEFAULT_HOME_CATEGORIES);
+  }
+}
+
+export async function saveHomeCategoryConfig(
+  data: HomeCategoryConfig,
+): Promise<HomeCategoryConfig> {
+  const merged = mergeHomeCategoryConfig(data);
+  await prisma.homeCategoryConfig.upsert({
+    where: { id: CONFIG_ID },
+    create: { id: CONFIG_ID, data: merged },
+    update: { data: merged },
+  });
+  return merged;
+}
+
+export function activeCategoryCards(
+  config: HomeCategoryConfig,
+): HomeCategoryCard[] {
+  const enabled = config.cards.filter((c) => c.enabled && c.imageUrl);
+  return enabled.length ? enabled : config.cards.slice(0, 2);
 }

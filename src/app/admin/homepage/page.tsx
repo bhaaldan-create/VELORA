@@ -3,24 +3,44 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PageHeader, Surface } from "@/components/admin/ui/primitives";
-import { DEFAULT_HOME_HERO } from "@/lib/home/default-config";
-import type { HomeHeroConfig, HomeHeroSlide } from "@/lib/home/types";
+import {
+  DEFAULT_HOME_CATEGORIES,
+  DEFAULT_HOME_HERO,
+} from "@/lib/home/default-config";
+import type {
+  HomeCategoryCard,
+  HomeCategoryConfig,
+  HomeHeroConfig,
+  HomeHeroSlide,
+} from "@/lib/home/types";
 
 export default function AdminHomepagePage() {
   const [config, setConfig] = useState<HomeHeroConfig>(DEFAULT_HOME_HERO);
+  const [categories, setCategories] = useState<HomeCategoryConfig>(
+    DEFAULT_HOME_CATEGORIES,
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingCategories, setSavingCategories] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetch("/api/admin/home-hero")
-      .then((r) => r.json())
-      .then((data: { ok?: boolean; config?: HomeHeroConfig }) => {
-        if (data.config) setConfig(data.config);
-      })
-      .catch(() => setError("تعذّر تحميل إعدادات الهيرو."))
+    void Promise.all([
+      fetch("/api/admin/home-hero").then((r) => r.json()),
+      fetch("/api/admin/home-categories").then((r) => r.json()),
+    ])
+      .then(
+        ([heroData, categoryData]: [
+          { ok?: boolean; config?: HomeHeroConfig },
+          { ok?: boolean; config?: HomeCategoryConfig },
+        ]) => {
+          if (heroData.config) setConfig(heroData.config);
+          if (categoryData.config) setCategories(categoryData.config);
+        },
+      )
+      .catch(() => setError("تعذّر تحميل إعدادات الصفحة الرئيسية."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,11 +72,47 @@ export default function AdminHomepagePage() {
     }
   }
 
+  async function saveCategories() {
+    setSavingCategories(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/home-categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: categories }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        config?: HomeCategoryConfig;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setError(data.error || "فشل حفظ الفئات.");
+        return;
+      }
+      if (data.config) setCategories(data.config);
+      setMessage("تم حفظ بطاقات «تسوق حسب الفئة».");
+    } catch {
+      setError("فشل حفظ الفئات.");
+    } finally {
+      setSavingCategories(false);
+    }
+  }
+
   function patchSlide(index: number, patch: Partial<HomeHeroSlide>) {
     setConfig((prev) => {
       const slides = [...prev.slides];
       slides[index] = { ...slides[index]!, ...patch };
       return { ...prev, slides };
+    });
+  }
+
+  function patchCard(index: number, patch: Partial<HomeCategoryCard>) {
+    setCategories((prev) => {
+      const cards = [...prev.cards];
+      cards[index] = { ...cards[index]!, ...patch };
+      return { ...prev, cards };
     });
   }
 
@@ -99,6 +155,36 @@ export default function AdminHomepagePage() {
     }
   }
 
+  async function uploadCategoryImage(cardId: string, file: File) {
+    setUploading(`category-${cardId}`);
+    setError(null);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.set("cardId", cardId);
+      form.set("file", file);
+      const res = await fetch("/api/admin/home-categories/image", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        config?: HomeCategoryConfig;
+        error?: string;
+      };
+      if (!res.ok || !data.ok || !data.config) {
+        setError(data.error || "فشل رفع صورة الفئة.");
+        return;
+      }
+      setCategories(data.config);
+      setMessage("تم تحديث صورة الفئة.");
+    } catch {
+      setError("فشل رفع صورة الفئة.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   return (
     <AdminShell active="homepage" title="الصفحة الرئيسية">
       <PageHeader
@@ -111,7 +197,7 @@ export default function AdminHomepagePage() {
             disabled={saving || loading}
             className="rounded-full bg-[var(--admin-text)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
-            {saving ? "جارٍ الحفظ…" : "حفظ التغييرات"}
+            {saving ? "جارٍ الحفظ…" : "حفظ الهيرو"}
           </button>
         }
       />
@@ -370,6 +456,143 @@ export default function AdminHomepagePage() {
               </div>
             </Surface>
           ))}
+
+          <div className="pt-4">
+            <PageHeader
+              title="تسوق حسب الفئة"
+              description="ارفعي صور بطاقات الفئات وعدّلي العناوين والروابط — تظهر مباشرة في الصفحة الرئيسية."
+              actions={
+                <button
+                  type="button"
+                  onClick={() => void saveCategories()}
+                  disabled={savingCategories || loading}
+                  className="rounded-full bg-[var(--admin-text)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {savingCategories ? "جارٍ الحفظ…" : "حفظ الفئات"}
+                </button>
+              }
+            />
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            {categories.cards.map((card, index) => (
+              <Surface key={card.id} className="space-y-4 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-medium text-[var(--admin-text)]">
+                    بطاقة {index + 1}{" "}
+                    <span className="text-[var(--admin-text-secondary)]">
+                      ({card.id})
+                    </span>
+                  </h3>
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={card.enabled}
+                      onChange={(e) =>
+                        patchCard(index, { enabled: e.target.checked })
+                      }
+                    />
+                    مفعّلة
+                  </label>
+                </div>
+
+                <div className="relative aspect-[3/4] max-h-[320px] overflow-hidden rounded-xl bg-[var(--admin-surface-soft)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={card.imageUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    style={{
+                      objectPosition: card.objectPosition || "center center",
+                    }}
+                  />
+                </div>
+
+                <label className="inline-flex cursor-pointer rounded-full border border-[var(--admin-border)] bg-white px-4 py-2 text-sm">
+                  {uploading === `category-${card.id}`
+                    ? "جارٍ الرفع…"
+                    : "رفع صورة الفئة"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={Boolean(uploading)}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void uploadCategoryImage(card.id, f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+
+                <div className="grid gap-3">
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                      العنوان (عربي)
+                    </span>
+                    <input
+                      className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                      value={card.titleAr}
+                      onChange={(e) =>
+                        patchCard(index, { titleAr: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                      Title (EN)
+                    </span>
+                    <input
+                      className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                      value={card.titleEn}
+                      onChange={(e) =>
+                        patchCard(index, { titleEn: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                      نص الزر (عربي)
+                    </span>
+                    <input
+                      className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                      value={card.ctaAr}
+                      onChange={(e) =>
+                        patchCard(index, { ctaAr: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                      رابط البطاقة
+                    </span>
+                    <input
+                      className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                      dir="ltr"
+                      value={card.href}
+                      onChange={(e) =>
+                        patchCard(index, { href: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                      موضع الصورة
+                    </span>
+                    <input
+                      className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                      dir="ltr"
+                      placeholder="center center"
+                      value={card.objectPosition || ""}
+                      onChange={(e) =>
+                        patchCard(index, { objectPosition: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              </Surface>
+            ))}
+          </div>
         </div>
       )}
     </AdminShell>

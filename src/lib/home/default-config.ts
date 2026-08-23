@@ -1,4 +1,34 @@
-import type { HomeHeroConfig } from "@/lib/home/types";
+import type { HomeCategoryConfig, HomeHeroConfig } from "@/lib/home/types";
+
+export const DEFAULT_HOME_CATEGORIES: HomeCategoryConfig = {
+  version: 1,
+  cards: [
+    {
+      id: "skincare",
+      slug: "skincare",
+      enabled: true,
+      titleAr: "العناية بالبشرة",
+      titleEn: "Skincare",
+      ctaAr: "استكشفي",
+      ctaEn: "Explore",
+      href: "/shop?category=skincare",
+      imageUrl: "/brand/categories/skincare.png",
+      objectPosition: "center center",
+    },
+    {
+      id: "makeup",
+      slug: "makeup",
+      enabled: true,
+      titleAr: "المكياج",
+      titleEn: "Makeup",
+      ctaAr: "استكشفي",
+      ctaEn: "Explore",
+      href: "/shop?category=makeup",
+      imageUrl: "/brand/categories/makeup.png",
+      objectPosition: "center center",
+    },
+  ],
+};
 
 export const DEFAULT_HOME_HERO: HomeHeroConfig = {
   version: 1,

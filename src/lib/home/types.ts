@@ -25,3 +25,21 @@ export type HomeHeroConfig = {
   autoplayMs: number;
   slides: HomeHeroSlide[];
 };
+
+export type HomeCategoryCard = {
+  id: string;
+  slug: string;
+  enabled: boolean;
+  titleAr: string;
+  titleEn: string;
+  ctaAr: string;
+  ctaEn: string;
+  href: string;
+  imageUrl: string;
+  objectPosition?: string;
+};
+
+export type HomeCategoryConfig = {
+  version: number;
+  cards: HomeCategoryCard[];
+};

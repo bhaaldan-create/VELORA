@@ -2,7 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 /** زد هذا الرقم بعد أي تغيير في schema حتى لا يبقى عميل Prisma قديماً في وضع التطوير */
-const PRISMA_SCHEMA_VERSION = 11;
+const PRISMA_SCHEMA_VERSION = 12;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -37,10 +37,14 @@ function isStalePrismaClient(client: PrismaClient | undefined) {
   const homeHero = (
     client as { homeHeroConfig?: { findUnique?: unknown } }
   ).homeHeroConfig;
+  const homeCategories = (
+    client as { homeCategoryConfig?: { findUnique?: unknown } }
+  ).homeCategoryConfig;
   return (
     typeof customer?.findUnique !== "function" ||
     typeof phoneOtp?.findFirst !== "function" ||
-    typeof homeHero?.findUnique !== "function"
+    typeof homeHero?.findUnique !== "function" ||
+    typeof homeCategories?.findUnique !== "function"
   );
 }
 

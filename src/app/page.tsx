@@ -12,26 +12,36 @@ import {
   getNewArrivals,
   getProductsByCategory,
 } from "@/lib/catalog";
-import { getHomeHeroConfig } from "@/lib/home/config";
+import { getHomeCategoryConfig, getHomeHeroConfig } from "@/lib/home/config";
 
 export default async function HomePage() {
-  const [heroConfig, newArrivals, bestsellers, skincare, makeup, hair, body, fragrance] =
-    await Promise.all([
-      getHomeHeroConfig(),
-      getNewArrivals(12),
-      getBestsellers(12),
-      getProductsByCategory("skincare"),
-      getProductsByCategory("makeup"),
-      getProductsByCategory("hair-care"),
-      getProductsByCategory("body-care"),
-      getFragranceProducts(12),
-    ]);
+  const [
+    heroConfig,
+    categoryConfig,
+    newArrivals,
+    bestsellers,
+    skincare,
+    makeup,
+    hair,
+    body,
+    fragrance,
+  ] = await Promise.all([
+    getHomeHeroConfig(),
+    getHomeCategoryConfig(),
+    getNewArrivals(12),
+    getBestsellers(12),
+    getProductsByCategory("skincare"),
+    getProductsByCategory("makeup"),
+    getProductsByCategory("hair-care"),
+    getProductsByCategory("body-care"),
+    getFragranceProducts(12),
+  ]);
 
   return (
     <div className="home-premium bg-[var(--ivory)]">
       <Hero config={heroConfig} />
       <TrustBar />
-      <CategoryShowcase />
+      <CategoryShowcase cards={categoryConfig.cards} />
       <PromoBanner />
 
       <ProductRail
