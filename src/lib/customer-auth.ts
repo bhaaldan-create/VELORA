@@ -117,9 +117,16 @@ export async function verifyPassword(password: string, stored: string) {
   return diff === 0;
 }
 
-export async function createCustomerSessionToken(customerId: string) {
+export async function createCustomerSessionToken(
+  customerId: string,
+  ttlMs = CUSTOMER_SESSION_DAYS * 24 * 60 * 60 * 1000,
+) {
+  // التوكن مقسوم على "." — يجب ألا يحتوي المعرّف على نقاط
+  if (customerId.includes(".")) {
+    throw new Error("customerId must not contain '.'");
+  }
   const secret = getSecret();
-  const exp = Date.now() + CUSTOMER_SESSION_DAYS * 24 * 60 * 60 * 1000;
+  const exp = Date.now() + ttlMs;
   const payload = `v1.${customerId}.${exp}`;
   const sig = await hmacSign(payload, secret);
   return `${payload}.${sig}`;

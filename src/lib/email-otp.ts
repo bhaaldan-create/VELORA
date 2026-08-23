@@ -219,8 +219,42 @@ export async function verifyEmailOtpCode(emailRaw: string, codeRaw: string) {
   return { ok: true as const, email, token };
 }
 
+/** ترميز البريد بدون نقاط حتى لا ينكسر توكن الجلسة المقسوم على "." */
+function encodeEmailSubject(email: string) {
+  const bytes = new TextEncoder().encode(email);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function decodeEmailSubject(encoded: string) {
+  const padded =
+    encoded.length % 4 === 0
+      ? encoded
+      : encoded + "=".repeat(4 - (encoded.length % 4));
+  const binary = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+const EMAIL_VERIFY_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * توكن تحقق البريد — البريد يُرمَّز لأنه يحتوي نقاطاً (gmail.com)
+ * فتنسيق التوكن `v1.id.exp.sig` ينكسر إن وُضع البريد خاماً.
+ */
 export async function createEmailVerifiedToken(email: string) {
-  return createCustomerSessionToken(`email:${email}`);
+  const normalized = normalizeAuthEmail(email);
+  return createCustomerSessionToken(
+    `ev_${encodeEmailSubject(normalized)}`,
+    EMAIL_VERIFY_TTL_MS,
+  );
 }
 
 export async function verifyEmailVerifiedToken(
@@ -232,5 +266,15 @@ export async function verifyEmailVerifiedToken(
 
   const session = await verifyCustomerSessionToken(token);
   if (!session) return false;
-  return session.customerId === `email:${email}`;
+
+  if (session.customerId.startsWith("ev_")) {
+    try {
+      const decoded = decodeEmailSubject(session.customerId.slice(3));
+      return normalizeAuthEmail(decoded) === email;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
 }

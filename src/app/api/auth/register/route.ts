@@ -55,13 +55,14 @@ export async function POST(req: Request) {
     const email = validatedEmail.email;
     const jar = await cookies();
     const cookieToken = jar.get(EMAIL_VERIFY_COOKIE)?.value;
-    const bodyToken = parsed.data.emailVerificationToken;
-    const verified =
-      (await verifyEmailVerifiedToken(cookieToken, email)) ||
-      (bodyToken
-        ? await verifyEmailVerifiedToken(bodyToken, email)
-        : false);
-    if (!verified) {
+    const bodyToken = parsed.data.emailVerificationToken?.trim();
+    const verifiedByBody = bodyToken
+      ? await verifyEmailVerifiedToken(bodyToken, email)
+      : false;
+    const verifiedByCookie = !verifiedByBody
+      ? await verifyEmailVerifiedToken(cookieToken, email)
+      : false;
+    if (!verifiedByBody && !verifiedByCookie) {
       return Response.json(
         {
           ok: false,

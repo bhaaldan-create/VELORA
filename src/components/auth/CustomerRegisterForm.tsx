@@ -151,9 +151,12 @@ export function CustomerRegisterForm() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "رمز غير صحيح.");
       }
+      if (!data.verificationToken) {
+        throw new Error("تعذّر حفظ التحقق. أعيدي تأكيد الرمز.");
+      }
       setEmail(validated.email);
       setEmailVerified(true);
-      setEmailVerificationToken(data.verificationToken ?? null);
+      setEmailVerificationToken(data.verificationToken);
       setDevCode(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التحقق.");
@@ -174,6 +177,11 @@ export function CustomerRegisterForm() {
       setError(err);
       return;
     }
+    if (!emailVerificationToken) {
+      setError("يجب تأكيد رمز البريد أولاً قبل إنشاء الحساب.");
+      setEmailVerified(false);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -186,9 +194,7 @@ export function CustomerRegisterForm() {
           email: validated.email,
           phone,
           password,
-          ...(emailVerificationToken
-            ? { emailVerificationToken }
-            : {}),
+          emailVerificationToken,
         }),
       });
       const data = (await res.json()) as {
