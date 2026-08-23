@@ -19,6 +19,8 @@ import {
   heroConfigForClient,
 } from "@/lib/home/config";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [
     heroConfig,

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/context/LocaleContext";
+import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import type { HomeCategoryCard } from "@/lib/home/types";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +33,7 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
             const href =
               card.href ||
               (card.slug ? `/shop?category=${card.slug}` : "/shop");
-            const isData = card.imageUrl.startsWith("data:");
+            const isData = shouldUseNativeImageElement(card.imageUrl);
             return (
               <Link
                 key={card.id}

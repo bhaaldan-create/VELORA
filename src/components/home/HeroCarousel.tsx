@@ -7,9 +7,11 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useLocale } from "@/context/LocaleContext";
+import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import type { HomeHeroConfig, HomeHeroSlide } from "@/lib/home/types";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,38 @@ function overlayStyle(level: HomeHeroSlide["overlay"]) {
   }
   // soft / medium (default)
   return "linear-gradient(to top right, rgba(12,8,16,0.48) 0%, rgba(12,8,16,0.22) 30%, transparent 55%)";
+}
+
+function HeroSlidePicture({
+  src,
+  className,
+  style,
+  priority,
+  sizes,
+}: {
+  src: string;
+  className?: string;
+  style?: CSSProperties;
+  priority?: boolean;
+  sizes?: string;
+}) {
+  if (shouldUseNativeImageElement(src)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" className={className} style={style} />
+    );
+  }
+  return (
+    <Image
+      src={src}
+      alt=""
+      fill
+      priority={priority}
+      className={className}
+      style={style}
+      sizes={sizes}
+    />
+  );
 }
 
 export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
@@ -118,56 +152,28 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
               aria-hidden={!active}
             >
               <div className="absolute inset-0 bg-[#e8dff0]">
-                {(mobileSrc.startsWith("data:") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={mobileSrc}
-                    alt=""
-                    className={cn(
-                      "h-full w-full object-cover md:hidden transition-transform duration-[6500ms] ease-out",
-                      active && "scale-[1.03]",
-                    )}
-                    style={{ objectPosition: s.objectPosition || "right center" }}
-                  />
-                ) : (
-                  <Image
-                    src={mobileSrc}
-                    alt=""
-                    fill
-                    priority={i === 0}
-                    className={cn(
-                      "object-cover md:hidden transition-transform duration-[6500ms] ease-out",
-                      active && "scale-[1.03]",
-                    )}
-                    style={{ objectPosition: s.objectPosition || "right center" }}
-                    sizes="100vw"
-                  />
-                )) as React.ReactNode}
-                {(desktopSrc.startsWith("data:") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={desktopSrc}
-                    alt=""
-                    className={cn(
-                      "hidden h-full w-full object-cover md:block transition-transform duration-[6500ms] ease-out",
-                      active && "scale-[1.02]",
-                    )}
-                    style={{ objectPosition: s.objectPosition || "right center" }}
-                  />
-                ) : (
-                  <Image
-                    src={desktopSrc}
-                    alt=""
-                    fill
-                    priority={i === 0}
-                    className={cn(
-                      "hidden object-cover md:block transition-transform duration-[6500ms] ease-out",
-                      active && "scale-[1.02]",
-                    )}
-                    style={{ objectPosition: s.objectPosition || "right center" }}
-                    sizes="(max-width: 1280px) 100vw, 1280px"
-                  />
-                )) as React.ReactNode}
+                <HeroSlidePicture
+                  src={mobileSrc}
+                  className={cn(
+                    "object-cover md:hidden transition-transform duration-[6500ms] ease-out",
+                    shouldUseNativeImageElement(mobileSrc) && "h-full w-full",
+                    active && "scale-[1.03]",
+                  )}
+                  style={{ objectPosition: s.objectPosition || "right center" }}
+                  priority={i === 0}
+                  sizes="100vw"
+                />
+                <HeroSlidePicture
+                  src={desktopSrc}
+                  className={cn(
+                    "hidden object-cover md:block transition-transform duration-[6500ms] ease-out",
+                    shouldUseNativeImageElement(desktopSrc) && "h-full w-full",
+                    active && "scale-[1.02]",
+                  )}
+                  style={{ objectPosition: s.objectPosition || "right center" }}
+                  priority={i === 0}
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                />
               </div>
               <div
                 className="absolute inset-0"

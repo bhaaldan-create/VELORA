@@ -26,3 +26,8 @@ export function resolveClientImageUrl(stored: string, mediaUrl: string): string 
 export function isEphemeralClientImageUrl(url: string): boolean {
   return url.startsWith("data:") || url.startsWith("/api/media/");
 }
+
+/** روابط API والـ data URLs لا تعمل مع محسّن next/image */
+export function shouldUseNativeImageElement(src: string): boolean {
+  return src.startsWith("data:") || src.startsWith("/api/media/");
+}

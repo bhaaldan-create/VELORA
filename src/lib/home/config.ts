@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import {
   categoryCardMediaUrl,
   heroSlideMediaUrl,
@@ -147,6 +148,7 @@ export async function saveHomeHeroConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
+  revalidatePath("/");
   return merged;
 }
 
@@ -283,6 +285,7 @@ export async function saveHomeCategoryConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
+  revalidatePath("/");
   return merged;
 }
 
