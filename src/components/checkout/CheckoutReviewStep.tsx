@@ -8,15 +8,14 @@ import { formatPrice } from "@/lib/utils";
 import { WASEET_CARRIER } from "@/lib/shipping";
 import type { PaymentMethod } from "@/data/payments";
 import type { CartItem } from "@/types";
+import { CheckoutFlowCta } from "@/components/checkout/CheckoutFlowCta";
 import {
-  IconArrowStart,
   IconCreditCard,
   IconEdit,
   IconMapPin,
   IconPackageCheck,
   IconTruck,
 } from "@/components/checkout/CheckoutIcons";
-import { cn } from "@/lib/utils";
 
 type Props = {
   fullName: string;
@@ -31,6 +30,7 @@ type Props = {
   onEditShipping: () => void;
   onEditPayment: () => void;
   onConfirm: () => void;
+  hideInlineConfirm?: boolean;
 };
 
 export function CheckoutReviewStep({
@@ -46,6 +46,7 @@ export function CheckoutReviewStep({
   onEditShipping,
   onEditPayment,
   onConfirm,
+  hideInlineConfirm,
 }: Props) {
   const isWayl = paymentMethod?.id === "wayl";
 
@@ -200,20 +201,19 @@ export function CheckoutReviewStep({
         </div>
       </div>
 
-      <div className="space-y-3 pt-2">
-        <button
-          type="button"
-          onClick={onConfirm}
-          className={cn(
-            "t3 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--plum)] px-6 py-3.5 font-medium text-[var(--ivory)] shadow-[0_6px_20px_-8px_rgba(61,38,64,0.45)] transition-all active:scale-[0.99]",
-          )}
-        >
-          <span>تأكيد الطلب</span>
-        </button>
-        <p className="t2 text-center text-[var(--muted)]">
-          بمجرد تأكيد الطلب، سيبدأ فريق VELORA بتجهيزه.
-        </p>
-      </div>
+      {!hideInlineConfirm ? (
+        <div className="space-y-3 pt-2">
+          <CheckoutFlowCta
+            action="confirm"
+            onClick={onConfirm}
+            showTotal
+            total={total}
+          />
+          <p className="t2 text-center text-[var(--muted)]">
+            بمجرد تأكيد الطلب، سيبدأ فريق VELORA بتجهيزه.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -225,7 +225,7 @@ function ReviewSection({
   children,
 }: {
   title: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onEdit?: () => void;
   children: ReactNode;
 }) {
@@ -262,63 +262,5 @@ function PriceRow({ label, value }: { label: string; value: string }) {
       <dt className="t3 text-[var(--muted)]">{label}</dt>
       <dd className="t3 font-medium text-[var(--ink)]/90">{value}</dd>
     </div>
-  );
-}
-
-export function CheckoutReviewMobileCta({
-  total,
-  onConfirm,
-}: {
-  total: number;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <p className="t2 text-[var(--muted)]">الإجمالي</p>
-        <p className="font-display text-[1.2rem] font-semibold text-[var(--plum)]">
-          {formatPrice(total)}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onConfirm}
-        className="t3 inline-flex min-w-[9.5rem] flex-1 items-center justify-center gap-2 rounded-[14px] bg-[var(--plum)] px-5 py-3 font-medium text-[var(--ivory)] shadow-[0_4px_16px_-6px_rgba(61,38,64,0.4)] transition-all active:scale-[0.99] sm:max-w-[220px] sm:flex-none"
-      >
-        <span>تأكيد الطلب</span>
-      </button>
-    </div>
-  );
-}
-
-export function CheckoutStepCta({
-  label,
-  onClick,
-  disabled,
-  showTotal,
-  total,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  showTotal?: boolean;
-  total?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "t3 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--plum)] px-6 py-3.5 font-medium text-[var(--ivory)] shadow-[0_6px_20px_-8px_rgba(61,38,64,0.45)] transition-all duration-200",
-        "hover:bg-[var(--plum-soft)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55",
-      )}
-    >
-      <span>{label}</span>
-      {showTotal && total != null ? (
-        <span className="opacity-85">· {formatPrice(total)}</span>
-      ) : null}
-      <IconArrowStart />
-    </button>
   );
 }

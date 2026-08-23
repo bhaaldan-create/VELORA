@@ -236,3 +236,28 @@ export function IconTruck({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconSparkle({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5", className)}
+      aria-hidden
+    >
+      <path d="M12 3v2" />
+      <path d="M12 19v2" />
+      <path d="M5 12H3" />
+      <path d="M21 12h-2" />
+      <path d="m18.5 5.5-1.4 1.4" />
+      <path d="m6.9 17.1-1.4 1.4" />
+      <path d="m18.5 18.5-1.4-1.4" />
+      <path d="m6.9 6.9 1.4-1.4" />
+      <circle cx="12" cy="12" r="3.5" />
+    </svg>
+  );
+}

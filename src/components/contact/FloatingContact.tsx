@@ -56,9 +56,12 @@ export function FloatingContact() {
   if (!waUrl && !igUrl) return null;
 
   const isCartPage = pathname === "/cart";
+  const isCheckoutPage = pathname === "/checkout";
   const bottomOffset = isCartPage
     ? "calc(10.5rem + env(safe-area-inset-bottom))"
-    : "calc(5.75rem + env(safe-area-inset-bottom))";
+    : isCheckoutPage
+      ? "calc(10.5rem + env(safe-area-inset-bottom))"
+      : "calc(5.75rem + env(safe-area-inset-bottom))";
 
   return (
     <div
