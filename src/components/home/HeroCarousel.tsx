@@ -14,14 +14,15 @@ import type { HomeHeroConfig, HomeHeroSlide } from "@/lib/home/types";
 import { cn } from "@/lib/utils";
 
 function overlayStyle(level: HomeHeroSlide["overlay"]) {
-  if (level === "none") return "transparent";
-  if (level === "soft") {
-    return "linear-gradient(90deg, rgba(250,248,252,0.72) 0%, rgba(250,248,252,0.35) 38%, transparent 62%)";
+  // Soft bottom-left readability wash — keeps the hero image clear elsewhere
+  if (level === "none") {
+    return "linear-gradient(to top right, rgba(12,8,16,0.42) 0%, rgba(12,8,16,0.18) 28%, transparent 52%)";
   }
   if (level === "strong") {
-    return "linear-gradient(90deg, rgba(250,248,252,0.82) 0%, rgba(250,248,252,0.45) 42%, transparent 68%)";
+    return "linear-gradient(to top right, rgba(12,8,16,0.55) 0%, rgba(12,8,16,0.28) 32%, transparent 58%)";
   }
-  return "linear-gradient(90deg, rgba(250,248,252,0.78) 0%, rgba(250,248,252,0.4) 40%, transparent 65%)";
+  // soft / medium (default)
+  return "linear-gradient(to top right, rgba(12,8,16,0.48) 0%, rgba(12,8,16,0.22) 30%, transparent 55%)";
 }
 
 export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
@@ -176,26 +177,38 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
           );
         })}
 
-        {/* Text on visual left; Arabic reads RTL inside the block */}
-        <div className="relative z-10 flex h-full min-h-[inherit] items-center justify-start px-5 py-8 sm:px-8 sm:py-10 md:px-10">
+        {/* Text — bottom-left, white copy with soft shadow */}
+        <div className="relative z-10 flex h-full min-h-[inherit] items-end justify-start px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-10 md:px-10">
           <div
             dir={dir}
             className={cn(
-              "max-w-[78%] sm:max-w-[50%] md:max-w-[42%] transition-all duration-700 ease-out",
+              "max-w-[85%] sm:max-w-[52%] md:max-w-[44%] transition-all duration-700 ease-out",
               entered
                 ? "translate-y-0 opacity-100"
                 : "translate-y-3 opacity-0",
             )}
           >
-            <h1 className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-bold leading-[1.35] tracking-tight text-[#32162f]">
+            <h1
+              className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-bold leading-[1.35] tracking-tight text-white"
+              style={{
+                textShadow:
+                  "0 1px 2px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.4)",
+              }}
+            >
               {ar ? slide.headlineAr : slide.headlineEn}
             </h1>
-            <p className="mt-3 text-[0.82rem] leading-[1.75] text-[#5a4a58] sm:text-[0.9rem]">
+            <p
+              className="mt-3 text-[0.82rem] leading-[1.75] text-white/95 sm:text-[0.9rem]"
+              style={{
+                textShadow:
+                  "0 1px 2px rgba(0,0,0,0.5), 0 3px 14px rgba(0,0,0,0.32)",
+              }}
+            >
               {ar ? slide.bodyAr : slide.bodyEn}
             </p>
             <div
               className={cn(
-                "mt-6 sm:mt-7 transition-all delay-150 duration-700 ease-out",
+                "mt-5 sm:mt-6 transition-all delay-150 duration-700 ease-out",
                 entered
                   ? "translate-y-0 opacity-100"
                   : "translate-y-2 opacity-0",
@@ -203,7 +216,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
             >
               <Link
                 href={slide.href || "/shop"}
-                className="inline-flex items-center gap-2.5 rounded-full bg-[#32162f] px-5 py-2.5 text-[0.8rem] font-medium text-white shadow-[0_8px_24px_rgba(50,22,47,0.18)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-white px-5 py-2.5 text-[0.8rem] font-medium text-[#32162f] shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {ar ? slide.ctaAr : slide.ctaEn}
                 <span aria-hidden className="text-[0.75rem] opacity-90">
@@ -216,7 +229,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
 
         {list.length > 1 ? (
           <div
-            className="absolute bottom-4 start-5 z-20 flex gap-1.5 sm:bottom-5 sm:start-6"
+            className="absolute bottom-4 end-5 z-20 flex gap-1.5 sm:bottom-5 sm:end-6"
             role="tablist"
             aria-label="Hero slides"
           >
@@ -230,8 +243,8 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
                 className={cn(
                   "rounded-full transition-all duration-300",
                   i === index
-                    ? "h-2 w-5 bg-[#32162f]"
-                    : "h-2 w-2 bg-[#32162f]/28 hover:bg-[#32162f]/45",
+                    ? "h-2 w-5 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.35)]"
+                    : "h-2 w-2 bg-white/45 hover:bg-white/70",
                 )}
                 onClick={() => {
                   setPaused(true);
