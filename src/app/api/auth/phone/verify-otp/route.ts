@@ -8,12 +8,10 @@ import {
 import { customerCookieOptions } from "@/lib/customer-auth";
 
 const schema = z.object({
-  phone: z.string().optional(),
-  email: z.string().trim().email().optional(),
+  email: z.string().trim().email(),
   code: z.string().min(4).max(8),
 });
 
-/** توافق مع الواجهة القديمة — تحقق التسجيل عبر البريد */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -27,7 +25,6 @@ export async function POST(req: Request) {
 
     const resolved = await resolveAuthEmail({
       email: parsed.data.email,
-      phone: parsed.data.phone,
       purpose: "register",
     });
     if (!resolved.ok) {

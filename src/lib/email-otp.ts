@@ -4,7 +4,6 @@ import {
   createCustomerSessionToken,
   verifyCustomerSessionToken,
 } from "@/lib/customer-auth";
-import { normalizeIraqMobile } from "@/lib/phone";
 import { getSmtpConfigIssue, isSmtpConfigured, sendOtpEmail } from "@/lib/smtp";
 
 const REFRESH_PAGE_HINT =
@@ -29,10 +28,9 @@ export function normalizeAuthEmail(raw: string | undefined | null) {
   return email;
 }
 
-/** يدعم الواجهة القديمة (رقم جوال) والجديدة (بريد) */
+/** يتطلب البريد الذي أدخلتهِ الزبونة — لا إرسال عبر رقم الجوال */
 export async function resolveAuthEmail(input: {
   email?: string | null;
-  phone?: string | null;
   purpose: "register" | "login";
 }) {
   const direct = normalizeAuthEmail(input.email);
@@ -40,28 +38,9 @@ export async function resolveAuthEmail(input: {
     return { ok: true as const, email: direct };
   }
 
-  const phone = input.phone ? normalizeIraqMobile(input.phone) : "";
-  if (input.purpose === "login" && phone) {
-    const customer = await prisma.customer.findFirst({ where: { phone } });
-    if (!customer) {
-      return {
-        ok: false as const,
-        error: "هذا الرقم غير مسجّل. أنشئي حساباً أولاً.",
-      };
-    }
-    return { ok: true as const, email: customer.email.toLowerCase() };
-  }
-
-  if (input.purpose === "register") {
-    return {
-      ok: false as const,
-      error: `التسجيل أصبح عبر البريد الإلكتروني. ${REFRESH_PAGE_HINT}`,
-    };
-  }
-
   return {
     ok: false as const,
-    error: `أدخلي البريد الإلكتروني. ${REFRESH_PAGE_HINT}`,
+    error: `أدخلي البريد الإلكتروني لإرسال رمز التحقق. ${REFRESH_PAGE_HINT}`,
   };
 }
 
@@ -168,7 +147,7 @@ export async function createAndStoreEmailOtp(
       email,
       expiresInSec: Math.floor(OTP_TTL_MS / 1000),
       channel: "email" as const,
-      message: `تم إرسال رمز التحقق إلى ${email} — راجعي البريد (وصندوق الرسائل غير المرغوب فيها).`,
+        message: `أرسل فريق VELORA Beauty رمز التحقق إلى ${email} — راجعي البريد وصندوق الرسائل غير المرغوب فيها.`,
       devCode: undefined,
     };
   }

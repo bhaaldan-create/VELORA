@@ -181,11 +181,11 @@ export function CustomerLoginForm() {
         <p className="t3 mt-2 text-[var(--muted)]">
           {step === "email"
             ? ar
-              ? "أدخلي بريدكِ الإلكتروني — سنرسل رمز تحقق من VELORA Beauty."
-              : "Enter your email — we’ll send a verification code from VELORA Beauty."
+              ? "أدخلي بريدكِ الإلكتروني — سيرسل فريق VELORA Beauty رمز التحقق إلى نفس البريد."
+              : "Enter your email — the VELORA Beauty team will send a code to that address."
             : ar
-              ? `أدخلي الرمز المرسل إلى ${email}`
-              : `Enter the code sent to ${email}`}
+              ? `أدخلي الرمز الذي أرسله فريق VELORA إلى ${email}`
+              : `Enter the code the VELORA team sent to ${email}`}
         </p>
       </div>
 
@@ -232,8 +232,8 @@ export function CustomerLoginForm() {
           ) : (
             <p className="t2 text-[var(--muted)]">
               {ar
-                ? "راجعي البريد وصندوق الرسائل غير المرغوب فيها."
-                : "Check your inbox and spam folder."}
+                ? "تحققي من بريدكِ — الرسالة من فريق VELORA Beauty."
+                : "Check your inbox — look for a message from the VELORA Beauty team."}
             </p>
           )}
           {devCode ? (
@@ -298,8 +298,8 @@ export function CustomerLoginForm() {
               : "Signing in…"
           : step === "email"
             ? ar
-              ? "إرسال رمز التحقق"
-              : "Send verification code"
+              ? "إرسال رمز التحقق إلى البريد"
+              : "Send code to email"
             : ar
               ? "تأكيد الدخول"
               : "Confirm sign in"}

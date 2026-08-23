@@ -10,12 +10,11 @@ import {
 import { resolveAuthEmail, verifyEmailOtpCode } from "@/lib/email-otp";
 
 const schema = z.object({
-  phone: z.string().optional(),
-  email: z.string().trim().email().optional(),
+  email: z.string().trim().email(),
   code: z.string().min(4).max(8),
 });
 
-/** توافق مع الواجهة القديمة — الدخول عبر رمز البريد */
+/** توافق — الدخول بالبريد ورمز التحقق فقط */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
 
     const resolved = await resolveAuthEmail({
       email: parsed.data.email,
-      phone: parsed.data.phone,
       purpose: "login",
     });
     if (!resolved.ok) {

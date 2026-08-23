@@ -100,7 +100,6 @@ export function CustomerRegisterForm() {
         error?: string;
         devCode?: string;
         message?: string;
-        channel?: "email" | "dev";
       };
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "تعذّر إرسال رمز التحقق.");
@@ -143,6 +142,11 @@ export function CustomerRegisterForm() {
   }
 
   async function createAccount() {
+    const err = iraqMobileError(phone);
+    if (err) {
+      setError(err);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -176,10 +180,6 @@ export function CustomerRegisterForm() {
         setError("أكملي جميع الحقول بشكل صحيح.");
         return;
       }
-      if (phoneError) {
-        setError(phoneError);
-        return;
-      }
       await sendOtp();
       return;
     }
@@ -209,8 +209,10 @@ export function CustomerRegisterForm() {
         </h1>
         <p className="t3 mt-2 text-[var(--muted)]">
           {step === "details"
-            ? "سجّلي بياناتكِ ثم أكّدي بريدكِ الإلكتروني برمز يصل من VELORA Beauty."
-            : `أدخلي رمز التحقق المرسل إلى ${email}`}
+            ? "أدخلي بريدكِ الإلكتروني — سيرسل فريق VELORA Beauty رمز التحقق إلى نفس البريد."
+            : emailVerified
+              ? "تم التحقق من بريدكِ. أدخلي رقم الجوال للتوصيل ثم أنشئي الحساب."
+              : `أدخلي رمز التحقق الذي أرسله فريق VELORA إلى ${email}`}
         </p>
       </div>
 
@@ -239,30 +241,12 @@ export function CustomerRegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
               dir="ltr"
-              className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
-            />
-          </label>
-
-          <label className="block">
-            <span className="t2 text-[var(--muted)]">رقم الجوال العراقي</span>
-            <input
-              type="tel"
-              required
-              inputMode="numeric"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(maskIraqMobileInput(e.target.value))}
-              disabled={submitting}
-              placeholder="07XXXXXXXXX"
-              dir="ltr"
+              placeholder="you@example.com"
               className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
             />
             <span className="t2 mt-1 block text-[var(--muted)]">
-              للتواصل والطلبات — رمز التحقق يُرسل إلى بريدكِ فقط
+              رمز التحقق يُرسل إلى هذا البريد فقط
             </span>
-            {phoneError && phone.length >= 11 ? (
-              <span className="t2 mt-1 block text-red-700">{phoneError}</span>
-            ) : null}
           </label>
 
           <label className="block">
@@ -299,6 +283,7 @@ export function CustomerRegisterForm() {
                 setStep("details");
                 setEmailVerified(false);
                 setOtp("");
+                setPhone("");
                 setDevCode(null);
               }}
             >
@@ -318,12 +303,12 @@ export function CustomerRegisterForm() {
                 </span>
               </div>
             </div>
-          ) : (
+          ) : !emailVerified ? (
             <div className="t3 border border-[var(--plum)]/20 bg-[var(--mist)] px-4 py-3 text-[var(--ink)]">
               {otpHint ||
-                "تم إرسال الرمز من VELORA Beauty — راجعي البريد وصندوق الرسائل غير المرغوب فيها."}
+                "تحققي من بريدكِ — الرسالة من فريق VELORA Beauty (وراجعي الرسائل غير المرغوب فيها)."}
             </div>
-          )}
+          ) : null}
 
           {!emailVerified ? (
             <label className="block">
@@ -344,19 +329,43 @@ export function CustomerRegisterForm() {
               />
             </label>
           ) : (
-            <div className="t3 border border-green-200 bg-green-50 px-4 py-3 text-green-900">
-              تم التحقق من البريد ✓ — اضغطي لإنشاء الحساب.
-            </div>
+            <>
+              <div className="t3 border border-green-200 bg-green-50 px-4 py-3 text-green-900">
+                تم التحقق من البريد ✓
+              </div>
+              <label className="block">
+                <span className="t2 text-[var(--muted)]">
+                  رقم الجوال للتوصيل (لا يُستخدم لرمز التحقق)
+                </span>
+                <input
+                  type="tel"
+                  required
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(maskIraqMobileInput(e.target.value))}
+                  disabled={submitting}
+                  placeholder="07XXXXXXXXX"
+                  dir="ltr"
+                  className="t3 mt-2 w-full border-b border-[var(--plum)]/20 bg-transparent py-3 outline-none focus:border-[var(--plum)] disabled:opacity-60"
+                />
+                {phoneError && phone.length >= 11 ? (
+                  <span className="t2 mt-1 block text-red-700">{phoneError}</span>
+                ) : null}
+              </label>
+            </>
           )}
 
-          <button
-            type="button"
-            disabled={submitting || cooldown > 0}
-            onClick={() => void sendOtp()}
-            className="t2 text-[var(--plum)] underline-offset-4 hover:underline disabled:opacity-40"
-          >
-            {cooldown > 0 ? `إعادة الإرسال بعد ${cooldown}ث` : "إعادة إرسال الرمز"}
-          </button>
+          {!emailVerified ? (
+            <button
+              type="button"
+              disabled={submitting || cooldown > 0}
+              onClick={() => void sendOtp()}
+              className="t2 text-[var(--plum)] underline-offset-4 hover:underline disabled:opacity-40"
+            >
+              {cooldown > 0 ? `إعادة الإرسال بعد ${cooldown}ث` : "إعادة إرسال الرمز"}
+            </button>
+          ) : null}
         </>
       )}
 
@@ -371,14 +380,18 @@ export function CustomerRegisterForm() {
         className="w-full"
         disabled={
           submitting ||
-          (step === "details" && Boolean(phoneError)) ||
-          (step === "otp" && !emailVerified && otp.length !== 6)
+          (step === "otp" &&
+            !emailVerified &&
+            otp.length !== 6) ||
+          (step === "otp" &&
+            emailVerified &&
+            (Boolean(phoneError) || phone.length < 11))
         }
       >
         {submitting
           ? "جارٍ المعالجة…"
           : step === "details"
-            ? "إرسال رمز التحقق"
+            ? "إرسال رمز التحقق إلى البريد"
             : emailVerified
               ? "إنشاء الحساب"
               : "تأكيد الرمز"}
@@ -390,7 +403,7 @@ export function CustomerRegisterForm() {
           href={`/login?next=${encodeURIComponent(nextPath)}`}
           className="text-[var(--plum)] underline-offset-4 hover:underline"
         >
-          تسجيل الدخول
+          تسجيل الدخول بالبريد
         </Link>
       </p>
     </form>

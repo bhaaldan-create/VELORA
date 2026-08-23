@@ -117,31 +117,48 @@ export async function sendOtpEmail(
   purpose: "register" | "login",
 ): Promise<SmtpSendResult> {
   const action =
-    purpose === "login" ? "تسجيل الدخول" : "إنشاء حسابكِ في VELORA";
-  const subject = `رمز التحقق — VELORA (${code})`;
+    purpose === "login" ? "تسجيل الدخول إلى حسابكِ" : "إنشاء حسابكِ";
+  const subject = `فريق VELORA Beauty — رمز التحقق (${code})`;
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://velorabeautyiq.me";
+
   const text = [
     "VELORA Beauty",
+    "فريق VELORA Beauty",
     "",
-    `رمز التحقق لـ ${action}: ${code}`,
+    `مرحباً،`,
+    "",
+    `رمز التحقق لـ${action} على موقع VELORA:`,
+    "",
+    code,
     "",
     "صالح لمدة 5 دقائق. لا تشاركي هذا الرمز مع أحد.",
     "",
     "إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.",
+    "",
+    "مع تحيات فريق VELORA Beauty 🤍",
+    siteUrl,
   ].join("\n");
 
   const html = `
-    <div dir="rtl" style="font-family: Georgia, serif; color: #3d2b4a; max-width: 420px;">
-      <p style="letter-spacing: 0.12em; font-size: 12px; color: #8b6f8e;">VELORA Beauty</p>
-      <h1 style="font-size: 20px; margin: 0 0 12px;">رمز التحقق</h1>
-      <p style="margin: 0 0 16px; line-height: 1.6;">
-        استخدمي هذا الرمز لإكمال ${action}:
+    <div dir="rtl" style="font-family: Georgia, 'Times New Roman', serif; color: #3d2b4a; max-width: 440px; margin: 0 auto;">
+      <div style="border-bottom: 1px solid #e8dfe6; padding-bottom: 16px; margin-bottom: 20px;">
+        <p style="letter-spacing: 0.18em; font-size: 11px; color: #8b6f8e; margin: 0 0 6px; text-transform: uppercase;">VELORA Beauty</p>
+        <p style="font-size: 15px; font-weight: 600; margin: 0; color: #3d2b4a;">فريق VELORA Beauty</p>
+      </div>
+      <p style="margin: 0 0 12px; line-height: 1.7; font-size: 15px;">مرحباً،</p>
+      <p style="margin: 0 0 20px; line-height: 1.7; font-size: 15px;">
+        رمز التحقق لـ<strong>${action}</strong> على موقع VELORA:
       </p>
-      <p dir="ltr" style="font-size: 28px; letter-spacing: 0.35em; font-weight: 600; margin: 0 0 16px;">
-        ${code}
+      <div style="background: #f8f4f1; border: 1px solid #e8dfe6; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;">
+        <p dir="ltr" style="font-size: 32px; letter-spacing: 0.4em; font-weight: 700; margin: 0; color: #3d2b4a;">${code}</p>
+      </div>
+      <p style="font-size: 13px; color: #6b5b6e; line-height: 1.6; margin: 0 0 24px;">
+        صالح لمدة 5 دقائق. لا تشاركي الرمز مع أحد.<br/>
+        إذا لم تطلبي هذا الرمز، تجاهلي هذه الرسالة.
       </p>
-      <p style="font-size: 13px; color: #6b5b6e; line-height: 1.5;">
-        صالح لمدة 5 دقائق. لا تشاركي الرمز مع أحد.
-      </p>
+      <p style="font-size: 14px; color: #3d2b4a; margin: 0 0 4px;">مع تحيات فريق VELORA Beauty 🤍</p>
+      <p style="font-size: 12px; margin: 0;"><a href="${siteUrl}" style="color: #8b6f8e;">velorabeautyiq.me</a></p>
     </div>
   `;
 

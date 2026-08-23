@@ -4,10 +4,9 @@ import {
   resolveAuthEmail,
 } from "@/lib/email-otp";
 
-/** توافق مع الواجهة القديمة — يوجّه الإرسال إلى البريد فقط */
+/** يُعاد توجيه الواجهات القديمة — يتطلب البريد الإلكتروني */
 const schema = z.object({
-  phone: z.string().optional(),
-  email: z.string().trim().email().optional(),
+  email: z.string().trim().email(),
   purpose: z.enum(["register", "login"]).optional().default("register"),
 });
 
@@ -17,7 +16,11 @@ export async function POST(req: Request) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return Response.json(
-        { ok: false, error: "أدخلي البريد الإلكتروني." },
+        {
+          ok: false,
+          error:
+            "أدخلي البريد الإلكتروني لإرسال رمز التحقق (التسجيل أصبح عبر البريد فقط).",
+        },
         { status: 400 },
       );
     }
@@ -25,7 +28,6 @@ export async function POST(req: Request) {
     const purpose = parsed.data.purpose;
     const resolved = await resolveAuthEmail({
       email: parsed.data.email,
-      phone: parsed.data.phone,
       purpose,
     });
     if (!resolved.ok) {
