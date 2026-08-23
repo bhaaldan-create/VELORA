@@ -14,7 +14,7 @@ export default async function OrderReceiptPage({ params }: Props) {
   if (!entry) notFound();
 
   return (
-    <main className="min-h-screen bg-[#F1EAE6] px-3 py-6 sm:px-6 sm:py-10">
+    <main className="min-h-screen bg-[#F4F0F8] px-3 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto mb-5 flex w-[850px] max-w-full flex-wrap items-center justify-between gap-3 print:hidden">
         <Link
           href="/admin/orders"
