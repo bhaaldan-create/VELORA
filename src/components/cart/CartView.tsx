@@ -1,147 +1,123 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { ProductMedia } from "@/components/shop/ProductMedia";
-import { ProductPrice } from "@/components/shop/ProductPrice";
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/utils";
 import { ui } from "@/constants/brand";
+import { CartClearDialog } from "@/components/cart/CartClearDialog";
+import { CartEmptyState } from "@/components/cart/CartEmptyState";
+import { CartLineItem } from "@/components/cart/CartLineItem";
+import { CartOrderSummary } from "@/components/cart/CartOrderSummary";
+import { IconArrowStart } from "@/components/cart/CartIcons";
+import { formatPrice } from "@/lib/utils";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
 } from "@/lib/shipping";
-import { DeliveryFeeNotice } from "@/components/shipping/DeliveryFeeNotice";
+
+function formatBagCount(count: number) {
+  if (count === 1) return "1 منتج";
+  if (count === 2) return "2 منتجات";
+  return `${count} منتجات`;
+}
 
 export function CartView() {
-  const { items, subtotal, updateQuantity, removeItem, clearCart } = useCart();
-  const total = getOrderTotal(subtotal, DELIVERY_FEE_IQD);
+  const { items, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
+    useCart();
+  const [clearOpen, setClearOpen] = useState(false);
+  const deliveryFee = DELIVERY_FEE_IQD;
+  const total = getOrderTotal(subtotal, deliveryFee);
 
   if (items.length === 0) {
-    return (
-      <div className="mx-auto max-w-3xl px-5 py-24 text-center sm:px-8">
-        <h1 className="font-display t7 font-semibold text-[var(--plum)]">
-          {ui.emptyBag}
-        </h1>
-        <p className="t4 mt-4 text-[var(--muted)]">
-          اكتشفي مجموعة VELORA — أو دعي مستشارة الجمال ترشدكِ لطقسكِ الأول.
-        </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link href="/shop">
-            <Button>{ui.continueShopping}</Button>
-          </Link>
-          <Link href="/advisor">
-            <Button variant="outline">{ui.advisor}</Button>
-          </Link>
-        </div>
-      </div>
-    );
+    return <CartEmptyState />;
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-20">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="t1 font-medium tracking-[0.18em] text-[var(--muted)]">
-            {ui.bag}
-          </p>
-          <h1 className="font-display t7 mt-2 font-semibold text-[var(--plum)]">
-            حقيبة التسوق
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={clearCart}
-          className="t2 text-[var(--muted)] hover:text-[var(--plum)]"
-        >
-          {ui.clear}
-        </button>
-      </div>
-
-      <ul className="mt-12 divide-y divide-[var(--plum)]/10 border-y border-[var(--plum)]/10">
-        {items.map(({ product, quantity }) => (
-          <li
-            key={product.id}
-            className="flex flex-col gap-4 py-8 sm:flex-row sm:items-center"
-          >
-            <ProductMedia
-              name={product.nameAr}
-              imageTone={product.imageTone}
-              imageUrl={product.imageUrl}
-              aspectClassName="h-28 w-full sm:h-24 sm:w-20 sm:aspect-auto"
-              className="shrink-0"
-              sizes="96px"
-            />
-            <div className="flex-1">
-              <Link
-                href={`/shop/${product.slug}`}
-                className="font-display t5 font-medium text-[var(--plum)]"
-              >
-                {product.nameAr}
-              </Link>
-              <p className="t3 mt-1 text-[var(--muted)]">
-                <ProductPrice
-                  size="sm"
-                  price={product.price}
-                  originalPrice={product.originalPrice}
-                  discountPercent={product.discountPercent}
-                />
-                <span> · {product.size}</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-[var(--plum)]/20">
-                <button
-                  type="button"
-                  className="px-3 py-2"
-                  onClick={() => updateQuantity(product.id, quantity - 1)}
-                >
-                  −
-                </button>
-                <span className="t3 min-w-6 text-center">{quantity}</span>
-                <button
-                  type="button"
-                  className="px-3 py-2"
-                  onClick={() => updateQuantity(product.id, quantity + 1)}
-                >
-                  +
-                </button>
-              </div>
-              <p className="t3 min-w-[5.5rem] text-end font-medium">
-                {formatPrice(product.price * quantity)}
-              </p>
-              <button
-                type="button"
-                onClick={() => removeItem(product.id)}
-                className="t1 text-[var(--muted)] hover:text-[var(--plum)]"
-              >
-                {ui.remove}
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-10 flex flex-col items-stretch justify-between gap-6 sm:flex-row sm:items-center">
-        <div className="space-y-3">
-          <div>
-            <p className="t3 text-[var(--muted)]">{ui.subtotal}</p>
-            <p className="font-display t5 mt-1 font-semibold text-[var(--plum)]">
-              {formatPrice(subtotal)}
+    <div className="bg-[var(--ivory)] pb-[calc(9.5rem+env(safe-area-inset-bottom))] lg:pb-12">
+      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10">
+        <header className="flex items-start justify-between gap-4 border-b border-[var(--plum)]/8 pb-5">
+          <div className="min-w-0">
+            <p className="t1 font-medium tracking-[0.22em] text-[var(--muted)]">
+              {ui.bag}
+            </p>
+            <h1 className="font-display mt-1 text-[clamp(1.5rem,3.5vw,2rem)] font-medium leading-tight text-[var(--plum)]">
+              حقيبة التسوق
+            </h1>
+            <p className="t3 mt-1 text-[var(--muted)]">
+              {formatBagCount(itemCount)}
             </p>
           </div>
-          <DeliveryFeeNotice feeIqd={DELIVERY_FEE_IQD} compact />
+          <button
+            type="button"
+            onClick={() => setClearOpen(true)}
+            className="t2 shrink-0 pt-1 font-medium tracking-[0.04em] text-[var(--muted)] transition-colors hover:text-[var(--plum)]"
+          >
+            تفريغ
+          </button>
+        </header>
+
+        <div className="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <section aria-label="منتجات الحقيبة">
+            <ul>
+              {items.map(({ product, quantity }, index) => (
+                <CartLineItem
+                  key={product.id}
+                  item={{ product, quantity }}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeItem}
+                  isLast={index === items.length - 1}
+                />
+              ))}
+            </ul>
+          </section>
+
+          <div className="hidden lg:block lg:sticky lg:top-24">
+            <CartOrderSummary
+              subtotal={subtotal}
+              deliveryFee={deliveryFee}
+              total={total}
+            />
+          </div>
+        </div>
+
+        <div className="mt-8 lg:hidden">
+          <CartOrderSummary
+            subtotal={subtotal}
+            deliveryFee={deliveryFee}
+            total={total}
+            showCta={false}
+          />
+        </div>
+      </div>
+
+      <div
+        className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--ivory)]/96 shadow-[0_-8px_30px_-12px_rgba(61,38,64,0.15)] backdrop-blur-sm lg:hidden"
+        style={{
+          bottom: "calc(4.75rem + env(safe-area-inset-bottom))",
+        }}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div>
-            <p className="t3 text-[var(--muted)]">{ui.total}</p>
-            <p className="font-display t6 mt-1 font-semibold text-[var(--plum)]">
+            <p className="t2 text-[var(--muted)]">الإجمالي</p>
+            <p className="font-display text-[1.2rem] font-semibold text-[var(--plum)]">
               {formatPrice(total)}
             </p>
           </div>
+          <Link
+            href="/checkout"
+            className="t3 inline-flex min-w-[9.5rem] flex-1 items-center justify-center gap-2 rounded-[14px] bg-[var(--plum)] px-5 py-3 font-medium text-[var(--ivory)] shadow-[0_4px_16px_-6px_rgba(61,38,64,0.4)] transition-all active:scale-[0.99] sm:max-w-[220px] sm:flex-none"
+          >
+            <span>إتمام الطلب</span>
+            <IconArrowStart />
+          </Link>
         </div>
-        <Link href="/checkout">
-          <Button className="w-full sm:min-w-[220px]">{ui.checkout}</Button>
-        </Link>
       </div>
+
+      <CartClearDialog
+        open={clearOpen}
+        onClose={() => setClearOpen(false)}
+        onConfirm={clearCart}
+      />
     </div>
   );
 }

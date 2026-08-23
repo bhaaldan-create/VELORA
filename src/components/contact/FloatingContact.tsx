@@ -51,14 +51,18 @@ export function FloatingContact() {
   if (pathname.startsWith("/admin")) return null;
   if (!waUrl && !igUrl) return null;
 
+  const isCartPage = pathname === "/cart";
+  const bottomOffset = isCartPage
+    ? "calc(10.5rem + env(safe-area-inset-bottom))"
+    : "calc(5.75rem + env(safe-area-inset-bottom))";
+
   return (
     <div
       ref={rootRef}
+      style={{ bottom: bottomOffset }}
       className={cn(
         "fixed z-[60] flex flex-col items-end gap-3",
-        "end-4 lg:end-6",
-        /* فوق الـ bottom nav + safe area — دون تغطية الأزرار */
-        "bottom-[calc(5.75rem+env(safe-area-inset-bottom))] lg:bottom-8",
+        "end-4 lg:end-6 lg:bottom-8",
         "transition-[opacity,transform] duration-500 ease-out",
         visible
           ? "translate-y-0 opacity-100"
