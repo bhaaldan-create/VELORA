@@ -161,21 +161,34 @@ export default function AdminHomepagePage() {
       });
       const data = (await res.json()) as {
         ok?: boolean;
-        config?: HomeHeroConfig;
+        imageUrl?: string;
         error?: string;
       };
-      if (!res.ok || !data.ok || !data.config) {
+      if (!res.ok || !data.ok || !data.imageUrl) {
         setError(data.error || "فشل رفع الصورة.");
         return;
       }
-      setConfig(data.config);
+      setConfig((prev) => ({
+        ...prev,
+        slides: prev.slides.map((s) =>
+          s.id === slideId
+            ? variant === "mobile"
+              ? { ...s, imageUrlMobile: data.imageUrl! }
+              : { ...s, imageUrl: data.imageUrl! }
+            : s,
+        ),
+      }));
       setMessage(
         variant === "mobile"
           ? "تم تحديث صورة الموبايل."
           : "تم تحديث صورة سطح المكتب.",
       );
-    } catch {
-      setError("فشل رفع الصورة.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل رفع الصورة: ${err.message}`
+          : "فشل رفع الصورة.",
+      );
     } finally {
       setUploading(null);
     }
@@ -195,17 +208,26 @@ export default function AdminHomepagePage() {
       });
       const data = (await res.json()) as {
         ok?: boolean;
-        config?: HomeCategoryConfig;
+        imageUrl?: string;
         error?: string;
       };
-      if (!res.ok || !data.ok || !data.config) {
+      if (!res.ok || !data.ok || !data.imageUrl) {
         setError(data.error || "فشل رفع صورة الفئة.");
         return;
       }
-      setCategories(data.config);
+      setCategories((prev) => ({
+        ...prev,
+        cards: prev.cards.map((c) =>
+          c.id === cardId ? { ...c, imageUrl: data.imageUrl! } : c,
+        ),
+      }));
       setMessage("تم تحديث صورة الفئة.");
-    } catch {
-      setError("فشل رفع صورة الفئة.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل رفع صورة الفئة: ${err.message}`
+          : "فشل رفع صورة الفئة.",
+      );
     } finally {
       setUploading(null);
     }

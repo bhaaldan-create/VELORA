@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/db";
 import type { AdminProduct } from "@/lib/admin-product-types";
 import {
-  ADMIN_IMAGE_MIME,
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
-import { persistAdminImage } from "@/lib/admin/persist-image";
+import {
+  isUploadBlob,
+  persistAdminImage,
+  resolveUploadMime,
+} from "@/lib/admin/persist-image";
 import { salePriceFromBase } from "@/lib/pricing";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function mapRow(row: {
   id: string;
@@ -53,10 +59,15 @@ export async function POST(req: Request) {
     if (!id) {
       return Response.json({ ok: false, error: "معرّف المنتج مطلوب." }, { status: 400 });
     }
-    if (!(file instanceof File)) {
+    if (!isUploadBlob(file)) {
       return Response.json({ ok: false, error: "أرفقي ملف صورة." }, { status: 400 });
     }
-    if (!ADMIN_IMAGE_MIME.has(file.type)) {
+
+    const mime = resolveUploadMime({
+      type: file.type,
+      name: "name" in file ? String((file as File).name || "") : "",
+    });
+    if (!mime) {
       return Response.json(
         { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
         { status: 400 },
@@ -75,18 +86,16 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
     const persisted = await persistAdminImage({
       buffer,
       mime,
       folder: "products",
       basename: id,
     });
-    const imageUrl = persisted.url;
 
     const row = await prisma.product.update({
       where: { id },
-      data: { imageUrl },
+      data: { imageUrl: persisted.url },
     });
 
     return Response.json({ ok: true, product: mapRow(row) });
@@ -94,10 +103,7 @@ export async function POST(req: Request) {
     console.error("[admin/products/image] POST failed", error);
     const detail =
       error instanceof Error ? error.message : "تعذّر رفع صورة المنتج.";
-    return Response.json(
-      { ok: false, error: detail },
-      { status: 500 },
-    );
+    return Response.json({ ok: false, error: detail }, { status: 500 });
   }
 }
 

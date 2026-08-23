@@ -1,13 +1,19 @@
 import {
-  ADMIN_IMAGE_MIME,
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
-import { persistAdminImage } from "@/lib/admin/persist-image";
+import {
+  isUploadBlob,
+  persistAdminImage,
+  resolveUploadMime,
+} from "@/lib/admin/persist-image";
 import {
   getHomeHeroConfig,
   saveHomeHeroConfig,
 } from "@/lib/home/config";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -22,13 +28,18 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    if (!(file instanceof File)) {
+    if (!isUploadBlob(file)) {
       return Response.json(
         { ok: false, error: "أرفقي ملف صورة." },
         { status: 400 },
       );
     }
-    if (!ADMIN_IMAGE_MIME.has(file.type)) {
+
+    const mime = resolveUploadMime({
+      type: file.type,
+      name: "name" in file ? String((file as File).name || "") : "",
+    });
+    if (!mime) {
       return Response.json(
         { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
         { status: 400 },
@@ -51,39 +62,35 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
     const persisted = await persistAdminImage({
       buffer,
       mime,
       folder: "home-hero",
       basename: `${slideId}-${variant === "mobile" ? "mobile" : "desktop"}`,
     });
-    const imageUrl = persisted.url;
 
     const slides = [...config.slides];
     const slide = { ...slides[index]! };
     if (variant === "mobile") {
-      slide.imageUrlMobile = imageUrl;
+      slide.imageUrlMobile = persisted.url;
     } else {
-      slide.imageUrl = imageUrl;
+      slide.imageUrl = persisted.url;
     }
     slides[index] = slide;
 
-    // Save only image fields for this slide — avoid rewriting unrelated text
-    const saved = await saveHomeHeroConfig({ ...config, slides });
+    await saveHomeHeroConfig({ ...config, slides });
+
+    // Lightweight response — avoid returning multi‑MB configs that break the client
     return Response.json({
       ok: true,
-      config: saved,
-      imageUrl,
+      slideId,
       variant,
+      imageUrl: persisted.url,
     });
   } catch (error) {
     console.error("[admin/home-hero/image] POST", error);
     const detail =
       error instanceof Error ? error.message : "تعذّر رفع صورة الهيرو.";
-    return Response.json(
-      { ok: false, error: detail },
-      { status: 500 },
-    );
+    return Response.json({ ok: false, error: detail }, { status: 500 });
   }
 }
