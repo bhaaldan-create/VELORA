@@ -370,10 +370,10 @@ export function AccountSettings() {
           <div className="rounded-[22px] border border-[var(--account-border)] bg-white/90 px-5 py-6 lg:sticky lg:top-24">
             {/* dir=ltr يمنع عكس حرفَي My في الواجهة العربية */}
             <div className="text-center" dir="ltr">
-              <p className="font-latin text-[0.68rem] font-medium tracking-[0.42em] text-[var(--account-muted)] uppercase">
+              <p className="font-latin text-[0.7rem] font-semibold tracking-[0.28em] text-[var(--account-muted)] uppercase">
                 My
               </p>
-              <p className="font-brand mt-1.5 text-[1.45rem] leading-none tracking-[0.22em] text-[var(--account-plum)]">
+              <p className="font-brand mt-1.5 text-[1.5rem] leading-none tracking-[0.2em] text-[var(--account-plum)]">
                 VELORA
               </p>
               <span
