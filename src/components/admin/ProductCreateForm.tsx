@@ -25,6 +25,7 @@ const EMPTY = {
   name: "",
   nameAr: "",
   categorySlug: "skincare" as CategorySlug,
+  brandName: "",
   price: "",
   stock: "100",
   discountPercent: 0,
@@ -68,6 +69,7 @@ export function ProductCreateForm({
         : EMPTY.categorySlug,
   }));
   const [file, setFile] = useState<File | null>(null);
+  const [brandFile, setBrandFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,6 +136,7 @@ export function ProductCreateForm({
           name: form.name.trim(),
           nameAr: form.nameAr.trim(),
           categorySlug: form.categorySlug,
+          brandName: form.brandName.trim() || null,
           price,
           stock: Number.isFinite(stock) ? Math.round(stock) : 100,
           discountPercent: form.discountPercent,
@@ -181,9 +184,36 @@ export function ProductCreateForm({
         }
       }
 
+      if (brandFile) {
+        const fd = new FormData();
+        fd.set("id", product.id);
+        fd.set("kind", "brandLogo");
+        fd.set("file", brandFile);
+        const imgRes = await fetch("/api/admin/products/image", {
+          method: "POST",
+          body: fd,
+        });
+        const imgJson = (await imgRes.json()) as {
+          ok?: boolean;
+          product?: AdminProduct;
+          error?: string;
+        };
+        if (imgRes.ok && imgJson.ok && imgJson.product) {
+          product = imgJson.product;
+        }
+      }
+
       onCreated(product);
-      setForm(EMPTY);
+      setForm({
+        ...EMPTY,
+        categorySlug:
+          defaultCategorySlug &&
+          CATEGORIES.some((c) => c.slug === defaultCategorySlug)
+            ? defaultCategorySlug
+            : EMPTY.categorySlug,
+      });
       setFile(null);
+      setBrandFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر إضافة المنتج.");
     } finally {
@@ -250,6 +280,15 @@ export function ProductCreateForm({
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="اسم العلامة التجارية (اختياري)">
+          <input
+            value={form.brandName}
+            onChange={(e) => set("brandName", e.target.value)}
+            className={inputClass}
+            dir="ltr"
+            placeholder="L’Oréal Paris"
+          />
         </Field>
         <Field label="الحجم / العبوة">
           <input
@@ -445,6 +484,21 @@ export function ProductCreateForm({
         />
         <p className="t2 mt-1 text-[var(--muted)]">
           JPG / PNG / WebP — حتى 12 ميجابايت
+        </p>
+      </div>
+
+      <div>
+        <label className="t2 text-[var(--muted)]">
+          شعار العلامة التجارية (اختياري)
+        </label>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="t3 mt-2 block w-full"
+          onChange={(e) => setBrandFile(e.target.files?.[0] || null)}
+        />
+        <p className="t2 mt-1 text-[var(--muted)]">
+          يُعرض فوق عنوان المنتج في صفحة التفاصيل — يُفضّل PNG شفاف
         </p>
       </div>
 

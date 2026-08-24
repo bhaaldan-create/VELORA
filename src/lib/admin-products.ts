@@ -38,6 +38,8 @@ function toAdminProduct(row: {
   isNew: boolean;
   size: string;
   imageUrl: string | null;
+  brandName: string | null;
+  brandLogoUrl: string | null;
   updatedAt: Date;
 }): AdminProduct {
   const discountPercent = row.discountPercent || 0;
@@ -56,6 +58,8 @@ function toAdminProduct(row: {
     isNew: row.isNew,
     size: row.size,
     imageUrl: row.imageUrl,
+    brandName: row.brandName,
+    brandLogoUrl: row.brandLogoUrl,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -74,6 +78,8 @@ function toAdminProductDetail(row: {
   isNew: boolean;
   size: string;
   imageUrl: string | null;
+  brandName: string | null;
+  brandLogoUrl: string | null;
   updatedAt: Date;
   description: string;
   descriptionAr: string;
@@ -118,6 +124,8 @@ export type AdminProductUpdate = {
   isBestseller?: boolean;
   isNew?: boolean;
   imageUrl?: string | null;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
   categorySlug?: string;
   size?: string;
   description?: string;
@@ -153,6 +161,8 @@ export type AdminProductCreateInput = {
   reviews?: number;
   imageTone?: string;
   slug?: string;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
 };
 
 function slugify(input: string) {
@@ -217,6 +227,8 @@ export async function createAdminProduct(
       rating: typeof data.rating === "number" ? data.rating : 5,
       reviews: typeof data.reviews === "number" ? Math.round(data.reviews) : 0,
       imageTone: data.imageTone?.trim() || DEFAULT_TONE,
+      brandName: data.brandName?.trim() || null,
+      brandLogoUrl: data.brandLogoUrl || null,
       stock: Math.round(data.stock ?? 100),
       isActive: data.isActive !== false,
     },
@@ -263,6 +275,17 @@ export async function updateAdminProduct(
         : {}),
       ...(typeof data.isNew === "boolean" ? { isNew: data.isNew } : {}),
       ...(data.imageUrl !== undefined ? { imageUrl: data.imageUrl } : {}),
+      ...(data.brandName !== undefined
+        ? {
+            brandName:
+              typeof data.brandName === "string"
+                ? data.brandName.trim() || null
+                : null,
+          }
+        : {}),
+      ...(data.brandLogoUrl !== undefined
+        ? { brandLogoUrl: data.brandLogoUrl }
+        : {}),
       ...(data.categorySlug ? { categorySlug: data.categorySlug } : {}),
       ...(typeof data.size === "string" ? { size: data.size.trim() } : {}),
       ...(typeof data.description === "string"

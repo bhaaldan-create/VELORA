@@ -48,6 +48,10 @@ model Product {
   reviews        Int      @default(0)
   imageTone      String
   imageUrl       String?
+  /// اسم العلامة التجارية للمصنّع (اختياري) — ليس شعار VELORA
+  brandName      String?
+  /// شعار العلامة التجارية للمصنّع (اختياري)
+  brandLogoUrl   String?
   stock          Int      @default(100)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())

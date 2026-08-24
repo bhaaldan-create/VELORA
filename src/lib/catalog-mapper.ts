@@ -55,5 +55,8 @@ export function mapProduct(row: DbProduct): Product {
     reviews: row.reviews,
     imageTone: row.imageTone,
     imageUrl: row.imageUrl,
+    brandName: row.brandName || null,
+    brandLogoUrl: row.brandLogoUrl || null,
+    stock: row.stock,
   };
 }

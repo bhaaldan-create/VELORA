@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "brandName" TEXT;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "brandLogoUrl" TEXT;

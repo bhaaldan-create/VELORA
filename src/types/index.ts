@@ -51,6 +51,12 @@ export interface Product {
   imageTone: string;
   /** مسار صورة المنتج من لوحة الإدارة مثل /products/p1.webp */
   imageUrl?: string | null;
+  /** اسم علامة المصنّع (اختياري) */
+  brandName?: string | null;
+  /** شعار علامة المصنّع (اختياري) */
+  brandLogoUrl?: string | null;
+  /** المخزون المتاح — للواجهة فقط عند الحاجة */
+  stock?: number;
 }
 
 export interface CartItem {

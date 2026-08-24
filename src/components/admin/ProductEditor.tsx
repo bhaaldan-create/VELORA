@@ -54,6 +54,7 @@ type Draft = {
   descriptionAr: string;
   description: string;
   benefitsAr: string[];
+  brandName: string;
   isActive: boolean;
   isBestseller: boolean;
   isNew: boolean;
@@ -75,6 +76,7 @@ function draftFromProduct(p: AdminProductDetail): Draft {
     descriptionAr: p.descriptionAr,
     description: p.description,
     benefitsAr: [...p.benefitsAr],
+    brandName: p.brandName || "",
     isActive: p.isActive,
     isBestseller: p.isBestseller,
     isNew: p.isNew,
@@ -152,6 +154,7 @@ export function ProductEditor({
   const router = useRouter();
   const toast = useAdminToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const brandFileRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
 
   const [product, setProduct] = useState(initialProduct);
@@ -159,6 +162,7 @@ export function ProductEditor({
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
+  const [brandBusy, setBrandBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -194,6 +198,7 @@ export function ProductEditor({
       draft.isBestseller !== base.isBestseller ||
       draft.isNew !== base.isNew ||
       draft.specialOffer !== base.specialOffer ||
+      draft.brandName !== base.brandName ||
       JSON.stringify(draft.benefitsAr) !== JSON.stringify(base.benefitsAr)
     );
   }, [draft, product]);
@@ -289,6 +294,7 @@ export function ProductEditor({
           isActive: draft.isActive,
           isBestseller: draft.isBestseller,
           isNew: draft.isNew,
+          brandName: draft.brandName.trim() || null,
         }),
       });
       const json = (await res.json()) as {
@@ -365,6 +371,63 @@ export function ProductEditor({
       toast.error(err instanceof Error ? err.message : "تعذّر حذف الصورة.");
     } finally {
       setImageBusy(false);
+    }
+  }
+
+  async function uploadBrandLogo(file: File | null) {
+    if (!file) return;
+    setBrandBusy(true);
+    try {
+      const form = new FormData();
+      form.set("id", product.id);
+      form.set("kind", "brandLogo");
+      form.set("file", file);
+      const res = await fetch("/api/admin/products/image", {
+        method: "POST",
+        body: form,
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        product?: AdminProductDetail;
+        error?: string;
+      };
+      if (!res.ok || !json.ok || !json.product) {
+        throw new Error(json.error || "تعذّر رفع شعار العلامة.");
+      }
+      setProduct({ ...product, ...json.product });
+      toast.success("تم تحديث شعار العلامة");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر رفع الشعار.");
+    } finally {
+      setBrandBusy(false);
+      if (brandFileRef.current) brandFileRef.current.value = "";
+    }
+  }
+
+  async function removeBrandLogo() {
+    setBrandBusy(true);
+    try {
+      const res = await fetch("/api/admin/products/image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id, kind: "brandLogo" }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        product?: AdminProductDetail;
+        error?: string;
+      };
+      if (!res.ok || !json.ok || !json.product) {
+        throw new Error(json.error || "تعذّر حذف الشعار.");
+      }
+      setProduct({ ...product, ...json.product, brandLogoUrl: null });
+      toast.success("تم حذف شعار العلامة");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر حذف الشعار.");
+    } finally {
+      setBrandBusy(false);
     }
   }
 
@@ -593,6 +656,82 @@ export function ProductEditor({
               </span>
             </button>
           )}
+        </SectionCard>
+
+        <SectionCard title="معلومات العلامة التجارية">
+          <input
+            ref={brandFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              void uploadBrandLogo(f);
+            }}
+          />
+          <div className="space-y-4">
+            <Field
+              label="اسم العلامة"
+              hint="مثل L’Oréal Paris أو La Roche-Posay — اختياري"
+            >
+              <input
+                className={inputClass}
+                dir="ltr"
+                value={draft.brandName}
+                onChange={(e) => patchDraft({ brandName: e.target.value })}
+                placeholder="Brand name"
+              />
+            </Field>
+
+            <div>
+              <p className="mb-1.5 text-[12px] font-medium text-[var(--admin-text-secondary)]">
+                شعار العلامة
+              </p>
+              {product.brandLogoUrl ? (
+                <div className="space-y-3">
+                  <div className="flex h-24 items-center justify-center rounded-[14px] border border-[var(--admin-border)] bg-white px-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={product.brandLogoUrl}
+                      alt={draft.brandName || "Brand logo"}
+                      className="max-h-16 w-auto max-w-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={brandBusy}
+                      onClick={() => brandFileRef.current?.click()}
+                      className="inline-flex h-9 items-center rounded-[10px] border border-[var(--admin-border)] bg-white px-3 text-[12.5px] font-medium disabled:opacity-40"
+                    >
+                      {brandBusy ? "جارٍ الرفع…" : "استبدال الشعار"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={brandBusy}
+                      onClick={() => void removeBrandLogo()}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--admin-danger)]/20 bg-[var(--admin-danger-bg)] px-3 text-[12.5px] font-medium text-[var(--admin-danger)] disabled:opacity-40"
+                    >
+                      <Trash2 className="size-3.5" strokeWidth={1.7} />
+                      حذف الشعار
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={brandBusy}
+                  onClick={() => brandFileRef.current?.click()}
+                  className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-bg-elevated)] text-center transition hover:border-[var(--admin-plum-soft)]"
+                >
+                  <ImagePlus className="size-5 text-[var(--admin-plum)]" strokeWidth={1.6} />
+                  <span className="text-[12.5px] text-[var(--admin-text-muted)]">
+                    {brandBusy ? "جارٍ الرفع…" : "رفع شعار العلامة"}
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
         </SectionCard>
 
         {/* Basic info */}

@@ -59,19 +59,20 @@ export function FloatingContact() {
 
   const isCartPage = pathname === "/cart";
   const isCheckoutPage = pathname === "/checkout";
-  const bottomOffset = isCartPage
+  const isProductPage = pathname.startsWith("/shop/") && pathname !== "/shop";
+  const bottomOffset = isCartPage || isCheckoutPage
     ? "calc(7.5rem + env(safe-area-inset-bottom))"
-    : isCheckoutPage
-      ? "calc(7.5rem + env(safe-area-inset-bottom))"
-      : "calc(5.25rem + env(safe-area-inset-bottom))";
+    : isProductPage
+      ? "calc(5.75rem + var(--pdp-sticky-offset, 0px) + env(safe-area-inset-bottom))"
+      : "calc(4.75rem + env(safe-area-inset-bottom))";
 
   return (
     <div
       ref={rootRef}
       style={{ bottom: bottomOffset }}
       className={cn(
-        "fixed z-[60] flex flex-col items-end gap-3",
-        "end-4 lg:end-6 lg:bottom-8",
+        "fixed z-[60] flex flex-col items-end gap-2.5",
+        "end-3.5 lg:end-6 lg:bottom-8",
         "transition-[opacity,transform] duration-500 ease-out",
         visible
           ? "translate-y-0 opacity-100"

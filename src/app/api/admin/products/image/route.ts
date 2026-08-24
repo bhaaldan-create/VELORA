@@ -13,6 +13,7 @@ import { salePriceFromBase } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function mapRow(row: {
   id: string;
@@ -28,6 +29,8 @@ function mapRow(row: {
   isNew: boolean;
   size: string;
   imageUrl: string | null;
+  brandName: string | null;
+  brandLogoUrl: string | null;
   updatedAt: Date;
 }): AdminProduct {
   const discountPercent = row.discountPercent || 0;
@@ -46,6 +49,8 @@ function mapRow(row: {
     isNew: row.isNew,
     size: row.size,
     imageUrl: row.imageUrl,
+    brandName: row.brandName,
+    brandLogoUrl: row.brandLogoUrl,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -54,6 +59,7 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
     const id = String(form.get("id") || "").trim();
+    const kind = String(form.get("kind") || "product").trim();
     const file = form.get("file");
 
     if (!id) {
@@ -85,32 +91,36 @@ export async function POST(req: Request) {
       return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
     }
 
+    const isBrandLogo = kind === "brandLogo";
     const buffer = Buffer.from(await file.arrayBuffer());
     const persisted = await persistAdminImage({
       buffer,
       mime,
-      folder: "products",
-      basename: id,
+      folder: isBrandLogo ? "brands" : "products",
+      basename: isBrandLogo ? `${id}-brand` : id,
     });
 
     const row = await prisma.product.update({
       where: { id },
-      data: { imageUrl: persisted.url },
+      data: isBrandLogo
+        ? { brandLogoUrl: persisted.url }
+        : { imageUrl: persisted.url },
     });
 
     return Response.json({ ok: true, product: mapRow(row) });
   } catch (error) {
     console.error("[admin/products/image] POST failed", error);
     const detail =
-      error instanceof Error ? error.message : "تعذّر رفع صورة المنتج.";
+      error instanceof Error ? error.message : "تعذّر رفع الصورة.";
     return Response.json({ ok: false, error: detail }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request) {
   try {
-    const body = (await req.json()) as { id?: string };
+    const body = (await req.json()) as { id?: string; kind?: string };
     const id = body.id?.trim();
+    const kind = body.kind?.trim() || "product";
     if (!id) {
       return Response.json({ ok: false, error: "معرّف المنتج مطلوب." }, { status: 400 });
     }
@@ -120,16 +130,17 @@ export async function DELETE(req: Request) {
       return Response.json({ ok: false, error: "المنتج غير موجود." }, { status: 404 });
     }
 
+    const isBrandLogo = kind === "brandLogo";
     const row = await prisma.product.update({
       where: { id },
-      data: { imageUrl: null },
+      data: isBrandLogo ? { brandLogoUrl: null } : { imageUrl: null },
     });
 
     return Response.json({ ok: true, product: mapRow(row) });
   } catch (error) {
     console.error("[admin/products/image] DELETE failed", error);
     return Response.json(
-      { ok: false, error: "تعذّر حذف صورة المنتج." },
+      { ok: false, error: "تعذّر حذف الصورة." },
       { status: 500 },
     );
   }

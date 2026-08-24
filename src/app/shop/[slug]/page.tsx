@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/shop/ProductDetail";
-import { getProductBySlug, getProductSlugs } from "@/lib/catalog";
+import {
+  getProductBySlug,
+  getProductSlugs,
+  getRelatedProducts,
+  getRoutineCompanions,
+} from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -36,5 +41,13 @@ export default async function ProductPage({
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
-  return <ProductDetail product={product} />;
+
+  const [related, routine] = await Promise.all([
+    getRelatedProducts(product, 8),
+    getRoutineCompanions(product, 2),
+  ]);
+
+  return (
+    <ProductDetail product={product} related={related} routine={routine} />
+  );
 }

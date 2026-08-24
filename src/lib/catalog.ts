@@ -169,3 +169,35 @@ export async function resolveProductsByIdsOrSlugs(
   }
   return withoutFragranceProducts(ordered);
 }
+
+export async function getRelatedProducts(
+  product: Product,
+  limit = 8,
+): Promise<Product[]> {
+  const rows = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      categorySlug: product.category,
+      NOT: { id: product.id },
+    },
+    orderBy: [{ isBestseller: "desc" }, { rating: "desc" }],
+    take: limit,
+  });
+  return withoutFragranceProducts(rows.map(mapProduct));
+}
+
+export async function getRoutineCompanions(
+  product: Product,
+  limit = 2,
+): Promise<Product[]> {
+  const rows = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      categorySlug: product.category,
+      NOT: { id: product.id },
+    },
+    orderBy: [{ isBestseller: "desc" }, { isNew: "desc" }],
+    take: Math.max(limit * 2, 4),
+  });
+  return withoutFragranceProducts(rows.map(mapProduct)).slice(0, limit);
+}

@@ -15,6 +15,8 @@ export type AdminProduct = {
   isNew: boolean;
   size: string;
   imageUrl: string | null;
+  brandName: string | null;
+  brandLogoUrl: string | null;
   updatedAt: string;
 };
 
