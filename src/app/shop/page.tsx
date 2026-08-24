@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { getAllCategories, getAllProducts } from "@/lib/catalog";
@@ -11,12 +12,7 @@ export const metadata: Metadata = {
 
 export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; brand?: string }>;
-}) {
-  const { category, brand } = await searchParams;
+export default async function ShopPage() {
   const [products, categories] = await Promise.all([
     getAllProducts(),
     getAllCategories(),
@@ -24,12 +20,13 @@ export default async function ShopPage({
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14">
-      <ShopCatalog
-        initialCategory={category}
-        initialBrand={brand}
-        products={products}
-        categories={categories}
-      />
+      <Suspense
+        fallback={
+          <div className="h-40 animate-pulse rounded-3xl bg-[var(--mist)]" />
+        }
+      >
+        <ShopCatalog products={products} categories={categories} />
+      </Suspense>
     </div>
   );
 }

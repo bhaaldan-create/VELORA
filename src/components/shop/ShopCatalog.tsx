@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   getShopBrand,
   productMatchesBrand,
@@ -12,25 +13,28 @@ import type { Category, CategorySlug, Product } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ShopCatalogProps {
-  initialCategory?: string;
-  initialBrand?: string;
   products: Product[];
   categories: Category[];
 }
 
-export function ShopCatalog({
-  initialCategory,
-  initialBrand,
-  products,
-  categories,
-}: ShopCatalogProps) {
+export function ShopCatalog({ products, categories }: ShopCatalogProps) {
   const { locale, t } = useLocale();
-  const brand = getShopBrand(initialBrand);
-  const [category, setCategory] = useState<string | undefined>(
-    initialCategory && categories.some((c) => c.slug === initialCategory)
-      ? initialCategory
+  const searchParams = useSearchParams();
+  const brand = getShopBrand(searchParams.get("brand") ?? undefined);
+  const categoryFromUrl = searchParams.get("category") ?? undefined;
+  const [category, setCategory] = useState<string | undefined>(() =>
+    categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
+      ? categoryFromUrl
       : undefined,
   );
+
+  useEffect(() => {
+    setCategory(
+      categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
+        ? categoryFromUrl
+        : undefined,
+    );
+  }, [categoryFromUrl, categories]);
 
   const list = useMemo(() => {
     let result = products;

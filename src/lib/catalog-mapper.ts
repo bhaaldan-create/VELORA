@@ -15,6 +15,31 @@ function asStringArray<T = string>(value: Prisma.JsonValue): T[] {
   return [];
 }
 
+/** حقول القائمة فقط — بدون أوصاف/مكونات ثقيلة (تسريع التنقل) */
+export const productCardSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  nameAr: true,
+  categorySlug: true,
+  price: true,
+  discountPercent: true,
+  currency: true,
+  size: true,
+  isBestseller: true,
+  isNew: true,
+  rating: true,
+  reviews: true,
+  imageTone: true,
+  imageUrl: true,
+  brandName: true,
+  concernsJson: true,
+} as const;
+
+export type ProductCardRow = Prisma.ProductGetPayload<{
+  select: typeof productCardSelect;
+}>;
+
 export function mapCategory(row: DbCategory): Category {
   return {
     slug: row.slug as CategorySlug,
@@ -24,6 +49,41 @@ export function mapCategory(row: DbCategory): Category {
     descriptionAr: row.descriptionAr,
     tagline: row.tagline,
     taglineAr: row.taglineAr,
+  };
+}
+
+/** نسخة خفيفة للقوائم / الرئيسية / البحث — تبقى متوافقة مع Product */
+export function mapProductCard(row: ProductCardRow): Product {
+  const discountPercent = row.discountPercent || 0;
+  const base = row.price;
+  const sale = salePriceFromBase(base, discountPercent);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    category: row.categorySlug as CategorySlug,
+    price: sale,
+    originalPrice: discountPercent > 0 ? base : undefined,
+    discountPercent: discountPercent > 0 ? discountPercent : undefined,
+    currency: (row.currency as Currency) || "IQD",
+    description: "",
+    descriptionAr: "",
+    benefits: [],
+    benefitsAr: [],
+    ingredients: [],
+    concerns: asStringArray<SkinConcern>(row.concernsJson),
+    size: row.size,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    rating: row.rating,
+    reviews: row.reviews,
+    imageTone: row.imageTone,
+    imageUrl: row.imageUrl,
+    brandName: row.brandName || null,
+    brandLogoUrl: null,
+    stock: undefined,
   };
 }
 
