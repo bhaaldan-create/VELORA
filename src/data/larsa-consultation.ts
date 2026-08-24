@@ -270,7 +270,7 @@ export const LARSA_PATHS: LarsaPathDef[] = [
   {
     id: "body",
     number: "04",
-    title: "الجسم والعطور",
+    title: "العناية بالجسم",
     desc: "لعناية تكمّل جمالكِ",
     icon: "body",
     intro: "تمام، خلينا نكمّل جمالكِ بالعناية والجسم.",
@@ -281,7 +281,7 @@ export const LARSA_PATHS: LarsaPathDef[] = [
         title: "شنو تحبين نركز عليه؟",
         options: [
           { id: "soft", label: "نعومة وترطيب", tags: ["ترطيب جسم"] },
-          { id: "scent", label: "رائحة لطيفة", tags: ["عطر", "رائحة"] },
+          { id: "scent", label: "رائحة لطيفة", tags: ["معطر خفيف"] },
           { id: "both", label: "الاثنين معاً", tags: ["ترطيب جسم", "رائحة"] },
           { id: "unsure", label: "لستُ متأكدة", tags: ["استكشاف"] },
         ],

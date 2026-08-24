@@ -1,4 +1,4 @@
-import type { HomeCategoryConfig, HomeHeroConfig } from "@/lib/home/types";
+import type { HomeCategoryConfig, HomeHeroConfig, HomePromoConfig } from "@/lib/home/types";
 
 export const DEFAULT_HOME_CATEGORIES: HomeCategoryConfig = {
   version: 1,
@@ -27,7 +27,47 @@ export const DEFAULT_HOME_CATEGORIES: HomeCategoryConfig = {
       imageUrl: "/brand/categories/makeup.png",
       objectPosition: "center center",
     },
+    {
+      id: "hair-care",
+      slug: "hair-care",
+      enabled: true,
+      titleAr: "العناية بالشعر",
+      titleEn: "Hair care",
+      ctaAr: "استكشفي",
+      ctaEn: "Explore",
+      href: "/shop?category=hair-care",
+      imageUrl: "/brand/categories/skincare.png",
+      objectPosition: "center center",
+    },
+    {
+      id: "body-care",
+      slug: "body-care",
+      enabled: true,
+      titleAr: "العناية بالجسم",
+      titleEn: "Body care",
+      ctaAr: "استكشفي",
+      ctaEn: "Explore",
+      href: "/shop?category=body-care",
+      imageUrl: "/brand/categories/makeup.png",
+      objectPosition: "center center",
+    },
   ],
+};
+
+export const DEFAULT_HOME_PROMO: HomePromoConfig = {
+  version: 1,
+  enabled: true,
+  headlineAr: "وصل حديثاً ✦",
+  headlineEn: "Just arrived ✦",
+  bodyAr:
+    "اكتشفي أحدث الصيحات والمنتجات العالمية التي وصلت للتو إلى VELORA",
+  bodyEn:
+    "Discover the newest global trends and products just arrived at VELORA",
+  ctaAr: "استكشفي الآن",
+  ctaEn: "Explore now",
+  href: "/shop",
+  imageUrl: "/brand/categories/promo-gift.png",
+  objectPosition: "left center",
 };
 
 export const DEFAULT_HOME_HERO: HomeHeroConfig = {

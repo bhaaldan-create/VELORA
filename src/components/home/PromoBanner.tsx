@@ -3,10 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/context/LocaleContext";
+import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
+import type { HomePromoConfig } from "@/lib/home/types";
 
-export function PromoBanner() {
+export function PromoBanner({ config }: { config: HomePromoConfig }) {
   const { locale } = useLocale();
   const ar = locale !== "en";
+
+  if (!config.enabled) return null;
+
+  const useNativeImg = shouldUseNativeImageElement(config.imageUrl);
 
   return (
     <section className="bg-[#faf8fc] px-4 pb-8 sm:px-6 sm:pb-10">
@@ -28,13 +34,28 @@ export function PromoBanner() {
 
         <div className="relative z-[1] flex min-h-[168px] items-stretch sm:min-h-[200px]" dir="ltr">
           <div className="relative min-h-[168px] w-[42%] shrink-0 sm:min-h-[200px] sm:w-[38%] md:w-[36%]">
-            <Image
-              src="/brand/categories/promo-gift.png"
-              alt=""
-              fill
-              className="object-cover object-left"
-              sizes="(max-width: 640px) 42vw, 320px"
-            />
+            {useNativeImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={config.imageUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover object-left"
+                style={{
+                  objectPosition: config.objectPosition || "left center",
+                }}
+              />
+            ) : (
+              <Image
+                src={config.imageUrl}
+                alt=""
+                fill
+                className="object-cover object-left"
+                style={{
+                  objectPosition: config.objectPosition || "left center",
+                }}
+                sizes="(max-width: 640px) 42vw, 320px"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-l from-[#32162f]/30 via-transparent to-transparent" />
           </div>
 
@@ -43,19 +64,17 @@ export function PromoBanner() {
             dir={ar ? "rtl" : "ltr"}
           >
             <h2 className="font-display text-[clamp(1.25rem,4vw,1.75rem)] font-bold leading-tight text-white">
-              {ar ? "وصل حديثاً ✦" : "Just arrived ✦"}
+              {ar ? config.headlineAr : config.headlineEn}
             </h2>
             <p className="max-w-md text-[0.78rem] leading-[1.7] text-white/85 sm:text-[0.85rem]">
-              {ar
-                ? "اكتشفي أحدث الصيحات والمنتجات العالمية التي وصلت للتو إلى VELORA"
-                : "Discover the newest global trends and products just arrived at VELORA"}
+              {ar ? config.bodyAr : config.bodyEn}
             </p>
             <div className="mt-1 flex justify-start">
               <Link
-                href="/shop"
+                href={config.href || "/shop"}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.78rem] font-medium text-[#32162f] shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
-                {ar ? "استكشفي الآن" : "Explore now"}
+                {ar ? config.ctaAr : config.ctaEn}
                 <span aria-hidden className="text-[0.72rem]">
                   {ar ? "←" : "→"}
                 </span>

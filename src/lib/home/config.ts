@@ -222,12 +222,13 @@ export function mergeHomeCategoryConfig(stored: unknown): HomeCategoryConfig {
   if (!isObject(stored)) return base;
 
   const cardsIn = Array.isArray(stored.cards) ? stored.cards : null;
-  const cards =
-    cardsIn && cardsIn.length
-      ? cardsIn.map((c, i) =>
-          sanitizeCategoryCard(c, base.cards[i] ?? base.cards[0]!),
-        )
-      : base.cards;
+  const cards = base.cards.map((defaultCard, i) => {
+    const fromStored =
+      cardsIn?.find(
+        (c) => isObject(c) && typeof c.id === "string" && c.id === defaultCard.id,
+      ) ?? cardsIn?.[i];
+    return sanitizeCategoryCard(fromStored, defaultCard);
+  });
 
   return {
     version: typeof stored.version === "number" ? stored.version : base.version,
@@ -254,12 +255,15 @@ export async function saveHomeCategoryConfig(
   const base = structuredClone(DEFAULT_HOME_CATEGORIES);
 
   const cardsIn = Array.isArray(data.cards) ? data.cards : existing.cards;
-  const cards = cardsIn.map((raw, i) => {
+  const cards = base.cards.map((defaultCard, i) => {
+    const raw =
+      cardsIn.find((c) => c.id === defaultCard.id) ??
+      cardsIn[i] ??
+      defaultCard;
     const fallback =
-      existing.cards.find((c) => c.id === raw.id) ??
+      existing.cards.find((c) => c.id === defaultCard.id) ??
       existing.cards[i] ??
-      base.cards[i] ??
-      base.cards[0]!;
+      defaultCard;
     const card = sanitizeCategoryCard(raw, fallback);
     const incomingImage =
       typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";

@@ -16,6 +16,13 @@ export function categoryCardMediaUrl(cardId: string, cacheBust?: number): string
   return `/api/media/home-categories?${q}`;
 }
 
+export function homePromoMediaUrl(cacheBust?: number): string {
+  const q = new URLSearchParams();
+  if (cacheBust) q.set("v", String(cacheBust));
+  const query = q.toString();
+  return query ? `/api/media/home-promo?${query}` : "/api/media/home-promo";
+}
+
 export function resolveClientImageUrl(stored: string, mediaUrl: string): string {
   if (!stored) return stored;
   if (stored.startsWith("data:")) return mediaUrl;

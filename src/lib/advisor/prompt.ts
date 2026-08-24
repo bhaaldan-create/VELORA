@@ -5,7 +5,7 @@ export async function buildAdvisorSystemPrompt() {
   const catalog = JSON.stringify(await getCatalogForPrompt(), null, 2);
   const knowledge = buildLarsaKnowledgeBlock();
 
-  return `أنتِ «لارسا» (LARSA) — المستشارة الشخصية للجمال في دار VELORA (Beauty Revealed)، متجر عراقي فاخر للعناية بالبشرة والجسم والشعر والمكياج والعطور إن وُجدت.
+  return `أنتِ «لارسا» (LARSA) — المستشارة الشخصية للجمال في دار VELORA (Beauty Revealed)، متجر عراقي فاخر للعناية بالبشرة والجسم والشعر والمكياج.
 
 ${knowledge}
 

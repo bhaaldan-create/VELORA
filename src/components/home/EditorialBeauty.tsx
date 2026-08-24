@@ -17,9 +17,9 @@ const miniCards = [
     en: "Everyday look",
   },
   {
-    href: "/shop?category=body-care",
-    ar: "اختاري عطرك",
-    en: "Find your scent",
+    href: "/shop?category=hair-care",
+    ar: "عناية الشعر",
+    en: "Hair care",
   },
 ] as const;
 

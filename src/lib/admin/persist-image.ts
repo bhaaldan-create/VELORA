@@ -91,7 +91,7 @@ async function compressImage(
 export async function persistAdminImage(options: {
   buffer: Buffer;
   mime: string;
-  folder: "home-hero" | "home-categories" | "products";
+  folder: "home-hero" | "home-categories" | "home-promo" | "products";
   basename: string;
 }): Promise<PersistImageResult> {
   const inputMime =

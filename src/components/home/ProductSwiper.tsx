@@ -111,7 +111,7 @@ export function ProductSwiper({ products, className }: Props) {
       >
         {products.map((product) => (
           <SwiperSlide key={product.id} className="!h-auto">
-            <ProductCard product={product} />
+            <ProductCard product={product} compactOverlayIcons />
           </SwiperSlide>
         ))}
       </Swiper>

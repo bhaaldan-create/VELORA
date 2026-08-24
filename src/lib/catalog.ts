@@ -3,6 +3,10 @@ import { mapCategory, mapProduct } from "@/lib/catalog-mapper";
 import { isFragranceProduct } from "@/lib/product-brand";
 import type { Category, Product } from "@/types";
 
+function withoutFragranceProducts(products: Product[]): Product[] {
+  return products.filter((p) => !isFragranceProduct(p));
+}
+
 export async function getAllCategories(): Promise<Category[]> {
   const rows = await prisma.category.findMany({
     orderBy: { sortOrder: "asc" },
@@ -20,21 +24,25 @@ export async function getAllProducts(): Promise<Product[]> {
     where: { isActive: true },
     orderBy: [{ isBestseller: "desc" }, { nameAr: "asc" }],
   });
-  return rows.map(mapProduct);
+  return withoutFragranceProducts(rows.map(mapProduct));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const row = await prisma.product.findFirst({
     where: { slug, isActive: true },
   });
-  return row ? mapProduct(row) : null;
+  const product = row ? mapProduct(row) : null;
+  if (product && isFragranceProduct(product)) return null;
+  return product;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
   const row = await prisma.product.findFirst({
     where: { id, isActive: true },
   });
-  return row ? mapProduct(row) : null;
+  const product = row ? mapProduct(row) : null;
+  if (product && isFragranceProduct(product)) return null;
+  return product;
 }
 
 export async function getProductsByCategory(
@@ -47,7 +55,7 @@ export async function getProductsByCategory(
     },
     orderBy: [{ isBestseller: "desc" }, { nameAr: "asc" }],
   });
-  return rows.map(mapProduct);
+  return withoutFragranceProducts(rows.map(mapProduct));
 }
 
 export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
@@ -59,7 +67,7 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
     orderBy: [{ isBestseller: "desc" }, { isNew: "desc" }],
     take: limit,
   });
-  return rows.map(mapProduct);
+  return withoutFragranceProducts(rows.map(mapProduct));
 }
 
 export async function getNewArrivals(limit = 12): Promise<Product[]> {
@@ -68,14 +76,14 @@ export async function getNewArrivals(limit = 12): Promise<Product[]> {
     orderBy: [{ updatedAt: "desc" }, { nameAr: "asc" }],
     take: limit,
   });
-  if (rows.length >= 4) return rows.map(mapProduct);
+  if (rows.length >= 4) return withoutFragranceProducts(rows.map(mapProduct));
 
   const fallback = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: [{ createdAt: "desc" }, { nameAr: "asc" }],
     take: limit,
   });
-  return fallback.map(mapProduct);
+  return withoutFragranceProducts(fallback.map(mapProduct));
 }
 
 export async function getBestsellers(limit = 12): Promise<Product[]> {
@@ -84,19 +92,14 @@ export async function getBestsellers(limit = 12): Promise<Product[]> {
     orderBy: [{ rating: "desc" }, { reviews: "desc" }],
     take: limit,
   });
-  if (rows.length >= 4) return rows.map(mapProduct);
+  if (rows.length >= 4) return withoutFragranceProducts(rows.map(mapProduct));
 
   const fallback = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: [{ rating: "desc" }, { reviews: "desc" }],
     take: limit,
   });
-  return fallback.map(mapProduct);
-}
-
-export async function getFragranceProducts(limit = 12): Promise<Product[]> {
-  const all = await getAllProducts();
-  return all.filter(isFragranceProduct).slice(0, limit);
+  return withoutFragranceProducts(fallback.map(mapProduct));
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
@@ -116,7 +119,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     },
     orderBy: [{ isBestseller: "desc" }, { nameAr: "asc" }],
   });
-  return rows.map(mapProduct);
+  return withoutFragranceProducts(rows.map(mapProduct));
 }
 
 export async function getProductSlugs(): Promise<string[]> {
@@ -159,10 +162,10 @@ export async function resolveProductsByIdsOrSlugs(
   for (const key of keys) {
     const product =
       byKey.get(key.toLowerCase()) || byKey.get(key);
-    if (product && !seen.has(product.id)) {
+    if (product && !isFragranceProduct(product) && !seen.has(product.id)) {
       seen.add(product.id);
       ordered.push(product);
     }
   }
-  return ordered;
+  return withoutFragranceProducts(ordered);
 }

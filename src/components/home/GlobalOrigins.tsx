@@ -5,7 +5,7 @@ const origins = [
     src: "/brand/origins/france.png",
     name: "France",
     nameAr: "فرنسا",
-    note: "عطور وعناية فاخرة",
+    note: "عناية فاخرة",
   },
   {
     src: "/brand/origins/italy.png",

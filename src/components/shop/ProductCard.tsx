@@ -13,9 +13,12 @@ import { cn } from "@/lib/utils";
 export function ProductCard({
   product,
   className,
+  compactOverlayIcons,
 }: {
   product: Product;
   className?: string;
+  /** أيقونات أصغر — للصفحة الرئيسية فقط */
+  compactOverlayIcons?: boolean;
 }) {
   const { addItem } = useCart();
   const { locale, t } = useLocale();
@@ -42,11 +45,22 @@ export function ProductCard({
       <div className="relative overflow-hidden bg-[var(--mist)]/40">
         <WishlistHeartButton
           productId={product.id}
-          className="absolute top-3 end-3 z-10 bg-[var(--ivory)]/90 backdrop-blur-sm"
+          size={compactOverlayIcons ? "sm" : "md"}
+          className={cn(
+            "absolute z-10 bg-[var(--ivory)]/90 backdrop-blur-sm",
+            compactOverlayIcons ? "top-2.5 end-2.5" : "top-3 end-3",
+          )}
         />
 
         {badge ? (
-          <span className="absolute top-3 start-3 z-10 rounded-full bg-[var(--ivory)]/95 px-2.5 py-1 text-[10px] font-medium tracking-[0.12em] text-[var(--plum)] uppercase">
+          <span
+            className={cn(
+              "absolute z-10 rounded-full bg-[var(--ivory)]/95 font-medium tracking-[0.12em] text-[var(--plum)] uppercase",
+              compactOverlayIcons
+                ? "top-2.5 start-2.5 px-2 py-0.5 text-[9px]"
+                : "top-3 start-3 px-2.5 py-1 text-[10px]",
+            )}
+          >
             {badge}
           </span>
         ) : null}

@@ -1,14 +1,12 @@
 import { CategoryShowcase } from "@/components/home/CategoryShowcase";
 import { GlobalOrigins } from "@/components/home/GlobalOrigins";
 import { Hero } from "@/components/home/Hero";
-import { LarsaPremium } from "@/components/home/LarsaPremium";
+import { LarsaHomeBar } from "@/components/home/LarsaHomeBar";
 import { ProductRail } from "@/components/home/ProductRail";
 import { PromoBanner } from "@/components/home/PromoBanner";
-import { TrustBar } from "@/components/home/TrustBar";
 import { ContactHelpCard } from "@/components/contact/ContactHelpCard";
 import {
   getBestsellers,
-  getFragranceProducts,
   getNewArrivals,
   getProductsByCategory,
 } from "@/lib/catalog";
@@ -18,6 +16,10 @@ import {
   getHomeHeroConfig,
   heroConfigForClient,
 } from "@/lib/home/config";
+import {
+  getHomePromoConfig,
+  promoConfigForClient,
+} from "@/lib/home/promo-config";
 
 export const dynamic = "force-dynamic";
 
@@ -25,31 +27,31 @@ export default async function HomePage() {
   const [
     heroConfig,
     categoryConfig,
+    promoConfig,
     newArrivals,
     bestsellers,
     skincare,
     makeup,
     hair,
     body,
-    fragrance,
   ] = await Promise.all([
     getHomeHeroConfig(),
     getHomeCategoryConfig(),
+    getHomePromoConfig(),
     getNewArrivals(12),
     getBestsellers(12),
     getProductsByCategory("skincare"),
     getProductsByCategory("makeup"),
     getProductsByCategory("hair-care"),
     getProductsByCategory("body-care"),
-    getFragranceProducts(12),
   ]);
 
   return (
     <div className="home-premium bg-[var(--ivory)]">
       <Hero config={heroConfigForClient(heroConfig)} />
-      <TrustBar />
+      <LarsaHomeBar />
       <CategoryShowcase cards={categoryConfigForClient(categoryConfig).cards} />
-      <PromoBanner />
+      <PromoBanner config={promoConfigForClient(promoConfig)} />
 
       <ProductRail
         title="الأكثر مبيعاً"
@@ -113,19 +115,6 @@ export default async function HomePage() {
         tone="white"
       />
 
-      {fragrance.length > 0 ? (
-        <ProductRail
-          title="العطور"
-          titleEn="Fragrance"
-          subtitle="رائحة تترك أثراً"
-          subtitleEn="A scent that leaves a trace"
-          products={fragrance}
-          href="/shop"
-          tone="mist"
-        />
-      ) : null}
-
-      <LarsaPremium />
       <ContactHelpCard />
     </div>
   );

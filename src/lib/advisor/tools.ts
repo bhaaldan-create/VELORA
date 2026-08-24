@@ -21,7 +21,7 @@ export const searchCatalogTool = tool({
   inputSchema: z.object({
     query: z.string().optional().describe("كلمات بحث عربية أو إنجليزية"),
     category: z
-      .enum(["skincare", "body-care", "hair-care", "makeup", "fragrance", "all"])
+      .enum(["skincare", "body-care", "hair-care", "makeup", "all"])
       .optional(),
     concerns: z.array(concernEnum).optional(),
     maxPriceIQD: z.number().optional(),

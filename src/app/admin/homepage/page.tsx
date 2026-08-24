@@ -8,12 +8,14 @@ import { parseJsonResponse } from "@/lib/admin/parse-json-response";
 import {
   DEFAULT_HOME_CATEGORIES,
   DEFAULT_HOME_HERO,
+  DEFAULT_HOME_PROMO,
 } from "@/lib/home/default-config";
 import type {
   HomeCategoryCard,
   HomeCategoryConfig,
   HomeHeroConfig,
   HomeHeroSlide,
+  HomePromoConfig,
 } from "@/lib/home/types";
 
 export default function AdminHomepagePage() {
@@ -21,9 +23,11 @@ export default function AdminHomepagePage() {
   const [categories, setCategories] = useState<HomeCategoryConfig>(
     DEFAULT_HOME_CATEGORIES,
   );
+  const [promo, setPromo] = useState<HomePromoConfig>(DEFAULT_HOME_PROMO);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingCategories, setSavingCategories] = useState(false);
+  const [savingPromo, setSavingPromo] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +36,17 @@ export default function AdminHomepagePage() {
     void Promise.all([
       fetch("/api/admin/home-hero").then((r) => r.json()),
       fetch("/api/admin/home-categories").then((r) => r.json()),
+      fetch("/api/admin/home-promo").then((r) => r.json()),
     ])
       .then(
-        ([heroData, categoryData]: [
+        ([heroData, categoryData, promoData]: [
           { ok?: boolean; config?: HomeHeroConfig },
           { ok?: boolean; config?: HomeCategoryConfig },
+          { ok?: boolean; config?: HomePromoConfig },
         ]) => {
           if (heroData.config) setConfig(heroData.config);
           if (categoryData.config) setCategories(categoryData.config);
+          if (promoData.config) setPromo(promoData.config);
         },
       )
       .catch(() => setError("تعذّر تحميل إعدادات الصفحة الرئيسية."))
@@ -127,6 +134,75 @@ export default function AdminHomepagePage() {
       );
     } finally {
       setSavingCategories(false);
+    }
+  }
+
+  async function savePromo() {
+    setSavingPromo(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const payload: HomePromoConfig = {
+        ...promo,
+        imageUrl: isEphemeralClientImageUrl(promo.imageUrl) ? "" : promo.imageUrl,
+      };
+      const res = await fetch("/api/admin/home-promo", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: payload }),
+      });
+      const data = await parseJsonResponse<{
+        ok?: boolean;
+        config?: HomePromoConfig;
+        error?: string;
+      }>(res);
+      if (!res.ok || !data.ok) {
+        setError(data.error || "فشل حفظ بانر وصل حديثاً.");
+        return;
+      }
+      if (data.config) setPromo(data.config);
+      setMessage("تم حفظ بانر «وصل حديثاً».");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل حفظ البانر: ${err.message}`
+          : "فشل حفظ البانر.",
+      );
+    } finally {
+      setSavingPromo(false);
+    }
+  }
+
+  async function uploadPromoImage(file: File) {
+    setUploading("promo");
+    setError(null);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      const res = await fetch("/api/admin/home-promo/image", {
+        method: "POST",
+        body: form,
+      });
+      const data = await parseJsonResponse<{
+        ok?: boolean;
+        imageUrl?: string;
+        error?: string;
+      }>(res);
+      if (!res.ok || !data.ok || !data.imageUrl) {
+        setError(data.error || "فشل رفع صورة البانر.");
+        return;
+      }
+      setPromo((prev) => ({ ...prev, imageUrl: data.imageUrl! }));
+      setMessage("تم تحديث صورة بانر «وصل حديثاً».");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `فشل رفع صورة البانر: ${err.message}`
+          : "فشل رفع صورة البانر.",
+      );
+    } finally {
+      setUploading(null);
     }
   }
 
@@ -645,6 +721,165 @@ export default function AdminHomepagePage() {
               </Surface>
             ))}
           </div>
+
+          <div className="pt-4">
+            <PageHeader
+              title="بانر «وصل حديثاً»"
+              description="البانر البنفسجي بين الفئات وقسم المنتجات — ارفعي الصورة أولاً ثم احفظي النصوص."
+              actions={
+                <button
+                  type="button"
+                  onClick={() => void savePromo()}
+                  disabled={savingPromo || loading}
+                  className="rounded-full bg-[var(--admin-text)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {savingPromo ? "جارٍ الحفظ…" : "حفظ البانر"}
+                </button>
+              }
+            />
+          </div>
+
+          <Surface className="space-y-4 p-5">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={promo.enabled}
+                onChange={(e) =>
+                  setPromo((p) => ({ ...p, enabled: e.target.checked }))
+                }
+              />
+              إظهار البانر على الصفحة الرئيسية
+            </label>
+
+            <div className="relative aspect-[16/9] max-h-[280px] overflow-hidden rounded-xl bg-[var(--admin-surface-soft)] sm:max-w-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={promo.imageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                style={{
+                  objectPosition: promo.objectPosition || "left center",
+                }}
+              />
+            </div>
+
+            <label className="inline-flex cursor-pointer rounded-full border border-[var(--admin-border)] bg-white px-4 py-2 text-sm">
+              {uploading === "promo" ? "جارٍ الرفع…" : "رفع صورة البانر"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={Boolean(uploading)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadPromoImage(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  العنوان (عربي)
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.headlineAr}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, headlineAr: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  Headline (EN)
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.headlineEn}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, headlineEn: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm lg:col-span-2">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  النص (عربي)
+                </span>
+                <textarea
+                  className="min-h-[72px] w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.bodyAr}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, bodyAr: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm lg:col-span-2">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  Body (EN)
+                </span>
+                <textarea
+                  className="min-h-[72px] w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.bodyEn}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, bodyEn: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  زر CTA (عربي)
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.ctaAr}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, ctaAr: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  CTA (EN)
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  value={promo.ctaEn}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, ctaEn: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm lg:col-span-2">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  رابط الزر
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  dir="ltr"
+                  value={promo.href}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, href: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-text-secondary)]">
+                  موضع الصورة
+                </span>
+                <input
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2"
+                  dir="ltr"
+                  placeholder="left center"
+                  value={promo.objectPosition || ""}
+                  onChange={(e) =>
+                    setPromo((p) => ({ ...p, objectPosition: e.target.value }))
+                  }
+                />
+              </label>
+            </div>
+          </Surface>
         </div>
       )}
     </AdminShell>

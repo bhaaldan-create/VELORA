@@ -43,3 +43,17 @@ export type HomeCategoryConfig = {
   version: number;
   cards: HomeCategoryCard[];
 };
+
+export type HomePromoConfig = {
+  version: number;
+  enabled: boolean;
+  headlineAr: string;
+  headlineEn: string;
+  bodyAr: string;
+  bodyEn: string;
+  ctaAr: string;
+  ctaEn: string;
+  href: string;
+  imageUrl: string;
+  objectPosition?: string;
+};

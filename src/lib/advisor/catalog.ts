@@ -2,7 +2,6 @@ import {
   getAllProducts,
   resolveProductsByIdsOrSlugs as resolveFromDb,
 } from "@/lib/catalog";
-import { isFragranceProduct } from "@/lib/product-brand";
 import type { CategorySlug, Product, SkinConcern } from "@/types";
 
 /** كتالوج مضغوط للنموذج — من قاعدة البيانات */
@@ -22,13 +21,12 @@ export async function getCatalogForPrompt() {
     descriptionAr: p.descriptionAr.slice(0, 160),
     isBestseller: !!p.isBestseller,
     isNew: !!p.isNew,
-    isFragrance: isFragranceProduct(p),
   }));
 }
 
 export type CatalogSearchInput = {
   query?: string;
-  category?: CategorySlug | "fragrance" | "all";
+  category?: CategorySlug | "all";
   concerns?: SkinConcern[];
   maxPriceIQD?: number;
   minPriceIQD?: number;
@@ -52,11 +50,7 @@ export async function searchCatalogProducts(
       return false;
     }
     if (input.category && input.category !== "all") {
-      if (input.category === "fragrance") {
-        if (!isFragranceProduct(p)) return false;
-      } else if (p.category !== input.category) {
-        return false;
-      }
+      if (p.category !== input.category) return false;
     }
     if (input.concerns?.length) {
       if (!input.concerns.some((c) => p.concerns.includes(c))) return false;

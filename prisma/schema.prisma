@@ -215,6 +215,14 @@ model HomeCategoryConfig {
   createdAt DateTime @default(now())
 }
 
+/// بانر «وصل حديثاً» على الصفحة الرئيسية
+model HomePromoConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 /// تعميم إشعار من الأدمن إلى الزبائن
 model NotificationCampaign {
   id         String                 @id @default(cuid())
