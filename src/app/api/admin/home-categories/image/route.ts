@@ -74,9 +74,7 @@ export async function POST(req: Request) {
     cards[index] = { ...cards[index]!, imageUrl: persisted.url };
     await saveHomeCategoryConfig({ ...config, cards });
 
-    const imageUrl = persisted.url.startsWith("data:")
-      ? categoryCardMediaUrl(cardId, Date.now())
-      : persisted.url;
+    const imageUrl = categoryCardMediaUrl(cardId, Date.now());
 
     return Response.json({
       ok: true,

@@ -83,10 +83,7 @@ export async function POST(req: Request) {
     await saveHomeHeroConfig({ ...config, slides });
 
     const clientVariant = variant === "mobile" ? "mobile" : "desktop";
-    const imageUrl =
-      persisted.url.startsWith("data:")
-        ? heroSlideMediaUrl(slideId, clientVariant, Date.now())
-        : persisted.url;
+    const imageUrl = heroSlideMediaUrl(slideId, clientVariant, Date.now());
 
     return Response.json({
       ok: true,

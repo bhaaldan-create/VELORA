@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
 import {
   homePromoMediaUrl,
+  mediaCacheBustFromStored,
   resolveClientImageUrl,
+  shouldRetainStoredImageOnSave,
 } from "@/lib/admin/media-url";
 import { prisma } from "@/lib/db";
 import { DEFAULT_HOME_PROMO } from "@/lib/home/default-config";
@@ -63,10 +65,7 @@ export async function saveHomePromoConfig(
   const promo = sanitizePromo(data, existing);
   const incomingImage =
     typeof data.imageUrl === "string" ? data.imageUrl.trim() : "";
-  const keepImage =
-    !incomingImage ||
-    incomingImage.startsWith("data:") ||
-    incomingImage.startsWith("/api/media/");
+  const keepImage = shouldRetainStoredImageOnSave(incomingImage);
 
   const merged: HomePromoConfig = {
     ...promo,
@@ -85,6 +84,9 @@ export async function saveHomePromoConfig(
 export function promoConfigForClient(config: HomePromoConfig): HomePromoConfig {
   return {
     ...config,
-    imageUrl: resolveClientImageUrl(config.imageUrl, homePromoMediaUrl()),
+    imageUrl: resolveClientImageUrl(
+      config.imageUrl,
+      homePromoMediaUrl(mediaCacheBustFromStored(config.imageUrl)),
+    ),
   };
 }

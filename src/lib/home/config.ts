@@ -2,7 +2,9 @@ import { revalidatePath } from "next/cache";
 import {
   categoryCardMediaUrl,
   heroSlideMediaUrl,
+  mediaCacheBustFromStored,
   resolveClientImageUrl,
+  shouldRetainStoredImageOnSave,
 } from "@/lib/admin/media-url";
 import { prisma } from "@/lib/db";
 import {
@@ -116,14 +118,8 @@ export async function saveHomeHeroConfig(
       typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
     const incomingMobile =
       typeof raw.imageUrlMobile === "string" ? raw.imageUrlMobile.trim() : "";
-    const keepDesktop =
-      !incomingImage ||
-      incomingImage.startsWith("data:") ||
-      incomingImage.startsWith("/api/media/");
-    const keepMobile =
-      !incomingMobile ||
-      incomingMobile.startsWith("data:") ||
-      incomingMobile.startsWith("/api/media/");
+    const keepDesktop = shouldRetainStoredImageOnSave(incomingImage);
+    const keepMobile = shouldRetainStoredImageOnSave(incomingMobile);
 
     return {
       ...slide,
@@ -165,12 +161,20 @@ export function heroConfigForClient(config: HomeHeroConfig): HomeHeroConfig {
       ...slide,
       imageUrl: resolveClientImageUrl(
         slide.imageUrl,
-        heroSlideMediaUrl(slide.id, "desktop"),
+        heroSlideMediaUrl(
+          slide.id,
+          "desktop",
+          mediaCacheBustFromStored(slide.imageUrl),
+        ),
       ),
       imageUrlMobile: slide.imageUrlMobile
         ? resolveClientImageUrl(
             slide.imageUrlMobile,
-            heroSlideMediaUrl(slide.id, "mobile"),
+            heroSlideMediaUrl(
+              slide.id,
+              "mobile",
+              mediaCacheBustFromStored(slide.imageUrlMobile),
+            ),
           )
         : slide.imageUrlMobile,
     })),
@@ -186,7 +190,10 @@ export function categoryConfigForClient(
       ...card,
       imageUrl: resolveClientImageUrl(
         card.imageUrl,
-        categoryCardMediaUrl(card.id),
+        categoryCardMediaUrl(
+          card.id,
+          mediaCacheBustFromStored(card.imageUrl),
+        ),
       ),
     })),
   };
@@ -267,10 +274,7 @@ export async function saveHomeCategoryConfig(
     const card = sanitizeCategoryCard(raw, fallback);
     const incomingImage =
       typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
-    const keepImage =
-      !incomingImage ||
-      incomingImage.startsWith("data:") ||
-      incomingImage.startsWith("/api/media/");
+    const keepImage = shouldRetainStoredImageOnSave(incomingImage);
 
     return {
       ...card,

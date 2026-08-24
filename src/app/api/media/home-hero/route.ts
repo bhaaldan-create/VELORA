@@ -53,7 +53,7 @@ export async function GET(req: Request) {
     });
   }
 
-  if (stored.startsWith("/uploads/")) {
+  if (stored.startsWith("/uploads/") || stored.startsWith("/")) {
     try {
       const filePath = path.join(process.cwd(), "public", stored.replace(/^\//, ""));
       const buffer = await readFile(filePath);

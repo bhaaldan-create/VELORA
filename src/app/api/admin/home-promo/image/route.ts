@@ -57,9 +57,7 @@ export async function POST(req: Request) {
     const existing = await getHomePromoConfig();
     await saveHomePromoConfig({ ...existing, imageUrl: persisted.url });
 
-    const imageUrl = persisted.url.startsWith("data:")
-      ? homePromoMediaUrl(Date.now())
-      : persisted.url;
+    const imageUrl = homePromoMediaUrl(Date.now());
 
     return Response.json({ ok: true, imageUrl });
   } catch (error) {

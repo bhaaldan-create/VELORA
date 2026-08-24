@@ -25,13 +25,31 @@ export function homePromoMediaUrl(cacheBust?: number): string {
 
 export function resolveClientImageUrl(stored: string, mediaUrl: string): string {
   if (!stored) return stored;
-  if (stored.startsWith("data:")) return mediaUrl;
-  return stored;
+  if (stored.startsWith("http://") || stored.startsWith("https://")) return stored;
+  // كل المسارات المحلية والـ data URLs تُعرض عبر /api/media لضمان العمل على Vercel
+  return mediaUrl;
 }
 
 /** لا نعيد إرسالها في PUT — السيرفر يحتفظ بالصورة في DB */
 export function isEphemeralClientImageUrl(url: string): boolean {
   return url.startsWith("data:") || url.startsWith("/api/media/");
+}
+
+/** عند الحفظ: فارغ أو رابط عرض مؤقت فقط — لا نستبدل ما في DB */
+export function shouldRetainStoredImageOnSave(incoming: string): boolean {
+  const trimmed = incoming.trim();
+  return !trimmed || trimmed.startsWith("/api/media/");
+}
+
+/** مفتاح كاش خفيف يتغيّر عند تغيير الصورة المخزّنة */
+export function mediaCacheBustFromStored(stored: string): number | undefined {
+  if (!stored) return undefined;
+  let h = 0;
+  const step = Math.max(1, Math.floor(stored.length / 48));
+  for (let i = 0; i < stored.length; i += step) {
+    h = (h * 31 + stored.charCodeAt(i)) | 0;
+  }
+  return h >>> 0;
 }
 
 /** روابط API والـ data URLs لا تعمل مع محسّن next/image */
