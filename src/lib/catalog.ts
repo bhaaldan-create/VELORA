@@ -56,7 +56,7 @@ export async function getAllProducts(): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-all-products-card-v1"],
+    ["catalog-all-products-card-v2"],
     catalogCache,
   )();
 }
@@ -71,7 +71,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       if (product && isFragranceProduct(product)) return null;
       return product;
     },
-    ["catalog-product-slug", slug],
+    ["catalog-product-slug-v2", slug],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.product(slug)],
@@ -112,7 +112,7 @@ export async function getProductsByCategory(
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
     [
-      "catalog-products-category-card-v1",
+      "catalog-products-category-card-v2",
       category ?? "all",
       String(limit ?? "all"),
     ],
@@ -134,7 +134,7 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-featured-card-v1", String(limit)],
+    ["catalog-featured-card-v2", String(limit)],
     catalogCache,
   )();
 }
@@ -160,7 +160,7 @@ export async function getNewArrivals(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-new-arrivals-card-v1", String(limit)],
+    ["catalog-new-arrivals-card-v2", String(limit)],
     catalogCache,
   )();
 }
@@ -186,7 +186,7 @@ export async function getBestsellers(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-bestsellers-card-v1", String(limit)],
+    ["catalog-bestsellers-card-v2", String(limit)],
     catalogCache,
   )();
 }
@@ -212,7 +212,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-search-card-v1", q.toLowerCase()],
+    ["catalog-search-card-v2", q.toLowerCase()],
     catalogCache,
   )();
 }
