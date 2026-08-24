@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
@@ -9,14 +8,9 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
 import { SiteMain } from "@/components/layout/SiteMain";
 import { Providers } from "@/components/layout/Providers";
+import { FloatingContactLazy } from "@/components/contact/FloatingContactLazy";
 import { brand } from "@/constants/brand";
 import "./globals.css";
-
-const FloatingContact = dynamic(
-  () =>
-    import("@/components/contact/FloatingContact").then((m) => m.FloatingContact),
-  { ssr: false, loading: () => null },
-);
 
 /** خط واحد خفيف للعربي والعناوين */
 const sans = IBM_Plex_Sans_Arabic({
@@ -86,7 +80,7 @@ export default function RootLayout({
           <Header />
           <SiteMain>{children}</SiteMain>
           <Footer />
-          <FloatingContact />
+          <FloatingContactLazy />
           <Suspense fallback={null}>
             <PrimaryBottomNav />
           </Suspense>
