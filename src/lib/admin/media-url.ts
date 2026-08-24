@@ -41,15 +41,16 @@ export function shouldRetainStoredImageOnSave(incoming: string): boolean {
   return !trimmed || trimmed.startsWith("/api/media/");
 }
 
-/** مفتاح كاش خفيف يتغيّر عند تغيير الصورة المخزّنة */
+/** مفتاح كاش خفيف يتغيّر عند تغيير الصورة المخزّنة — بدون مسح الـ base64 كاملاً */
 export function mediaCacheBustFromStored(stored: string): number | undefined {
   if (!stored) return undefined;
-  let h = 0;
-  const step = Math.max(1, Math.floor(stored.length / 48));
-  for (let i = 0; i < stored.length; i += step) {
-    h = (h * 31 + stored.charCodeAt(i)) | 0;
-  }
-  return h >>> 0;
+  const len = stored.length;
+  // عيّنة صغيرة من البداية/الوسط/النهاية — كافية لكشف التغيير دون تكلفة 10MB
+  const a = stored.charCodeAt(0) || 0;
+  const b = stored.charCodeAt(Math.min(64, len - 1)) || 0;
+  const c = stored.charCodeAt(Math.floor(len / 2)) || 0;
+  const d = stored.charCodeAt(Math.max(0, len - 32)) || 0;
+  return ((len * 1315423911) ^ (a << 24) ^ (b << 16) ^ (c << 8) ^ d) >>> 0;
 }
 
 /** روابط API والـ data URLs لا تعمل مع محسّن next/image */

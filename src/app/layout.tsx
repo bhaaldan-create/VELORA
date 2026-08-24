@@ -9,6 +9,7 @@ import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
 import { SiteMain } from "@/components/layout/SiteMain";
 import { Providers } from "@/components/layout/Providers";
 import { FloatingContactLazy } from "@/components/contact/FloatingContactLazy";
+import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { brand } from "@/constants/brand";
 import "./globals.css";
 
@@ -82,6 +83,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full max-w-full flex-col overflow-x-clip antialiased">
         <Providers>
+          <RoutePrefetcher />
           <Suspense fallback={null}>
             <NavigationProgress />
           </Suspense>

@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { CategoryShowcase } from "@/components/home/CategoryShowcase";
 import { Hero } from "@/components/home/Hero";
@@ -6,40 +5,30 @@ import { LarsaHomeBar } from "@/components/home/LarsaHomeBar";
 import { ProductRail } from "@/components/home/ProductRail";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { ContactHelpCard } from "@/components/contact/ContactHelpCard";
+import { GlobalOrigins } from "@/components/home/GlobalOrigins";
 import { getBestsellers, getNewArrivals } from "@/lib/catalog";
 import {
-  categoryConfigForClient,
-  getHomeCategoryConfig,
-  getHomeHeroConfig,
-  heroConfigForClient,
+  getHomeCategoryConfigForStorefront,
+  getHomeHeroConfigForStorefront,
 } from "@/lib/home/config";
-import {
-  getHomePromoConfig,
-  promoConfigForClient,
-} from "@/lib/home/promo-config";
+import { getHomePromoConfigForStorefront } from "@/lib/home/promo-config";
 import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
-
-const GlobalOrigins = dynamic(
-  () =>
-    import("@/components/home/GlobalOrigins").then((m) => m.GlobalOrigins),
-  { loading: () => null },
-);
 
 export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 async function HomeAboveFold() {
   const [heroConfig, categoryConfig, promoConfig] = await Promise.all([
-    getHomeHeroConfig(),
-    getHomeCategoryConfig(),
-    getHomePromoConfig(),
+    getHomeHeroConfigForStorefront(),
+    getHomeCategoryConfigForStorefront(),
+    getHomePromoConfigForStorefront(),
   ]);
 
   return (
     <>
-      <Hero config={heroConfigForClient(heroConfig)} />
+      <Hero config={heroConfig} />
       <LarsaHomeBar />
-      <CategoryShowcase cards={categoryConfigForClient(categoryConfig).cards} />
-      <PromoBanner config={promoConfigForClient(promoConfig)} />
+      <CategoryShowcase cards={categoryConfig.cards} />
+      <PromoBanner config={promoConfig} />
     </>
   );
 }

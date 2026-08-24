@@ -60,11 +60,38 @@ async function fetchHomePromoConfig(): Promise<HomePromoConfig> {
   }
 }
 
+type PromoRawCache = { at: number; data: HomePromoConfig };
+const PROMO_RAW_TTL_MS = 60_000;
+let promoRawCache: PromoRawCache | null = null;
+
+function invalidatePromoRawCache() {
+  promoRawCache = null;
+}
+
+async function getHomePromoConfigRaw(): Promise<HomePromoConfig> {
+  if (promoRawCache && Date.now() - promoRawCache.at < PROMO_RAW_TTL_MS) {
+    return promoRawCache.data;
+  }
+  const data = await fetchHomePromoConfig();
+  promoRawCache = { at: Date.now(), data };
+  return data;
+}
+
+/** للإدارة ومسارات الوسائط */
 export async function getHomePromoConfig(): Promise<HomePromoConfig> {
-  return unstable_cache(fetchHomePromoConfig, ["home-promo-config"], {
-    tags: [CACHE_TAGS.home],
-    revalidate: STOREFRONT_REVALIDATE_SECONDS,
-  })();
+  return getHomePromoConfigRaw();
+}
+
+/** للواجهة — بدون data URL ضخمة */
+export async function getHomePromoConfigForStorefront(): Promise<HomePromoConfig> {
+  return unstable_cache(
+    async () => promoConfigForClient(await fetchHomePromoConfig()),
+    ["home-promo-config-storefront-v1"],
+    {
+      tags: [CACHE_TAGS.home],
+      revalidate: STOREFRONT_REVALIDATE_SECONDS,
+    },
+  )();
 }
 
 export async function saveHomePromoConfig(
@@ -86,6 +113,7 @@ export async function saveHomePromoConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
+  invalidatePromoRawCache();
   revalidateHomepage();
   return merged;
 }

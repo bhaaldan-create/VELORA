@@ -102,11 +102,43 @@ async function fetchHomeHeroConfig(): Promise<HomeHeroConfig> {
   }
 }
 
+/** كاش ذاكرة قصير — البيانات قد تحتوي data URL ضخمة ولا تدخل Next data cache */
+type RawCacheEntry<T> = { at: number; data: T };
+const RAW_TTL_MS = 60_000;
+let heroRawCache: RawCacheEntry<HomeHeroConfig> | null = null;
+let categoryRawCache: RawCacheEntry<HomeCategoryConfig> | null = null;
+
+function invalidateHeroRawCache() {
+  heroRawCache = null;
+}
+function invalidateCategoryRawCache() {
+  categoryRawCache = null;
+}
+
+async function getHomeHeroConfigRaw(): Promise<HomeHeroConfig> {
+  if (heroRawCache && Date.now() - heroRawCache.at < RAW_TTL_MS) {
+    return heroRawCache.data;
+  }
+  const data = await fetchHomeHeroConfig();
+  heroRawCache = { at: Date.now(), data };
+  return data;
+}
+
+/** للإدارة ومسارات الوسائط — النسخة الكاملة من DB */
 export async function getHomeHeroConfig(): Promise<HomeHeroConfig> {
-  return unstable_cache(fetchHomeHeroConfig, ["home-hero-config"], {
-    tags: [CACHE_TAGS.home],
-    revalidate: STOREFRONT_REVALIDATE_SECONDS,
-  })();
+  return getHomeHeroConfigRaw();
+}
+
+/** للواجهة العامة — روابط /api/media فقط، قابلة لكاش Next (<2MB) */
+export async function getHomeHeroConfigForStorefront(): Promise<HomeHeroConfig> {
+  return unstable_cache(
+    async () => heroConfigForClient(await fetchHomeHeroConfig()),
+    ["home-hero-config-storefront-v1"],
+    {
+      tags: [CACHE_TAGS.home],
+      revalidate: STOREFRONT_REVALIDATE_SECONDS,
+    },
+  )();
 }
 
 export async function saveHomeHeroConfig(
@@ -153,6 +185,7 @@ export async function saveHomeHeroConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
+  invalidateHeroRawCache();
   revalidateHomepage();
   return merged;
 }
@@ -264,11 +297,30 @@ async function fetchHomeCategoryConfig(): Promise<HomeCategoryConfig> {
   }
 }
 
+async function getHomeCategoryConfigRaw(): Promise<HomeCategoryConfig> {
+  if (categoryRawCache && Date.now() - categoryRawCache.at < RAW_TTL_MS) {
+    return categoryRawCache.data;
+  }
+  const data = await fetchHomeCategoryConfig();
+  categoryRawCache = { at: Date.now(), data };
+  return data;
+}
+
+/** للإدارة ومسارات الوسائط — النسخة الكاملة (قد تكون ضخمة بسبب data URL) */
 export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
-  return unstable_cache(fetchHomeCategoryConfig, ["home-category-config"], {
-    tags: [CACHE_TAGS.home],
-    revalidate: STOREFRONT_REVALIDATE_SECONDS,
-  })();
+  return getHomeCategoryConfigRaw();
+}
+
+/** للواجهة — بدون base64؛ تُخزَّن في Next data cache بأمان */
+export async function getHomeCategoryConfigForStorefront(): Promise<HomeCategoryConfig> {
+  return unstable_cache(
+    async () => categoryConfigForClient(await fetchHomeCategoryConfig()),
+    ["home-category-config-storefront-v1"],
+    {
+      tags: [CACHE_TAGS.home],
+      revalidate: STOREFRONT_REVALIDATE_SECONDS,
+    },
+  )();
 }
 
 export async function saveHomeCategoryConfig(
@@ -309,6 +361,7 @@ export async function saveHomeCategoryConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
+  invalidateCategoryRawCache();
   revalidateHomepage();
   return merged;
 }
