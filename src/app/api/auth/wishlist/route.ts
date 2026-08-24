@@ -10,10 +10,15 @@ const toggleSchema = z.object({
 });
 
 /** قائمة أمنيات الزبون المسجّل */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const auth = await requireCustomerSessionId();
     if (!auth.ok) return auth.response;
+
+    const url = new URL(req.url);
+    const lite =
+      url.searchParams.get("lite") === "1" ||
+      url.searchParams.get("idsOnly") === "1";
 
     const rows = await prisma.customerWishlistItem.findMany({
       where: { customerId: auth.customerId },
@@ -22,6 +27,15 @@ export async function GET() {
     });
 
     const ids = rows.map((r) => r.productId);
+
+    if (lite) {
+      return Response.json({
+        ok: true,
+        ids,
+        count: ids.length,
+      });
+    }
+
     const products = ids.length
       ? await resolveProductsByIdsOrSlugs(ids)
       : [];
@@ -116,14 +130,10 @@ export async function POST(req: Request) {
 
     if (existing) {
       await prisma.customerWishlistItem.delete({ where: { id: existing.id } });
-      const count = await prisma.customerWishlistItem.count({
-        where: { customerId: auth.customerId },
-      });
       return Response.json({
         ok: true,
         wished: false,
         productId: product.id,
-        count,
         message: "تمت إزالة المنتج من محفوظاتك.",
       });
     }
@@ -139,14 +149,10 @@ export async function POST(req: Request) {
       // منع التكرار عند ضغط مزدوج سريع
     }
 
-    const count = await prisma.customerWishlistItem.count({
-      where: { customerId: auth.customerId },
-    });
     return Response.json({
       ok: true,
       wished: true,
       productId: product.id,
-      count,
       message: "تمت إضافة المنتج إلى محفوظاتك.",
     });
   } catch (error) {

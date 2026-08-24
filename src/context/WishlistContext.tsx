@@ -20,6 +20,7 @@ type WishlistContextValue = {
   count: number;
   toggle: (productId: string) => Promise<boolean>;
   has: (productId: string) => boolean;
+  pending: (productId: string) => boolean;
   ready: boolean;
   toast: ToastState;
 };
@@ -31,10 +32,16 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [ids, setIds] = useState<Set<string>>(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const toastTimer = useRef<number | null>(null);
+  const idsRef = useRef(ids);
+  const inFlight = useRef(new Set<string>());
+  const loadGen = useRef(0);
   const customerId = customer?.id ?? null;
+
+  idsRef.current = ids;
 
   const showToast = useCallback((message: string) => {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -55,30 +62,47 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     if (authLoading) return;
 
     if (!customerId) {
+      loadGen.current += 1;
+      inFlight.current.clear();
+      setPendingIds(new Set());
       setIds(new Set());
       setReady(true);
       return;
     }
 
+    const gen = ++loadGen.current;
     let cancelled = false;
+    // لا نفرّغ القائمة أثناء إعادة التحميل — يمنع شعور «الضغط مرتين»
     setReady(false);
     void (async () => {
       try {
-        const res = await fetch("/api/auth/wishlist", { cache: "no-store" });
+        const res = await fetch("/api/auth/wishlist?lite=1", {
+          cache: "no-store",
+        });
         const data = (await res.json()) as {
           ok?: boolean;
           ids?: string[];
         };
-        if (cancelled) return;
+        if (cancelled || gen !== loadGen.current) return;
         if (res.ok && data.ok && Array.isArray(data.ids)) {
-          setIds(new Set(data.ids));
-        } else {
-          setIds(new Set());
+          // لا تستبدل تحديثات المستخدم الجارية أثناء الطلب
+          if (inFlight.current.size === 0) {
+            setIds(new Set(data.ids));
+          } else {
+            setIds((prev) => {
+              const next = new Set(data.ids);
+              for (const id of inFlight.current) {
+                if (prev.has(id)) next.add(id);
+                else next.delete(id);
+              }
+              return next;
+            });
+          }
         }
       } catch {
-        if (!cancelled) setIds(new Set());
+        /* أبقِ الحالة الحالية */
       } finally {
-        if (!cancelled) setReady(true);
+        if (!cancelled && gen === loadGen.current) setReady(true);
       }
     })();
 
@@ -88,6 +112,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [authLoading, customerId]);
 
   const has = useCallback((productId: string) => ids.has(productId), [ids]);
+  const pending = useCallback(
+    (productId: string) => pendingIds.has(productId),
+    [pendingIds],
+  );
 
   const toggle = useCallback(
     async (productId: string) => {
@@ -97,11 +125,17 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const wasWished = ids.has(productId);
-      const optimistic = new Set(ids);
-      if (wasWished) optimistic.delete(productId);
-      else optimistic.add(productId);
-      setIds(optimistic);
+      if (inFlight.current.has(productId)) return false;
+      inFlight.current.add(productId);
+      setPendingIds((prev) => new Set(prev).add(productId));
+
+      const wasWished = idsRef.current.has(productId);
+      setIds((prev) => {
+        const next = new Set(prev);
+        if (wasWished) next.delete(productId);
+        else next.add(productId);
+        return next;
+      });
 
       try {
         const res = await fetch("/api/auth/wishlist", {
@@ -117,7 +151,12 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         };
 
         if (!res.ok || !data.ok) {
-          setIds(ids);
+          setIds((prev) => {
+            const next = new Set(prev);
+            if (wasWished) next.add(productId);
+            else next.delete(productId);
+            return next;
+          });
           if (res.status === 401) {
             const next = encodeURIComponent(pathname || "/account");
             router.push(`/login?next=${next}`);
@@ -140,11 +179,23 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         );
         return true;
       } catch {
-        setIds(ids);
+        setIds((prev) => {
+          const next = new Set(prev);
+          if (wasWished) next.add(productId);
+          else next.delete(productId);
+          return next;
+        });
         return false;
+      } finally {
+        inFlight.current.delete(productId);
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(productId);
+          return next;
+        });
       }
     },
-    [customerId, ids, pathname, router, showToast],
+    [customerId, pathname, router, showToast],
   );
 
   const value = useMemo(
@@ -153,10 +204,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       count: ids.size,
       toggle,
       has,
+      pending,
       ready,
       toast,
     }),
-    [ids, toggle, has, ready, toast],
+    [ids, toggle, has, pending, ready, toast],
   );
 
   return (

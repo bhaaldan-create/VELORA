@@ -4,6 +4,7 @@ import { Bodoni_Moda, IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
 import { SiteMain } from "@/components/layout/SiteMain";
 import { Providers } from "@/components/layout/Providers";
@@ -92,6 +93,9 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full max-w-full flex-col overflow-x-clip antialiased">
         <Providers>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           <NativeAppShell />
           <Header />
           <SiteMain>{children}</SiteMain>

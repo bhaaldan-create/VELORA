@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useWishlist } from "@/context/WishlistContext";
 import { cn } from "@/lib/utils";
 
@@ -13,24 +12,26 @@ export function WishlistHeartButton({
   className?: string;
   size?: "sm" | "md";
 }) {
-  const { has, toggle } = useWishlist();
+  const { has, toggle, pending } = useWishlist();
   const wished = has(productId);
-  const [bump, setBump] = useState(false);
+  const busy = pending(productId);
 
   return (
     <button
       type="button"
       aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
       aria-pressed={wished}
+      aria-busy={busy}
+      disabled={busy}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        setBump(true);
-        window.setTimeout(() => setBump(false), 320);
+        if (busy) return;
         void toggle(productId);
       }}
       className={cn(
-        "z-10 flex items-center justify-center text-[var(--ink)]/45 transition-colors duration-300 hover:text-[var(--plum)]",
+        "z-10 flex items-center justify-center text-[var(--ink)]/45 transition-colors duration-200 hover:text-[var(--plum)]",
+        "active:scale-95 disabled:opacity-70",
         wished && "text-[var(--plum)]",
         size === "sm" ? "h-8 w-8" : "h-9 w-9",
         className,
@@ -43,9 +44,9 @@ export function WishlistHeartButton({
         fill="none"
         aria-hidden
         className={cn(
-          "transition-transform duration-300 ease-out",
-          bump && "scale-125",
+          "transition-transform duration-200 ease-out",
           wished && "scale-105",
+          busy && "animate-pulse",
         )}
       >
         <path

@@ -90,6 +90,7 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getProductsByCategory(
   category?: string,
+  limit?: number,
 ): Promise<Product[]> {
   return unstable_cache(
     async () => {
@@ -99,10 +100,11 @@ export async function getProductsByCategory(
           ...(category ? { categorySlug: category } : {}),
         },
         orderBy: [{ isBestseller: "desc" }, { nameAr: "asc" }],
+        ...(typeof limit === "number" && limit > 0 ? { take: limit } : {}),
       });
       return withoutFragranceProducts(rows.map(mapProduct));
     },
-    ["catalog-products-category", category ?? "all"],
+    ["catalog-products-category", category ?? "all", String(limit ?? "all")],
     catalogCache,
   )();
 }

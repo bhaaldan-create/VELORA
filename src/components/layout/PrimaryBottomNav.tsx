@@ -161,6 +161,7 @@ export function PrimaryBottomNav() {
             <li key={link.id}>
               <Link
                 href={href}
+                prefetch
                 className={cn(
                   "relative flex flex-col items-center gap-0.5 rounded-full px-0.5 py-1.5 transition-all duration-200",
                   active

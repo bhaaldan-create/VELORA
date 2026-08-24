@@ -1,4 +1,5 @@
 import { AdminShell } from "@/components/admin/AdminShell";
+import { WaylStatusCard } from "@/components/admin/WaylStatusCard";
 import {
   PageHeader,
   StatCard,
@@ -37,6 +38,8 @@ export default async function AdminPaymentsPage() {
           title="المدفوعات"
           description="ملخص طرق الدفع وحالات التحصيل من الطلبات الفعلية."
         />
+
+        <WaylStatusCard />
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard

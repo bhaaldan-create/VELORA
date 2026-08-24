@@ -41,10 +41,10 @@ export default async function HomePage() {
     getHomePromoConfig(),
     getNewArrivals(12),
     getBestsellers(12),
-    getProductsByCategory("skincare"),
-    getProductsByCategory("makeup"),
-    getProductsByCategory("hair-care"),
-    getProductsByCategory("body-care"),
+    getProductsByCategory("skincare", 12),
+    getProductsByCategory("makeup", 12),
+    getProductsByCategory("hair-care", 12),
+    getProductsByCategory("body-care", 12),
   ]);
 
   return (
