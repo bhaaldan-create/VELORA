@@ -37,7 +37,7 @@ export function CategoryStripView({
             <Link
               key={cat.slug}
               href={`/shop?category=${cat.slug}`}
-              className="group block animate-[velora-rise_0.9s_ease-out_both]"
+              className="group block motion-safe:animate-[velora-rise_0.9s_ease-out_forwards]"
               style={{ animationDelay: `${0.08 * i}s` }}
             >
               <div

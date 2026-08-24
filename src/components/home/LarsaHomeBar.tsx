@@ -35,12 +35,10 @@ export function LarsaHomeBar() {
             <LarsaMark
               size={26}
               className="text-[var(--plum)] sm:hidden"
-              spinning
             />
             <LarsaMark
               size={30}
               className="hidden text-[var(--plum)] sm:block"
-              spinning
             />
           </span>
 

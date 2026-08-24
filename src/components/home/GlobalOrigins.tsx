@@ -54,7 +54,7 @@ export function GlobalOrigins() {
           {origins.map((origin, i) => (
             <figure
               key={origin.name}
-              className="group flex flex-col items-center text-center animate-[velora-rise_0.9s_ease-out_both]"
+              className="group flex flex-col items-center text-center motion-safe:animate-[velora-rise_0.9s_ease-out_forwards]"
               style={{ animationDelay: `${0.06 * i}s` }}
             >
               <div className="relative flex h-36 w-full items-end justify-center sm:h-44">

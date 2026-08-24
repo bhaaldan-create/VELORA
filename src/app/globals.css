@@ -205,7 +205,7 @@ html[data-locale="en"] .font-display {
 
 @keyframes velora-fade {
   from {
-    opacity: 0;
+    opacity: 0.92;
   }
   to {
     opacity: 1;
@@ -214,8 +214,8 @@ html[data-locale="en"] .font-display {
 
 @keyframes velora-rise {
   from {
-    opacity: 0;
-    transform: translateY(18px);
+    opacity: 0.92;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -233,13 +233,15 @@ html[data-locale="en"] .font-display {
   }
 }
 
+/* لا تختصر المدة إلى 0.01ms — ذلك يترك عناصر animate-fill (both)
+   عالقة على opacity منخفض من إطار from ويختفي المحتوى أحياناً */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 

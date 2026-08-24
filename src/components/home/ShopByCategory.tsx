@@ -55,7 +55,7 @@ export function ShopByCategory() {
               href={`/shop?category=${cat.slug}`}
               className={cn(
                 "group relative min-w-[68%] shrink-0 snap-start overflow-hidden sm:min-w-[42%] lg:min-w-0",
-                "animate-[velora-rise_0.8s_ease-out_both]",
+                "motion-safe:animate-[velora-rise_0.8s_ease-out_forwards]",
               )}
               style={{ animationDelay: `${0.06 * i}s` }}
             >

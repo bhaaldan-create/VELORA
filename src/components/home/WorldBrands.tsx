@@ -47,7 +47,7 @@ export function WorldBrands() {
             <Link
               key={item.id}
               href={item.href}
-              className="group block animate-[velora-rise_0.9s_ease-out_both]"
+              className="group block motion-safe:animate-[velora-rise_0.9s_ease-out_forwards]"
               style={{ animationDelay: `${0.05 * i}s` }}
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[var(--champagne)]">

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { shopBrands } from "@/data/shop-brands";
@@ -107,14 +106,17 @@ export function SearchScreen({ products }: { products: Product[] }) {
               href={`/shop?brand=${b.slug}`}
               className="group flex flex-col items-center gap-2.5"
             >
-              <span className="relative aspect-square w-[4.5rem] overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_24px_rgba(26,18,28,0.06)] ring-1 ring-[var(--plum)]/8 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_12px_32px_rgba(26,18,28,0.1)] group-hover:ring-[var(--plum)]/16 sm:w-[5.25rem] sm:rounded-[1.5rem]">
-                <Image
+              <span className="relative flex aspect-square w-[4.5rem] items-center justify-center overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_24px_rgba(26,18,28,0.06)] ring-1 ring-[var(--plum)]/8 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_12px_32px_rgba(26,18,28,0.1)] group-hover:ring-[var(--plum)]/16 sm:w-[5.25rem] sm:rounded-[1.5rem]">
+                {/* img ثابت لـ SVG — Next/Image يختفي أحياناً مع الشعارات */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={b.logo}
                   alt={b.name}
-                  fill
-                  className="object-contain p-1"
-                  sizes="84px"
-                  unoptimized
+                  width={84}
+                  height={84}
+                  className="h-full w-full object-contain p-1"
+                  loading="eager"
+                  decoding="async"
                 />
               </span>
               <span className="text-center">
