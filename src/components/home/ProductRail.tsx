@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Product } from "@/types";
-import { ProductSwiper } from "@/components/home/ProductSwiper";
+import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ export function ProductRail({
           ) : null}
         </div>
         <div className="min-w-0 overflow-hidden">
-          <ProductSwiper products={products} />
+          <ProductScrollRail products={products} />
         </div>
       </div>
     </section>

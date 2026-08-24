@@ -48,7 +48,13 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const run = () => void refresh();
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(run, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(run, 80);
+    return () => window.clearTimeout(t);
   }, [refresh]);
 
   const logout = useCallback(async () => {

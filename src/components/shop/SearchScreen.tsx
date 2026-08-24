@@ -1,35 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { shopBrands } from "@/data/shop-brands";
 import { CompactProductCard } from "@/components/shop/CompactProductCard";
 import { useLocale } from "@/context/LocaleContext";
 import type { Product } from "@/types";
 
-export function SearchScreen({ products }: { products: Product[] }) {
+export function SearchScreen() {
   const { locale } = useLocale();
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Product[]>([]);
+  const [searching, setSearching] = useState(false);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return products
-      .filter((p) => {
-        const hay = [
-          p.name,
-          p.nameAr,
-          p.category,
-          ...p.concerns,
-          ...p.benefits,
-          ...p.benefitsAr,
-        ]
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q);
-      })
-      .slice(0, 24);
-  }, [products, query]);
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+
+    setSearching(true);
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/catalog/search?q=${encodeURIComponent(q)}`,
+          );
+          const data = (await res.json()) as {
+            ok?: boolean;
+            products?: Product[];
+          };
+          setResults(data.ok && Array.isArray(data.products) ? data.products : []);
+        } catch {
+          setResults([]);
+        } finally {
+          setSearching(false);
+        }
+      })();
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   const brandsVisible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -42,7 +55,7 @@ export function SearchScreen({ products }: { products: Product[] }) {
     );
   }, [query]);
 
-  const searching = query.trim().length > 0;
+  const hasQuery = query.trim().length > 0;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -55,7 +68,6 @@ export function SearchScreen({ products }: { products: Product[] }) {
         </h1>
       </div>
 
-      {/* بحث يدوي */}
       <label className="relative mt-8 block">
         <span className="sr-only">
           {locale === "en" ? "Search products" : "ابحثي عن منتج"}
@@ -83,7 +95,7 @@ export function SearchScreen({ products }: { products: Product[] }) {
           autoComplete="off"
           inputMode="search"
         />
-        {searching ? (
+        {hasQuery ? (
           <button
             type="button"
             onClick={() => setQuery("")}
@@ -94,7 +106,6 @@ export function SearchScreen({ products }: { products: Product[] }) {
         ) : null}
       </label>
 
-      {/* براندات — مربعة بحواف شبه دائرية */}
       <section className="mt-12">
         <h2 className="font-display text-center text-[1.05rem] font-semibold text-[var(--plum)]">
           {locale === "en" ? "Brands" : "البراندات"}
@@ -107,7 +118,6 @@ export function SearchScreen({ products }: { products: Product[] }) {
               className="group flex flex-col items-center gap-2.5"
             >
               <span className="relative flex aspect-square w-[4.5rem] items-center justify-center overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_24px_rgba(26,18,28,0.06)] ring-1 ring-[var(--plum)]/8 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_12px_32px_rgba(26,18,28,0.1)] group-hover:ring-[var(--plum)]/16 sm:w-[5.25rem] sm:rounded-[1.5rem]">
-                {/* img ثابت لـ SVG — Next/Image يختفي أحياناً مع الشعارات */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={b.logo}
@@ -115,7 +125,7 @@ export function SearchScreen({ products }: { products: Product[] }) {
                   width={84}
                   height={84}
                   className="h-full w-full object-contain p-1"
-                  loading="eager"
+                  loading="lazy"
                   decoding="async"
                 />
               </span>
@@ -135,24 +145,36 @@ export function SearchScreen({ products }: { products: Product[] }) {
             </Link>
           ))}
         </div>
-        {searching && brandsVisible.length === 0 ? (
+        {hasQuery && brandsVisible.length === 0 ? (
           <p className="mt-6 text-center text-[0.875rem] text-[var(--muted)]">
             {locale === "en" ? "No matching brands." : "لا يوجد براند مطابق."}
           </p>
         ) : null}
       </section>
 
-      {/* نتائج البحث اليدوي */}
-      {searching ? (
+      {hasQuery ? (
         <section className="mt-14">
           <h2 className="font-display text-[1.05rem] font-semibold text-[var(--plum)]">
-            {locale === "en"
-              ? `Products · ${filtered.length}`
-              : `المنتجات · ${filtered.length}`}
+            {searching
+              ? locale === "en"
+                ? "Searching…"
+                : "جارٍ البحث…"
+              : locale === "en"
+                ? `Products · ${results.length}`
+                : `المنتجات · ${results.length}`}
           </h2>
-          {filtered.length ? (
+          {searching ? (
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[3/4] animate-pulse rounded-2xl bg-[var(--mist)]"
+                />
+              ))}
+            </div>
+          ) : results.length ? (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
-              {filtered.map((product) => (
+              {results.map((product) => (
                 <CompactProductCard key={product.id} product={product} />
               ))}
             </div>

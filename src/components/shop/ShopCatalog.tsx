@@ -7,21 +7,22 @@ import {
   getShopBrand,
   productMatchesBrand,
 } from "@/data/shop-brands";
-import { ShopProductSwiper } from "@/components/shop/ShopProductSwiper";
+import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
 import { useLocale } from "@/context/LocaleContext";
 import type { Category, CategorySlug, Product } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ShopCatalogProps {
-  products: Product[];
   categories: Category[];
 }
 
-export function ShopCatalog({ products, categories }: ShopCatalogProps) {
+export function ShopCatalog({ categories }: ShopCatalogProps) {
   const { locale, t } = useLocale();
   const searchParams = useSearchParams();
   const brand = getShopBrand(searchParams.get("brand") ?? undefined);
   const categoryFromUrl = searchParams.get("category") ?? undefined;
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<string | undefined>(() =>
     categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
       ? categoryFromUrl
@@ -35,6 +36,30 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
         : undefined,
     );
   }, [categoryFromUrl, categories]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    void (async () => {
+      try {
+        const res = await fetch("/api/catalog/products");
+        const data = (await res.json()) as {
+          ok?: boolean;
+          products?: Product[];
+        };
+        if (!cancelled && data.ok && Array.isArray(data.products)) {
+          setProducts(data.products);
+        }
+      } catch {
+        /* keep empty */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const list = useMemo(() => {
     let result = products;
@@ -54,7 +79,7 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
     return categories
       .map((cat) => ({
         cat,
-        items: products.filter((p) => p.category === cat.slug),
+        items: products.filter((p) => p.category === cat.slug).slice(0, 12),
       }))
       .filter((r) => r.items.length > 0);
   }, [brand, category, categories, products]);
@@ -93,14 +118,17 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
             {heading}
           </h1>
           <p className="mt-1 text-[0.85rem] text-[var(--muted)]">
-            {locale === "en"
-              ? `${list.length} products · swipe`
-              : `${list.length} منتج · مرّري`}
+            {loading
+              ? locale === "en"
+                ? "Loading…"
+                : "جارٍ التحميل…"
+              : locale === "en"
+                ? `${list.length} products · swipe`
+                : `${list.length} منتج · مرّري`}
           </p>
         </div>
       </div>
 
-      {/* فلاتر تصنيف مضغوطة — بدون بحث */}
       <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <FilterPill
           active={!category}
@@ -117,7 +145,9 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
         ))}
       </div>
 
-      {rails && !category ? (
+      {loading ? (
+        <ShopCatalogSkeleton />
+      ) : rails && !category ? (
         <div className="mt-10 space-y-12">
           {rails.map(({ cat, items }) => (
             <section key={cat.slug}>
@@ -133,13 +163,13 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
                   {locale === "en" ? "See all" : "الكل"}
                 </button>
               </div>
-              <ShopProductSwiper products={items} />
+              <ProductScrollRail products={items} variant="compact" />
             </section>
           ))}
         </div>
       ) : list.length ? (
         <div className="mt-8">
-          <ShopProductSwiper products={list} />
+          <ProductScrollRail products={list} variant="compact" />
         </div>
       ) : (
         <div className="mt-10 rounded-3xl border border-dashed border-[var(--plum)]/12 px-6 py-16 text-center">
@@ -156,6 +186,19 @@ export function ShopCatalog({ products, categories }: ShopCatalogProps) {
           </Link>
         </div>
       )}
+    </div>
+  );
+}
+
+function ShopCatalogSkeleton() {
+  return (
+    <div className="mt-8 flex gap-3 overflow-hidden">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="aspect-[3/4] w-[42%] shrink-0 animate-pulse rounded-2xl bg-[var(--mist)] sm:w-[30%]"
+        />
+      ))}
     </div>
   );
 }

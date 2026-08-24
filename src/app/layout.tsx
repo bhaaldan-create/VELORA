@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { Bodoni_Moda, IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
@@ -8,37 +9,22 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
 import { SiteMain } from "@/components/layout/SiteMain";
 import { Providers } from "@/components/layout/Providers";
-import { FloatingContact } from "@/components/contact/FloatingContact";
 import { brand } from "@/constants/brand";
 import "./globals.css";
-import "./auth.css";
 
-/** خط عربي/لاتيني حديث موحّد للواجهة */
-const body = IBM_Plex_Sans_Arabic({
+const FloatingContact = dynamic(
+  () =>
+    import("@/components/contact/FloatingContact").then((m) => m.FloatingContact),
+  { ssr: false, loading: () => null },
+);
+
+/** خط واحد خفيف للعربي والعناوين */
+const sans = IBM_Plex_Sans_Arabic({
   variable: "--font-body",
   subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-/** نفس العائلة للعناوين — أوزان أثقل عبر CSS */
-const display = IBM_Plex_Sans_Arabic({
-  variable: "--font-display",
-  subsets: ["arabic", "latin"],
-  weight: ["500", "600", "700"],
-});
-
-/** خط فاخر راقٍ لاسم VELORA */
-const brandFont = Bodoni_Moda({
-  variable: "--font-brand",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-/** خط إنجليزي مودرن لأسماء البراندات والنصوص اللاتينية */
-const latin = Outfit({
-  variable: "--font-latin",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -86,7 +72,7 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${body.variable} ${display.variable} ${brandFont.variable} ${latin.variable} h-full`}
+      className={`${sans.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />

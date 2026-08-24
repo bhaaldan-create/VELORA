@@ -1,5 +1,6 @@
 "use client";
 
+import "@/app/auth.css";
 import { Suspense } from "react";
 import { AuthBackground } from "@/components/auth/AuthBackground";
 import { AuthFooter } from "@/components/auth/AuthFooter";

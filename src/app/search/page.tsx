@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { SearchScreen } from "@/components/shop/SearchScreen";
-import { getAllProducts } from "@/lib/catalog";
 import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 export const metadata: Metadata = {
@@ -10,12 +9,10 @@ export const metadata: Metadata = {
 
 export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
-export default async function SearchPage() {
-  const products = await getAllProducts();
-
+export default function SearchPage() {
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
-      <SearchScreen products={products} />
+      <SearchScreen />
     </div>
   );
 }

@@ -95,8 +95,8 @@
   --color-mist: var(--mist);
   --color-muted: var(--muted);
   --font-sans: var(--font-body);
-  --font-display: var(--font-display);
-  --font-latin: var(--font-latin);
+  --font-display: var(--font-body);
+  --font-latin: var(--font-body);
 }
 
 * {
@@ -187,7 +187,7 @@ html[data-locale="en"] .font-display {
 }
 
 .font-brand {
-  font-family: var(--font-brand), "Times New Roman", serif;
+  font-family: Georgia, "Times New Roman", serif;
   letter-spacing: var(--track-brand);
   font-optical-sizing: auto;
 }

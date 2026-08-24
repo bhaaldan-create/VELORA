@@ -73,6 +73,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/api/catalog/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=3600, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
         source: "/api/media/:path*",
         headers: [
           {
@@ -90,6 +99,9 @@ const nextConfig: NextConfig = {
     "127.0.0.1",
   ],
   images: {
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [384, 640, 750, 828, 1080],
+    imageSizes: [64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: "https",
