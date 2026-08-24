@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { getAllCategories, getAllProducts } from "@/lib/catalog";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 export const metadata: Metadata = {
   title: "التسوق",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
     "تسوّقي من VELORA — تمرير سريع على العناية والمكياج بأسعار الدينار العراقي.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export default async function ShopPage({
   searchParams,

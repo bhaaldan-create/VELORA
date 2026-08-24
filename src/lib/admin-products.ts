@@ -4,6 +4,7 @@ import type {
   AdminProductDetail,
 } from "@/lib/admin-product-types";
 import { salePriceFromBase } from "@/lib/pricing";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import type { CategorySlug, SkinConcern } from "@/types";
 
 export type {
@@ -234,6 +235,7 @@ export async function createAdminProduct(
     },
   });
 
+  revalidateStorefront({ slug: row.slug });
   return toAdminProduct(row);
 }
 
@@ -311,6 +313,7 @@ export async function updateAdminProduct(
     },
   });
 
+  revalidateStorefront({ slug: row.slug, oldSlug: existing.slug });
   return toAdminProduct(row);
 }
 
@@ -318,5 +321,6 @@ export async function deleteAdminProduct(id: string): Promise<boolean> {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) return false;
   await prisma.product.delete({ where: { id } });
+  revalidateStorefront({ slug: existing.slug });
   return true;
 }

@@ -1,9 +1,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getHomePromoConfig } from "@/lib/home/promo-config";
+import {
+  MEDIA_CACHE_CONTROL,
+  MEDIA_IMMUTABLE_CACHE_CONTROL,
+} from "@/lib/media-cache";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 function parseDataUrl(url: string): { mime: string; buffer: Buffer } | null {
   const match = url.match(/^data:([^;,]+)?(?:;base64)?,([\s\S]+)$/);
@@ -32,7 +37,7 @@ export async function GET() {
     return new Response(new Uint8Array(parsed.buffer), {
       headers: {
         "Content-Type": parsed.mime,
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": MEDIA_CACHE_CONTROL,
       },
     });
   }
@@ -51,7 +56,7 @@ export async function GET() {
       return new Response(new Uint8Array(buffer), {
         headers: {
           "Content-Type": mime,
-          "Cache-Control": "public, max-age=86400, immutable",
+          "Cache-Control": MEDIA_IMMUTABLE_CACHE_CONTROL,
         },
       });
     } catch {
@@ -73,7 +78,7 @@ export async function GET() {
       return new Response(new Uint8Array(buffer), {
         headers: {
           "Content-Type": mime,
-          "Cache-Control": "public, max-age=86400, immutable",
+          "Cache-Control": MEDIA_IMMUTABLE_CACHE_CONTROL,
         },
       });
     } catch {

@@ -7,8 +7,9 @@ import {
   getRelatedProducts,
   getRoutineCompanions,
 } from "@/lib/catalog";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const dynamic = "force-dynamic";
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export async function generateStaticParams() {
   try {

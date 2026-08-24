@@ -10,6 +10,7 @@ import {
   resolveUploadMime,
 } from "@/lib/admin/persist-image";
 import { salePriceFromBase } from "@/lib/pricing";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,6 +108,7 @@ export async function POST(req: Request) {
         : { imageUrl: persisted.url },
     });
 
+    revalidateStorefront({ slug: row.slug });
     return Response.json({ ok: true, product: mapRow(row) });
   } catch (error) {
     console.error("[admin/products/image] POST failed", error);
@@ -136,6 +138,7 @@ export async function DELETE(req: Request) {
       data: isBrandLogo ? { brandLogoUrl: null } : { imageUrl: null },
     });
 
+    revalidateStorefront({ slug: row.slug });
     return Response.json({ ok: true, product: mapRow(row) });
   } catch (error) {
     console.error("[admin/products/image] DELETE failed", error);

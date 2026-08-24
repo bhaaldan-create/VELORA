@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 import path from "path";
+import {
+  MEDIA_CACHE_CONTROL,
+  MEDIA_IMMUTABLE_CACHE_CONTROL,
+} from "./src/lib/media-cache";
 
 const nextConfig: NextConfig = {
   turbopack: {
@@ -29,6 +33,51 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "no-store, no-cache, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/uploads/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: MEDIA_IMMUTABLE_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/products/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: MEDIA_IMMUTABLE_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/brands/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: MEDIA_IMMUTABLE_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/brand/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: MEDIA_IMMUTABLE_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/api/media/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: MEDIA_CACHE_CONTROL,
           },
         ],
       },

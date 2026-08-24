@@ -20,8 +20,9 @@ import {
   getHomePromoConfig,
   promoConfigForClient,
 } from "@/lib/home/promo-config";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const dynamic = "force-dynamic";
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export default async function HomePage() {
   const [

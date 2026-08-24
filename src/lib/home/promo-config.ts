@@ -1,11 +1,13 @@
-import { revalidatePath } from "next/cache";
+import { unstable_cache } from "next/cache";
 import {
   homePromoMediaUrl,
   mediaCacheBustFromStored,
   resolveClientImageUrl,
   shouldRetainStoredImageOnSave,
 } from "@/lib/admin/media-url";
+import { CACHE_TAGS, STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
+import { revalidateHomepage } from "@/lib/revalidate-storefront";
 import { DEFAULT_HOME_PROMO } from "@/lib/home/default-config";
 import type { HomePromoConfig } from "@/lib/home/types";
 
@@ -46,7 +48,7 @@ export function mergeHomePromoConfig(stored: unknown): HomePromoConfig {
   return sanitizePromo(stored, base);
 }
 
-export async function getHomePromoConfig(): Promise<HomePromoConfig> {
+async function fetchHomePromoConfig(): Promise<HomePromoConfig> {
   try {
     const row = await prisma.homePromoConfig.findUnique({
       where: { id: CONFIG_ID },
@@ -58,10 +60,17 @@ export async function getHomePromoConfig(): Promise<HomePromoConfig> {
   }
 }
 
+export async function getHomePromoConfig(): Promise<HomePromoConfig> {
+  return unstable_cache(fetchHomePromoConfig, ["home-promo-config"], {
+    tags: [CACHE_TAGS.home],
+    revalidate: STOREFRONT_REVALIDATE_SECONDS,
+  })();
+}
+
 export async function saveHomePromoConfig(
   data: HomePromoConfig,
 ): Promise<HomePromoConfig> {
-  const existing = await getHomePromoConfig();
+  const existing = await fetchHomePromoConfig();
   const promo = sanitizePromo(data, existing);
   const incomingImage =
     typeof data.imageUrl === "string" ? data.imageUrl.trim() : "";
@@ -77,7 +86,7 @@ export async function saveHomePromoConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
-  revalidatePath("/");
+  revalidateHomepage();
   return merged;
 }
 

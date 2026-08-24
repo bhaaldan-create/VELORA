@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { brand, ui } from "@/constants/brand";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 export const metadata: Metadata = {
   title: "عنّا",
   description: brand.descriptionAr,
 };
+
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export default function AboutPage() {
   return (

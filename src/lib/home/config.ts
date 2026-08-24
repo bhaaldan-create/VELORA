@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { unstable_cache } from "next/cache";
 import {
   categoryCardMediaUrl,
   heroSlideMediaUrl,
@@ -6,7 +6,9 @@ import {
   resolveClientImageUrl,
   shouldRetainStoredImageOnSave,
 } from "@/lib/admin/media-url";
+import { CACHE_TAGS, STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
+import { revalidateHomepage } from "@/lib/revalidate-storefront";
 import {
   DEFAULT_HOME_CATEGORIES,
   DEFAULT_HOME_HERO,
@@ -88,7 +90,7 @@ export function mergeHomeHeroConfig(stored: unknown): HomeHeroConfig {
   };
 }
 
-export async function getHomeHeroConfig(): Promise<HomeHeroConfig> {
+async function fetchHomeHeroConfig(): Promise<HomeHeroConfig> {
   try {
     const row = await prisma.homeHeroConfig.findUnique({
       where: { id: CONFIG_ID },
@@ -100,10 +102,17 @@ export async function getHomeHeroConfig(): Promise<HomeHeroConfig> {
   }
 }
 
+export async function getHomeHeroConfig(): Promise<HomeHeroConfig> {
+  return unstable_cache(fetchHomeHeroConfig, ["home-hero-config"], {
+    tags: [CACHE_TAGS.home],
+    revalidate: STOREFRONT_REVALIDATE_SECONDS,
+  })();
+}
+
 export async function saveHomeHeroConfig(
   data: HomeHeroConfig,
 ): Promise<HomeHeroConfig> {
-  const existing = await getHomeHeroConfig();
+  const existing = await fetchHomeHeroConfig();
   const base = structuredClone(DEFAULT_HOME_HERO);
 
   const slidesIn = Array.isArray(data.slides) ? data.slides : existing.slides;
@@ -144,7 +153,7 @@ export async function saveHomeHeroConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
-  revalidatePath("/");
+  revalidateHomepage();
   return merged;
 }
 
@@ -243,7 +252,7 @@ export function mergeHomeCategoryConfig(stored: unknown): HomeCategoryConfig {
   };
 }
 
-export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
+async function fetchHomeCategoryConfig(): Promise<HomeCategoryConfig> {
   try {
     const row = await prisma.homeCategoryConfig.findUnique({
       where: { id: CONFIG_ID },
@@ -255,10 +264,17 @@ export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
   }
 }
 
+export async function getHomeCategoryConfig(): Promise<HomeCategoryConfig> {
+  return unstable_cache(fetchHomeCategoryConfig, ["home-category-config"], {
+    tags: [CACHE_TAGS.home],
+    revalidate: STOREFRONT_REVALIDATE_SECONDS,
+  })();
+}
+
 export async function saveHomeCategoryConfig(
   data: HomeCategoryConfig,
 ): Promise<HomeCategoryConfig> {
-  const existing = await getHomeCategoryConfig();
+  const existing = await fetchHomeCategoryConfig();
   const base = structuredClone(DEFAULT_HOME_CATEGORIES);
 
   const cardsIn = Array.isArray(data.cards) ? data.cards : existing.cards;
@@ -293,7 +309,7 @@ export async function saveHomeCategoryConfig(
     create: { id: CONFIG_ID, data: merged },
     update: { data: merged },
   });
-  revalidatePath("/");
+  revalidateHomepage();
   return merged;
 }
 
