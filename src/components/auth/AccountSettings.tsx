@@ -367,17 +367,25 @@ export function AccountSettings() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Sidebar */}
         <aside className="shrink-0 lg:w-[240px]">
-          <div className="rounded-[22px] border border-[var(--account-border)] bg-white/90 p-6 lg:sticky lg:top-24">
-            <p className="font-latin text-[1.35rem] font-semibold leading-none tracking-tight text-[var(--account-plum)]">
-              My
-              <br />
-              <span className="font-brand tracking-[0.18em]">VELORA</span>
-            </p>
-            <p className="mt-3 text-[0.8rem] leading-relaxed text-[var(--account-muted)]">
-              {ar ? "مساحتك الخاصة في VELORA." : "Your private space in VELORA."}
-            </p>
+          <div className="rounded-[22px] border border-[var(--account-border)] bg-white/90 px-5 py-6 lg:sticky lg:top-24">
+            {/* dir=ltr يمنع عكس حرفَي My في الواجهة العربية */}
+            <div className="text-center" dir="ltr">
+              <p className="font-latin text-[0.68rem] font-medium tracking-[0.42em] text-[var(--account-muted)] uppercase">
+                My
+              </p>
+              <p className="font-brand mt-1.5 text-[1.45rem] leading-none tracking-[0.22em] text-[var(--account-plum)]">
+                VELORA
+              </p>
+              <span
+                className="mx-auto mt-3 block h-px w-10 bg-[var(--account-orchid)]/55"
+                aria-hidden
+              />
+              <p className="mt-3 text-[0.78rem] leading-relaxed text-[var(--account-muted)]" dir={ar ? "rtl" : "ltr"}>
+                {ar ? "مساحتك الخاصة" : "Your private space"}
+              </p>
+            </div>
 
-            <nav className="mt-8 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+            <nav className="mt-7 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
               {NAV.map((item) => {
                 const active = section === item.id;
                 return (
@@ -386,7 +394,7 @@ export function AccountSettings() {
                     type="button"
                     onClick={() => goTo(item.id)}
                     className={cn(
-                      "shrink-0 rounded-2xl px-4 py-2.5 text-start text-[0.9rem] transition-colors duration-200",
+                      "shrink-0 rounded-2xl px-4 py-2.5 text-center text-[0.9rem] transition-colors duration-200 lg:text-start",
                       active
                         ? "bg-[var(--account-lilac)] font-medium text-[var(--account-plum)]"
                         : "text-[var(--account-muted)] hover:bg-[var(--account-lilac)]/50 hover:text-[var(--account-plum)]",
@@ -398,10 +406,10 @@ export function AccountSettings() {
               })}
               <Link
                 href="/account/club"
-                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-gradient-to-l from-[#f5f1ee] to-white px-3 py-2 text-start text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:border-[var(--account-orchid)]/50"
+                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
               >
-                <span className="flex items-center gap-2.5">
-                  <ClubLogo height={28} />
+                <span className="inline-flex items-center justify-center gap-2.5 lg:justify-start">
+                  <ClubLogo height={26} />
                   <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
                 </span>
               </Link>
