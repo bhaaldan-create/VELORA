@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { IBM_Plex_Sans_Arabic } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
@@ -12,13 +12,22 @@ import { FloatingContactLazy } from "@/components/contact/FloatingContactLazy";
 import { brand } from "@/constants/brand";
 import "./globals.css";
 
-/** خط واحد خفيف للعربي والعناوين */
+/** خط عربي خفيف */
 const sans = IBM_Plex_Sans_Arabic({
   variable: "--font-body",
   subsets: ["arabic", "latin"],
   weight: ["400", "600"],
   display: "swap",
   preload: true,
+});
+
+/** خط لاتيني مودرن لشعارات مثل My VELORA */
+const latin = Outfit({
+  variable: "--font-latin",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -66,7 +75,7 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${sans.variable} h-full`}
+      className={`${sans.variable} ${latin.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />

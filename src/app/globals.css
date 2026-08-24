@@ -96,7 +96,7 @@
   --color-muted: var(--muted);
   --font-sans: var(--font-body);
   --font-display: var(--font-body);
-  --font-latin: var(--font-body);
+  --font-latin: var(--font-latin);
 }
 
 * {
@@ -187,7 +187,7 @@ html[data-locale="en"] .font-display {
 }
 
 .font-brand {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-latin), var(--font-body), system-ui, sans-serif;
   letter-spacing: var(--track-brand);
   font-optical-sizing: auto;
 }
