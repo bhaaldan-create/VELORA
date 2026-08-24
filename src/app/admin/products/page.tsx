@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProductsAdmin } from "@/components/admin/ProductsAdmin";
 import {
@@ -15,9 +16,17 @@ export default async function AdminProductsPage() {
     <AdminShell
       active="products"
       title="المنتجات"
-      subtitle="إدارة الكتالوج، الأسعار، المخزون، والإظهار."
+      subtitle="إدارة الكتالوج حسب القسم: العناية، المكياج، الشعر، والجسم."
     >
-      <ProductsAdmin initialProducts={products} initialStats={stats} />
+      <Suspense
+        fallback={
+          <p className="text-sm text-[var(--admin-text-secondary)]">
+            جارٍ التحميل…
+          </p>
+        }
+      >
+        <ProductsAdmin initialProducts={products} initialStats={stats} />
+      </Suspense>
     </AdminShell>
   );
 }

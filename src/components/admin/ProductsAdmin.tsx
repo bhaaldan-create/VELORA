@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { ProductCreateForm } from "@/components/admin/ProductCreateForm";
 import { formatPrice } from "@/lib/utils";
@@ -19,24 +19,83 @@ type Stats = {
 
 type Visibility = "all" | "active" | "hidden" | "low" | "out" | "sale";
 
+/** أقسام الكتالوج المعروضة منفصلة للتعديل */
+const PRODUCT_SECTIONS = [
+  { id: "all", label: "كل المنتجات", slug: null },
+  { id: "skincare", label: "العناية بالبشرة", slug: "skincare" },
+  { id: "makeup", label: "المكياج", slug: "makeup" },
+  { id: "hair-care", label: "العناية بالشعر", slug: "hair-care" },
+  { id: "body-care", label: "العناية بالجسم", slug: "body-care" },
+] as const;
+
+type SectionId = (typeof PRODUCT_SECTIONS)[number]["id"];
+
+function parseSection(raw: string | null): SectionId {
+  if (
+    raw === "skincare" ||
+    raw === "makeup" ||
+    raw === "hair-care" ||
+    raw === "body-care"
+  ) {
+    return raw;
+  }
+  return "all";
+}
+
 type Props = {
   initialProducts: AdminProduct[];
-  initialStats: Stats;
+  initialStats?: Stats;
 };
 
-export function ProductsAdmin({ initialProducts, initialStats }: Props) {
+export function ProductsAdmin({ initialProducts }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState(initialProducts);
-  const [stats, setStats] = useState(initialStats);
+  const [section, setSection] = useState<SectionId>(() =>
+    parseSection(searchParams.get("category")),
+  );
   const [visibility, setVisibility] = useState<Visibility>("all");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const [showCreate, setShowCreate] = useState(false);
   const [, startTransition] = useTransition();
 
+  const sectionProducts = useMemo(() => {
+    if (section === "all") return products;
+    return products.filter((p) => p.categorySlug === section);
+  }, [products, section]);
+
+  const sectionStats = useMemo(() => {
+    const list = sectionProducts;
+    return {
+      all: list.length,
+      active: list.filter((p) => p.isActive).length,
+      hidden: list.filter((p) => !p.isActive).length,
+      lowStock: list.filter((p) => p.stock > 0 && p.stock <= 10).length,
+      outOfStock: list.filter((p) => p.stock <= 0).length,
+      onSale: list.filter((p) => p.discountPercent > 0).length,
+    };
+  }, [sectionProducts]);
+
+  const sectionCounts = useMemo(() => {
+    const counts: Record<SectionId, number> = {
+      all: products.length,
+      skincare: 0,
+      makeup: 0,
+      "hair-care": 0,
+      "body-care": 0,
+    };
+    for (const p of products) {
+      if (p.categorySlug in counts) {
+        counts[p.categorySlug as SectionId] += 1;
+      }
+    }
+    return counts;
+  }, [products]);
+
   const visible = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase();
-    return products.filter((p) => {
+    return sectionProducts.filter((p) => {
       if (visibility === "active" && !p.isActive) return false;
       if (visibility === "hidden" && p.isActive) return false;
       if (visibility === "low" && !(p.stock > 0 && p.stock <= 10)) return false;
@@ -47,40 +106,45 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
         `${p.id} ${p.slug} ${p.name} ${p.nameAr} ${p.categorySlug}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [products, visibility, deferredQuery]);
+  }, [sectionProducts, visibility, deferredQuery]);
 
-  function refreshStats(next: AdminProduct[]) {
-    setStats({
-      all: next.length,
-      active: next.filter((p) => p.isActive).length,
-      hidden: next.filter((p) => !p.isActive).length,
-      lowStock: next.filter((p) => p.stock > 0 && p.stock <= 10).length,
-      outOfStock: next.filter((p) => p.stock <= 0).length,
-      onSale: next.filter((p) => p.discountPercent > 0).length,
-    });
+  function selectSection(next: SectionId) {
+    setSection(next);
+    setVisibility("all");
+    setQuery("");
+    const url =
+      next === "all" ? "/admin/products" : `/admin/products?category=${next}`;
+    router.replace(url, { scroll: false });
   }
 
   function prependProduct(created: AdminProduct) {
     startTransition(() => {
-      setProducts((prev) => {
-        const next = [created, ...prev];
-        refreshStats(next);
-        return next;
-      });
+      setProducts((prev) => [created, ...prev]);
       setShowCreate(false);
       setVisibility("all");
       setQuery("");
+      if (
+        created.categorySlug === "skincare" ||
+        created.categorySlug === "makeup" ||
+        created.categorySlug === "hair-care" ||
+        created.categorySlug === "body-care"
+      ) {
+        setSection(created.categorySlug);
+      }
     });
     router.push(`/admin/products/${created.id}`);
   }
 
+  const activeSection =
+    PRODUCT_SECTIONS.find((s) => s.id === section) ?? PRODUCT_SECTIONS[0];
+
   const filters: { id: Visibility; label: string; count: number }[] = [
-    { id: "all", label: "الكل", count: stats.all },
-    { id: "active", label: "ظاهر", count: stats.active },
-    { id: "hidden", label: "مخفي", count: stats.hidden },
-    { id: "sale", label: "خصم", count: stats.onSale },
-    { id: "low", label: "مخزون منخفض", count: stats.lowStock },
-    { id: "out", label: "نفد", count: stats.outOfStock },
+    { id: "all", label: "الكل", count: sectionStats.all },
+    { id: "active", label: "ظاهر", count: sectionStats.active },
+    { id: "hidden", label: "مخفي", count: sectionStats.hidden },
+    { id: "sale", label: "خصم", count: sectionStats.onSale },
+    { id: "low", label: "مخزون منخفض", count: sectionStats.lowStock },
+    { id: "out", label: "نفد", count: sectionStats.outOfStock },
   ];
 
   return (
@@ -88,10 +152,12 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[1.35rem] font-semibold tracking-tight text-[var(--admin-text)]">
-            المنتجات
+            {section === "all" ? "المنتجات" : activeSection.label}
           </h1>
           <p className="mt-1 text-[13px] text-[var(--admin-text-secondary)]">
-            أضيفي منتجات جديدة أو افتحي محرّر المنتج للتعديل.
+            {section === "all"
+              ? "اختاري قسماً أدناه للتعديل براحة، أو اعرضي الكل."
+              : `منتجات قسم ${activeSection.label} فقط — ${sectionStats.all} منتج.`}
           </p>
         </div>
         <button
@@ -103,10 +169,42 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
         </button>
       </div>
 
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {PRODUCT_SECTIONS.map((s) => {
+          const active = section === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => selectSection(s.id)}
+              className={`rounded-[12px] border px-3 py-3 text-start transition ${
+                active
+                  ? "border-[var(--admin-plum)] bg-[var(--admin-plum)] text-white shadow-[var(--admin-shadow)]"
+                  : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text)] hover:border-[var(--admin-plum-soft)]"
+              }`}
+            >
+              <span className="block text-[13px] font-semibold leading-snug">
+                {s.label}
+              </span>
+              <span
+                className={`admin-num mt-1 block text-[12px] ${
+                  active ? "text-white/80" : "text-[var(--admin-text-muted)]"
+                }`}
+              >
+                {sectionCounts[s.id]} منتج
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {showCreate ? (
         <ProductCreateForm
           onCreated={prependProduct}
           onCancel={() => setShowCreate(false)}
+          defaultCategorySlug={
+            section === "all" ? undefined : activeSection.slug ?? undefined
+          }
         />
       ) : null}
 
@@ -132,7 +230,11 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
         id="product-search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="الاسم، التصنيف، المعرّف…"
+        placeholder={
+          section === "all"
+            ? "الاسم، التصنيف، المعرّف…"
+            : `ابحثي داخل ${activeSection.label}…`
+        }
         className="h-11 w-full rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-[14px] outline-none focus:border-[var(--admin-plum-soft)]"
       />
 
@@ -141,6 +243,15 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
           <p className="text-[15px] font-medium text-[var(--admin-text)]">
             لا توجد منتجات مطابقة
           </p>
+          {section !== "all" ? (
+            <button
+              type="button"
+              onClick={() => selectSection("all")}
+              className="mt-3 text-[13px] font-medium text-[var(--admin-plum)]"
+            >
+              عرض كل المنتجات
+            </button>
+          ) : null}
         </div>
       ) : (
         <ul className="space-y-2.5">
@@ -184,9 +295,11 @@ export function ProductsAdmin({ initialProducts, initialStats }: Props) {
                           خصم {p.discountPercent}%
                         </span>
                       ) : null}
-                      <span className="text-[11px] text-[var(--admin-text-muted)]">
-                        {categoryLabel}
-                      </span>
+                      {section === "all" ? (
+                        <span className="text-[11px] text-[var(--admin-text-muted)]">
+                          {categoryLabel}
+                        </span>
+                      ) : null}
                     </div>
                     <h2 className="mt-1.5 truncate text-[15px] font-semibold text-[var(--admin-text)]">
                       {p.nameAr}

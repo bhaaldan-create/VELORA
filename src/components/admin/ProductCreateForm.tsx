@@ -53,11 +53,20 @@ function splitLines(value: string) {
 export function ProductCreateForm({
   onCreated,
   onCancel,
+  defaultCategorySlug,
 }: {
   onCreated: (product: AdminProduct) => void;
   onCancel: () => void;
+  defaultCategorySlug?: CategorySlug;
 }) {
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => ({
+    ...EMPTY,
+    categorySlug:
+      defaultCategorySlug &&
+      CATEGORIES.some((c) => c.slug === defaultCategorySlug)
+        ? defaultCategorySlug
+        : EMPTY.categorySlug,
+  }));
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
