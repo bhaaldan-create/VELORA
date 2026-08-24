@@ -14,20 +14,19 @@ export const CONCERN_LABELS: Record<
 
 export function productCopy(ar: boolean) {
   return {
-    about: ar ? "عن هذا المنتج" : "About This Product",
-    readMore: ar ? "اقرأ المزيد" : "Read More",
-    readLess: ar ? "عرض أقل" : "Show Less",
+    about: ar ? "عن المنتج" : "About the Product",
+    readMore: ar ? "اقرئي المزيد" : "Read more",
+    readLess: ar ? "عرض أقل" : "Show less",
     ingredients: ar ? "المكونات الأساسية" : "Key Ingredients",
-    suitability: ar ? "هل يناسب بشرتكِ؟" : "Is It Right For Your Skin?",
+    suitability: ar ? "هل يناسب بشرتكِ؟" : "Is it right for your skin?",
     suitableFor: ar ? "مناسب لـ" : "Suitable for",
-    dailyUse: ar ? "الاستخدام اليومي" : "Daily use",
+    dailyUse: ar ? "استخدام يومي" : "Daily use",
     concernsLabel: ar ? "الاحتياجات" : "Skin needs",
-    larsaTitle: ar
-      ? "لستِ متأكدة إن كان هذا المنتج مناسباً؟"
-      : "Not sure if this product is right for you?",
+    larsaEyebrow: ar ? "لارسا" : "Larsa",
+    larsaTitle: ar ? "لستِ متأكدة؟" : "Not sure?",
     larsaSub: ar
-      ? "اسألي لارسا — مستشارة الجمال في VELORA"
-      : "Ask Larsa — VELORA Beauty & Skincare Advisor",
+      ? "اسألي لارسا — مستشارة VELORA للجمال والعناية بالبشرة"
+      : "Ask Larsa — VELORA beauty & skincare advisor",
     askLarsa: ar ? "اسألي لارسا" : "Ask Larsa",
     addToBag: ar ? "أضيفي للحقيبة" : "Add to Bag",
     added: ar ? "أُضيفت ✓" : "Added ✓",
@@ -36,17 +35,19 @@ export function productCopy(ar: boolean) {
     qty: ar ? "الكمية" : "Quantity",
     decrease: ar ? "تقليل الكمية" : "Decrease quantity",
     increase: ar ? "زيادة الكمية" : "Increase quantity",
-    reviews: ar ? "تقييم" : "Reviews",
+    reviews: ar ? "تقييم" : "reviews",
     noReviews: ar ? "لا توجد تقييمات بعد" : "No reviews yet",
-    viewReviews: ar ? "عرض التقييمات" : "View Reviews",
+    viewReviews: ar ? "شاهد التقييمات" : "View reviews",
     bestSeller: ar ? "الأكثر مبيعاً" : "Best Seller",
     newBadge: ar ? "جديد" : "New",
     saleBadge: ar ? "تخفيض" : "Sale",
     save: ar ? "وفّري" : "Save",
     routine: ar ? "أكملي روتينكِ" : "Complete Your Routine",
-    routineCurrent: ar ? "المنتج الحالي" : "Current product",
-    routinePair: ar ? "أضيفي معه" : "Pair with",
+    routineCurrent: ar ? "حالي" : "Now",
+    routinePair: ar ? "التالي" : "Next",
     related: ar ? "قد يعجبكِ أيضاً" : "You May Also Like",
     size: ar ? "الحجم" : "Size",
+    moreBenefits: ar ? "المزيد" : "More",
+    lessBenefits: ar ? "أقل" : "Less",
   } as const;
 }

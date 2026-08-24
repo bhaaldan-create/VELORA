@@ -21,49 +21,61 @@ export function ProductHeroImage({ product, ar }: Props) {
   if (product.isNew) {
     badges.push({ key: "new", label: copy.newBadge });
   }
-  if (product.discountPercent && product.discountPercent > 0) {
-    badges.push({
-      key: "sale",
-      label: `${copy.saleBadge} ${product.discountPercent}%`,
-    });
-  }
 
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-[28px] sm:rounded-[32px]",
-        "bg-gradient-to-b from-[#f3ece8] to-[#ebe3df]",
-        "shadow-[0_18px_48px_rgba(50,22,47,0.08)]",
-        "motion-safe:animate-[velora-fade_0.9s_ease-out_both]",
-      )}
-    >
-      <ProductMedia
-        name={ar ? product.nameAr : product.name}
-        imageTone={product.imageTone}
-        imageUrl={product.imageUrl}
-        aspectClassName="aspect-[4/5] sm:aspect-[5/6]"
-        className="w-full rounded-[28px] sm:rounded-[32px]"
-        sizes="(max-width: 1024px) 100vw, 48vw"
-        priority
-      />
+    <div className="motion-safe:animate-[velora-fade_0.95s_ease-out_both]">
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          "rounded-[2rem] sm:rounded-[2.25rem]",
+          "bg-[radial-gradient(120%_90%_at_50%_12%,#faf6f3_0%,#f3ebe6_42%,#ebe2dc_100%)]",
+          "shadow-[0_28px_64px_-28px_rgba(50,22,47,0.22)]",
+          "ring-1 ring-[var(--plum)]/[0.06]",
+        )}
+      >
+        {/* Soft editorial light wash */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-70"
+          aria-hidden
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 55% at 50% 18%, rgba(255,255,255,0.55) 0%, transparent 62%), linear-gradient(180deg, transparent 55%, rgba(61,38,64,0.04) 100%)",
+          }}
+        />
 
-      <WishlistHeartButton
-        productId={product.id}
-        className="absolute end-3 top-3 z-[2] rounded-full border border-white/50 bg-white/85 p-2.5 text-[var(--plum)] shadow-[0_8px_24px_rgba(50,22,47,0.1)] backdrop-blur-md sm:end-4 sm:top-4"
-      />
+        <ProductMedia
+          name={ar ? product.nameAr : product.name}
+          imageTone={product.imageTone}
+          imageUrl={product.imageUrl}
+          aspectClassName="aspect-[4/5] sm:aspect-[5/6]"
+          className="relative z-[1] w-full rounded-[2rem] sm:rounded-[2.25rem]"
+          sizes="(max-width: 1024px) 100vw, 46vw"
+          priority
+        />
 
-      {badges.length > 0 ? (
-        <div className="absolute start-3 top-3 z-[2] flex max-w-[70%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
-          {badges.map((b) => (
-            <span
-              key={b.key}
-              className="rounded-full bg-[var(--plum)]/90 px-2.5 py-1 text-[0.65rem] font-medium tracking-[0.04em] text-white backdrop-blur-sm"
-            >
-              {b.label}
-            </span>
-          ))}
-        </div>
-      ) : null}
+        <WishlistHeartButton
+          productId={product.id}
+          className="absolute end-3.5 top-3.5 z-[2] rounded-full border border-white/55 bg-white/80 p-2.5 text-[var(--plum)] shadow-[0_10px_28px_rgba(50,22,47,0.12)] backdrop-blur-md sm:end-4 sm:top-4"
+        />
+
+        {badges.length > 0 ? (
+          <div className="absolute start-3.5 top-3.5 z-[2] flex max-w-[68%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
+            {badges.map((b) => (
+              <span
+                key={b.key}
+                className="rounded-full bg-[var(--plum)]/88 px-2.5 py-1 text-[0.62rem] font-medium tracking-[0.06em] text-white backdrop-blur-sm"
+              >
+                {b.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <ProductBrandLogo
+        brandName={product.brandName}
+        brandLogoUrl={product.brandLogoUrl}
+      />
     </div>
   );
 }
@@ -77,16 +89,24 @@ export function ProductBrandLogo({
 }) {
   if (!brandLogoUrl) return null;
   const isData = brandLogoUrl.startsWith("data:");
+
   return (
-    <div className="mb-4" dir="ltr">
-      <div className="relative h-9 w-auto max-w-[180px] sm:h-10 sm:max-w-[200px]">
+    <div
+      className="mt-5 flex flex-col items-center motion-safe:animate-[velora-rise_0.7s_0.12s_ease-out_both] sm:mt-6"
+      dir="ltr"
+    >
+      <div
+        className="mb-3.5 h-px w-10 bg-[var(--plum)]/15"
+        aria-hidden
+      />
+      <div className="relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[240px]">
         <Image
           src={brandLogoUrl}
           alt={brandName ? `${brandName} logo` : "Brand logo"}
-          width={200}
+          width={240}
           height={40}
           unoptimized={isData}
-          className="h-9 w-auto max-h-10 max-w-full object-contain object-left sm:h-10"
+          className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
         />
       </div>
     </div>

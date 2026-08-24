@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
+import { useCart } from "@/context/CartContext";
 import type { Product } from "@/types";
 import { productCopy } from "./copy";
 import { cn } from "@/lib/utils";
@@ -29,60 +31,135 @@ export function ProductRoutine({
     })),
   ];
 
+  const Arrow = ar ? ArrowLeft : ArrowRight;
+
   return (
-    <section className="mt-14 border-t border-[var(--plum)]/8 pt-10">
+    <section className="relative mt-14 pt-10 sm:mt-16 sm:pt-12">
+      <div
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--plum)]/15 to-transparent"
+        aria-hidden
+      />
+
       <h2 className="font-display text-[1.2rem] font-semibold text-[var(--plum)] sm:text-[1.35rem]">
         {copy.routine}
       </h2>
-      <ol className="mt-6 grid gap-4 sm:grid-cols-3">
+
+      <ol className="-mx-1 mt-6 flex items-stretch gap-2 overflow-x-auto px-1 pb-2 admin-scroll sm:mx-0 sm:gap-3 sm:overflow-visible sm:pb-0">
         {steps.map((step, i) => (
-          <li
-            key={step.product.id + String(i)}
-            className={cn(
-              "rounded-[22px] border border-[var(--plum)]/8 bg-white/80 p-4",
-              step.current && "ring-1 ring-[var(--plum)]/15",
-            )}
-          >
-            <p className="text-[0.68rem] font-medium tracking-[0.14em] text-[var(--muted)]">
-              {i + 1} — {step.label}
-            </p>
-            <div className="mt-3 flex gap-3">
-              <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-[14px]">
-                <ProductMedia
-                  name={step.product.nameAr}
-                  imageTone={step.product.imageTone}
-                  imageUrl={step.product.imageUrl}
-                  aspectClassName="h-full w-full"
-                  sizes="80px"
-                />
-              </div>
-              <div className="min-w-0">
-                {step.current ? (
-                  <p className="truncate text-[0.85rem] font-semibold text-[var(--plum)]">
-                    {ar ? step.product.nameAr : step.product.name}
-                  </p>
-                ) : (
-                  <Link
-                    href={`/shop/${step.product.slug}`}
-                    className="truncate text-[0.85rem] font-semibold text-[var(--plum)] hover:underline"
-                  >
-                    {ar ? step.product.nameAr : step.product.name}
-                  </Link>
-                )}
-                <div className="mt-1">
-                  <ProductPrice
-                    size="sm"
-                    price={step.product.price}
-                    originalPrice={step.product.originalPrice}
-                    discountPercent={step.product.discountPercent}
+          <li key={step.product.id + String(i)} className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div
+              className={cn(
+                "w-[9.5rem] rounded-[1.25rem] p-3 sm:w-[11rem]",
+                step.current
+                  ? "bg-[var(--plum)]/[0.05] ring-1 ring-[var(--plum)]/12"
+                  : "bg-white/50 ring-1 ring-[var(--plum)]/[0.06]",
+              )}
+            >
+              <p className="text-[0.62rem] font-medium tracking-[0.14em] text-[var(--muted)]">
+                {i + 1} · {step.label}
+              </p>
+              <div className="mt-2.5 flex gap-2.5">
+                <div className="relative h-[4.25rem] w-[3.25rem] shrink-0 overflow-hidden rounded-[12px] bg-[var(--mist)]">
+                  <ProductMedia
+                    name={step.product.nameAr}
+                    imageTone={step.product.imageTone}
+                    imageUrl={step.product.imageUrl}
+                    aspectClassName="h-full w-full"
+                    sizes="70px"
                   />
+                </div>
+                <div className="min-w-0 flex-1">
+                  {step.current ? (
+                    <p className="line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)]">
+                      {ar ? step.product.nameAr : step.product.name}
+                    </p>
+                  ) : (
+                    <Link
+                      href={`/shop/${step.product.slug}`}
+                      className="line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)] hover:underline"
+                    >
+                      {ar ? step.product.nameAr : step.product.name}
+                    </Link>
+                  )}
+                  <div className="mt-1.5">
+                    <ProductPrice
+                      size="sm"
+                      price={step.product.price}
+                      originalPrice={step.product.originalPrice}
+                      discountPercent={step.product.discountPercent}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+
+            {i < steps.length - 1 ? (
+              <Arrow
+                className="hidden h-4 w-4 shrink-0 text-[var(--plum)]/30 sm:block"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            ) : null}
           </li>
         ))}
       </ol>
     </section>
+  );
+}
+
+function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
+  const { addItem } = useCart();
+  const inStock = (product.stock ?? 1) > 0;
+
+  return (
+    <article className="relative w-[38vw] max-w-[168px] shrink-0 sm:w-auto sm:max-w-none">
+      <WishlistHeartButton
+        productId={product.id}
+        size="sm"
+        className="absolute end-1.5 top-1.5 z-[1] rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur"
+      />
+      <Link href={`/shop/${product.slug}`} className="group block">
+        <div className="overflow-hidden rounded-[1.1rem] bg-[radial-gradient(90%_70%_at_50%_20%,#faf6f3_0%,#efe7e2_100%)] ring-1 ring-[var(--plum)]/[0.05]">
+          <ProductMedia
+            name={product.nameAr}
+            imageTone={product.imageTone}
+            imageUrl={product.imageUrl}
+            aspectClassName="aspect-[3/4]"
+            className="transition duration-500 group-hover:scale-[1.03]"
+            sizes="(max-width: 640px) 38vw, 180px"
+          />
+        </div>
+        {product.brandName ? (
+          <p
+            className="mt-2 truncate text-[0.6rem] tracking-[0.1em] text-[var(--muted)]"
+            dir="ltr"
+          >
+            {product.brandName}
+          </p>
+        ) : null}
+        <h3 className="mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--plum)]">
+          {ar ? product.nameAr : product.name}
+        </h3>
+      </Link>
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <ProductPrice
+          size="sm"
+          price={product.price}
+          originalPrice={product.originalPrice}
+          discountPercent={product.discountPercent}
+        />
+        {inStock ? (
+          <button
+            type="button"
+            aria-label={ar ? "أضيفي للحقيبة" : "Add to bag"}
+            onClick={() => addItem(product, 1)}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--plum)] text-white transition active:scale-95"
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+          </button>
+        ) : null}
+      </div>
+    </article>
   );
 }
 
@@ -97,52 +174,18 @@ export function ProductRelated({
   if (!products.length) return null;
 
   return (
-    <section className="mt-14 border-t border-[var(--plum)]/8 pt-10">
+    <section className="relative mt-14 pt-10 sm:mt-16 sm:pt-12">
+      <div
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--plum)]/15 to-transparent"
+        aria-hidden
+      />
+
       <h2 className="font-display text-[1.2rem] font-semibold text-[var(--plum)] sm:text-[1.35rem]">
         {copy.related}
       </h2>
-      <div className="-mx-5 mt-6 flex gap-3 overflow-x-auto px-5 pb-2 admin-scroll sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+      <div className="-mx-5 mt-5 flex gap-3 overflow-x-auto px-5 pb-2 admin-scroll sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         {products.map((p) => (
-          <article
-            key={p.id}
-            className="relative w-[42vw] max-w-[200px] shrink-0 sm:w-auto sm:max-w-none"
-          >
-            <WishlistHeartButton
-              productId={p.id}
-              className="absolute end-2 top-2 z-[1] rounded-full bg-white/90 p-2 shadow-sm backdrop-blur"
-            />
-            <Link href={`/shop/${p.slug}`} className="group block">
-              <div className="overflow-hidden rounded-[20px] bg-[var(--mist)]">
-                <ProductMedia
-                  name={p.nameAr}
-                  imageTone={p.imageTone}
-                  imageUrl={p.imageUrl}
-                  aspectClassName="aspect-[3/4]"
-                  className="transition duration-500 group-hover:scale-[1.03]"
-                  sizes="(max-width: 640px) 42vw, 220px"
-                />
-              </div>
-              {p.brandName ? (
-                <p
-                  className="mt-2.5 truncate text-[0.65rem] tracking-[0.08em] text-[var(--muted)]"
-                  dir="ltr"
-                >
-                  {p.brandName}
-                </p>
-              ) : null}
-              <h3 className="mt-1 line-clamp-2 text-[0.82rem] font-medium leading-snug text-[var(--plum)]">
-                {ar ? p.nameAr : p.name}
-              </h3>
-              <div className="mt-1.5">
-                <ProductPrice
-                  size="sm"
-                  price={p.price}
-                  originalPrice={p.originalPrice}
-                  discountPercent={p.discountPercent}
-                />
-              </div>
-            </Link>
-          </article>
+          <RelatedCard key={p.id} product={p} ar={ar} />
         ))}
       </div>
     </section>

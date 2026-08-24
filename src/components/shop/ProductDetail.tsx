@@ -8,13 +8,14 @@ import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductWhatsAppUrl } from "@/lib/social-links";
 import { cn } from "@/lib/utils";
-import { ProductBrandLogo, ProductHeroImage } from "./product-detail/ProductHeroImage";
+import { ProductHeroImage } from "./product-detail/ProductHeroImage";
 import { ProductRelated, ProductRoutine } from "./product-detail/ProductRails";
 import {
   ProductAbout,
   ProductBenefits,
   ProductIngredients,
   ProductLarsaCard,
+  ProductMicroTags,
   ProductSuitability,
 } from "./product-detail/ProductSections";
 import { productCopy } from "./product-detail/copy";
@@ -40,8 +41,8 @@ function QtyControl({
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full border border-[var(--plum)]/15 bg-white",
-        compact ? "h-10" : "h-12",
+        "inline-flex items-center rounded-full border border-[var(--plum)]/12 bg-white/90",
+        compact ? "h-9" : "h-11",
       )}
       role="group"
       aria-label={copy.qty}
@@ -50,7 +51,7 @@ function QtyControl({
         type="button"
         className={cn(
           "flex items-center justify-center text-[var(--plum)] transition active:scale-95",
-          compact ? "h-10 w-10" : "h-12 w-11",
+          compact ? "h-9 w-9" : "h-11 w-10",
         )}
         onClick={() => setQty(Math.max(1, qty - 1))}
         aria-label={copy.decrease}
@@ -59,8 +60,8 @@ function QtyControl({
       </button>
       <span
         className={cn(
-          "min-w-7 text-center font-medium text-[var(--plum)]",
-          compact ? "text-[0.85rem]" : "text-[0.95rem]",
+          "min-w-6 text-center font-medium text-[var(--plum)]",
+          compact ? "text-[0.8rem]" : "text-[0.88rem]",
         )}
       >
         {qty}
@@ -69,7 +70,7 @@ function QtyControl({
         type="button"
         className={cn(
           "flex items-center justify-center text-[var(--plum)] transition active:scale-95",
-          compact ? "h-10 w-10" : "h-12 w-11",
+          compact ? "h-9 w-9" : "h-11 w-10",
         )}
         onClick={() => setQty(qty + 1)}
         aria-label={copy.increase}
@@ -115,7 +116,7 @@ export function ProductDetail({ product, related, routine }: Props) {
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--pdp-sticky-offset",
-      showSticky ? "4.75rem" : "0px",
+      showSticky ? "4.5rem" : "0px",
     );
     return () => {
       document.documentElement.style.removeProperty("--pdp-sticky-offset");
@@ -123,76 +124,96 @@ export function ProductDetail({ product, related, routine }: Props) {
   }, [showSticky]);
 
   return (
-    <div className="bg-[var(--ivory)] pb-[calc(6.5rem+var(--pdp-sticky-offset,0px)+env(safe-area-inset-bottom))] lg:pb-20">
-      <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8 sm:pt-10 lg:pt-14">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 xl:gap-16">
+    <div className="bg-[var(--ivory)] pb-[calc(6.25rem+var(--pdp-sticky-offset,0px)+env(safe-area-inset-bottom))] lg:pb-20">
+      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8 sm:pt-10 lg:pt-12">
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-start lg:gap-14 xl:gap-16">
+          {/* Hero column: image + brand logo signature */}
           <ProductHeroImage product={product} ar={ar} />
 
-          <div className="motion-safe:animate-[velora-rise_0.85s_0.08s_ease-out_both]">
-            <ProductBrandLogo
-              brandName={product.brandName}
-              brandLogoUrl={product.brandLogoUrl}
-            />
-
-            <h1 className="font-display text-[clamp(1.45rem,4.2vw,2.1rem)] font-semibold leading-[1.25] text-[var(--plum)]">
+          {/* Editorial product story */}
+          <div className="motion-safe:animate-[velora-rise_0.8s_0.06s_ease-out_both]">
+            <h1 className="font-display text-[clamp(1.35rem,3.8vw,1.95rem)] font-semibold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
               {ar ? product.nameAr : product.name}
             </h1>
             <p
-              className="mt-2 text-[0.9rem] leading-relaxed text-[var(--muted)]"
+              className="mt-1.5 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
               dir={ar ? "ltr" : undefined}
             >
               {ar ? product.name : product.nameAr}
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-[var(--muted)]">
+            <ProductBenefits product={product} ar={ar} />
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.78rem] text-[var(--muted)]">
               {product.reviews > 0 ? (
                 <>
                   <span className="inline-flex items-center gap-1 text-[var(--plum)]">
-                    <span aria-hidden>★</span>
-                    <span className="font-medium">
+                    <span aria-hidden className="text-[0.85rem]">
+                      ★
+                    </span>
+                    <span className="font-medium tabular-nums">
                       {product.rating.toFixed(1)}
                     </span>
+                  </span>
+                  <span className="text-[var(--plum)]/25" aria-hidden>
+                    ·
                   </span>
                   <span>
                     {product.reviews.toLocaleString(ar ? "ar-IQ" : "en-US")}{" "}
                     {copy.reviews}
                   </span>
+                  <span className="text-[var(--plum)]/25" aria-hidden>
+                    ·
+                  </span>
+                  <a
+                    href="#reviews"
+                    className="text-[var(--plum)]/70 underline-offset-4 transition hover:text-[var(--plum)] hover:underline"
+                  >
+                    {copy.viewReviews}
+                  </a>
                 </>
               ) : (
                 <span>{copy.noReviews}</span>
               )}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-end gap-3">
+            <div className="mt-5 flex flex-wrap items-end gap-2.5">
               <ProductPrice
                 size="lg"
                 price={product.price}
                 originalPrice={product.originalPrice}
                 discountPercent={product.discountPercent}
+                className="[&>span:first-child]:font-display [&>span:first-child]:text-[1.35rem] [&>span:first-child]:font-semibold [&>span:first-child]:text-[var(--plum)] sm:[&>span:first-child]:text-[1.5rem]"
               />
               {product.size ? (
-                <span className="mb-1 text-[0.8rem] text-[var(--muted)]">
+                <span className="mb-1 text-[0.75rem] tracking-[0.02em] text-[var(--muted)]">
                   {product.size}
                 </span>
               ) : null}
             </div>
 
-            <ProductBenefits product={product} ar={ar} />
+            <ProductMicroTags product={product} ar={ar} />
 
-            <div ref={purchaseRef} className="mt-9 space-y-3">
+            <div ref={purchaseRef} className="mt-7 space-y-2.5">
               {inStock ? (
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <QtyControl qty={qty} setQty={setQty} ar={ar} />
                   <button
                     type="button"
                     onClick={handleAdd}
-                    className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[var(--plum)] px-6 text-[0.88rem] font-medium text-white transition hover:bg-[var(--plum-soft)] active:scale-[0.98] sm:flex-none sm:min-w-[200px]"
+                    className={cn(
+                      "inline-flex min-h-11 flex-1 items-center justify-center rounded-full",
+                      "bg-[var(--plum)] px-6 text-[0.84rem] font-medium text-white",
+                      "shadow-[0_12px_28px_-14px_rgba(61,38,64,0.55)]",
+                      "transition hover:bg-[var(--plum-soft)] active:scale-[0.98]",
+                      "sm:flex-none sm:min-w-[11.5rem]",
+                    )}
                   >
                     {added ? copy.added : copy.addToBag}
                   </button>
                 </div>
               ) : (
-                <p className="inline-flex min-h-12 items-center rounded-full border border-[var(--plum)]/15 bg-[var(--mist)] px-5 text-[0.88rem] font-medium text-[var(--muted)]">
+                <p className="inline-flex min-h-11 items-center rounded-full border border-[var(--plum)]/12 bg-[var(--mist)]/80 px-5 text-[0.84rem] font-medium text-[var(--muted)]">
                   {copy.outOfStock}
                 </p>
               )}
@@ -202,10 +223,10 @@ export function ProductDetail({ product, related, routine }: Props) {
                   href={waProductUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--plum)]/15 bg-white px-5 text-[0.85rem] font-medium text-[var(--plum)] transition hover:bg-[var(--mist)]/70 sm:w-auto sm:min-w-[200px]"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-1 text-[0.78rem] font-medium text-[var(--plum)]/70 transition hover:text-[var(--plum)]"
                   aria-label={copy.orderWhatsApp}
                 >
-                  <IconWhatsApp size={16} className="text-[#3d8b6e]" />
+                  <IconWhatsApp size={15} className="text-[#3d8b6e]" />
                   {copy.orderWhatsApp}
                 </a>
               ) : null}
@@ -222,19 +243,19 @@ export function ProductDetail({ product, related, routine }: Props) {
         <ProductRelated products={related} ar={ar} />
       </div>
 
-      {/* Sticky purchase bar — mobile */}
+      {/* Sticky purchase — mobile */}
       <div
         className={cn(
-          "fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--ivory)]/95 px-4 py-3 backdrop-blur-xl transition-all duration-300 lg:hidden",
-          "bottom-[calc(4.35rem+env(safe-area-inset-bottom))]",
+          "fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--ivory)]/92 px-4 py-2.5 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          "bottom-[calc(4.15rem+env(safe-area-inset-bottom))]",
           showSticky && inStock
             ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-4 opacity-0",
+            : "pointer-events-none translate-y-3 opacity-0",
         )}
-        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}
         aria-hidden={!showSticky || !inStock}
       >
-        <div className="mx-auto flex max-w-lg items-center gap-2.5">
+        <div className="mx-auto flex max-w-lg items-center gap-2">
           <div className="min-w-0 flex-1">
             <ProductPrice
               size="sm"
@@ -247,7 +268,7 @@ export function ProductDetail({ product, related, routine }: Props) {
           <button
             type="button"
             onClick={handleAdd}
-            className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[var(--plum)] px-4 text-[0.78rem] font-medium text-white active:scale-[0.98]"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--plum)] px-3.5 text-[0.74rem] font-medium text-white active:scale-[0.98]"
           >
             {added ? copy.added : copy.addToBag}
           </button>

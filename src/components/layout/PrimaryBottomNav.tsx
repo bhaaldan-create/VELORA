@@ -136,9 +136,9 @@ export function PrimaryBottomNav() {
     >
       <ul
         className={cn(
-          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[20px] px-1 py-1.5",
-          "border border-white/40 bg-[rgba(248,244,241,0.78)]",
-          "shadow-[0_10px_32px_rgba(50,22,47,0.1)] backdrop-blur-2xl",
+          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[22px] px-1 py-1",
+          "border border-white/45 bg-[rgba(248,244,241,0.72)]",
+          "shadow-[0_8px_28px_rgba(50,22,47,0.08)] backdrop-blur-2xl",
         )}
       >
         {bottomNavLinks.map((link) => {
@@ -162,14 +162,14 @@ export function PrimaryBottomNav() {
               <Link
                 href={href}
                 className={cn(
-                  "relative flex flex-col items-center gap-0.5 rounded-[14px] px-0.5 py-1.5 transition-all duration-200",
+                  "relative flex flex-col items-center gap-0.5 rounded-full px-0.5 py-1.5 transition-all duration-200",
                   active
-                    ? "bg-[var(--plum)]/10 text-[var(--plum)]"
+                    ? "bg-[var(--plum)]/[0.09] text-[var(--plum)]"
                     : "text-[var(--muted)] hover:text-[var(--ink)]",
                 )}
               >
                 <Icon active={active} />
-                <span className="text-[0.58rem] font-medium tracking-[0.02em]">
+                <span className="text-[0.55rem] font-medium tracking-[0.02em]">
                   {labels[link.id]}
                 </span>
               </Link>
