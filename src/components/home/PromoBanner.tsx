@@ -15,8 +15,8 @@ export function PromoBanner({ config }: { config: HomePromoConfig }) {
   const useNativeImg = shouldUseNativeImageElement(config.imageUrl);
 
   return (
-    <section className="bg-[#faf8fc] px-4 pb-8 sm:px-6 sm:pb-10">
-      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[22px] sm:rounded-[24px]">
+    <section className="bg-[var(--background)] px-4 pb-8 sm:px-6 sm:pb-10">
+      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[22px] sm:rounded-[24px] ring-1 ring-[var(--border)]">
         <div
           className="absolute inset-0"
           style={{
@@ -72,7 +72,7 @@ export function PromoBanner({ config }: { config: HomePromoConfig }) {
             <div className="mt-1 flex justify-start">
               <Link
                 href={config.href || "/shop"}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.78rem] font-medium text-[#32162f] shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--ivory-fixed)] px-5 py-2.5 text-[0.78rem] font-medium text-[var(--ink-deep)] shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {ar ? config.ctaAr : config.ctaEn}
                 <span aria-hidden className="text-[0.72rem]">

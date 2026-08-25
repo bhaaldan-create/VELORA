@@ -86,7 +86,7 @@ function HomeRailsFallback() {
 
 export default function HomePage() {
   return (
-    <div className="home-premium bg-[var(--ivory)]">
+    <div className="home-premium bg-[var(--background)]">
       <Suspense
         fallback={
           <div className="min-h-[52vh] animate-pulse bg-[var(--mist)]" aria-busy />

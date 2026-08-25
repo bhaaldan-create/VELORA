@@ -49,21 +49,21 @@ export function ContactHelpCard() {
 
   return (
     <section
-      className="relative overflow-hidden border-y border-[var(--plum)]/8"
+      className="relative overflow-hidden border-y border-[var(--border)]"
       aria-labelledby="velora-help-heading"
     >
-      {/* Ivory + soft lavender atmosphere */}
+      {/* Theme-aware atmosphere */}
       <div
-        className="pointer-events-none absolute inset-0 bg-[var(--ivory)]"
+        className="pointer-events-none absolute inset-0 bg-[var(--background)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 home-help-atmosphere"
         style={{
           background: [
-            "radial-gradient(ellipse 75% 70% at 8% 20%, rgba(179,155,192,0.22), transparent 58%)",
-            "radial-gradient(ellipse 55% 55% at 92% 78%, rgba(212,196,224,0.28), transparent 52%)",
-            "linear-gradient(180deg, rgba(248,244,241,0.4) 0%, rgba(243,237,247,0.55) 50%, rgba(248,244,241,0.85) 100%)",
+            "radial-gradient(ellipse 75% 70% at 8% 20%, color-mix(in srgb, var(--blush) 28%, transparent), transparent 58%)",
+            "radial-gradient(ellipse 55% 55% at 92% 78%, color-mix(in srgb, var(--account-orchid) 22%, transparent), transparent 52%)",
+            "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--mist) 40%, transparent) 50%, transparent 100%)",
           ].join(", "),
         }}
         aria-hidden
@@ -213,15 +213,15 @@ function HelpCard({
       aria-label={ariaLabel}
       className={cn(
         "group relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-5 lg:p-6",
-        "border border-white/70",
-        "bg-white/75 backdrop-blur-md",
-        "shadow-[0_12px_40px_-18px_rgba(61,38,64,0.18),0_1px_0_rgba(255,255,255,0.8)_inset]",
-        "ring-1 ring-[var(--plum)]/[0.06]",
+        "border border-[var(--border-strong)]",
+        "bg-[var(--bg-elevated)]",
+        "shadow-[var(--shadow-md)]",
+        "ring-1 ring-[var(--border)]",
         "transition-all duration-300 ease-out",
         "hover:-translate-y-1",
-        "hover:shadow-[0_22px_48px_-16px_rgba(125,95,146,0.28),0_1px_0_rgba(255,255,255,0.9)_inset]",
-        "hover:ring-[var(--plum)]/15",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9578a8]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ivory)]",
+        "hover:shadow-[var(--shadow-lg)]",
+        "hover:ring-[var(--plum)]/20",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--plum)]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
       )}
     >
       {/* Soft purple glow on hover */}
@@ -263,10 +263,10 @@ function HelpCard({
       <span
         className={cn(
           "relative ms-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-          "border border-[var(--plum)]/10 bg-white/80 text-[var(--plum)]",
-          "shadow-[0_4px_14px_-8px_rgba(61,38,64,0.25)]",
+          "border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--plum)]",
+          "shadow-[var(--shadow-sm)]",
           "transition-all duration-300 ease-out",
-          "group-hover:border-[var(--plum)]/20 group-hover:bg-[var(--plum)] group-hover:text-white",
+          "group-hover:border-transparent group-hover:bg-[var(--btn-bg)] group-hover:text-[var(--btn-fg)]",
           "group-hover:-translate-x-1 rtl:group-hover:translate-x-1",
         )}
         aria-hidden

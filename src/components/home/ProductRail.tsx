@@ -34,8 +34,8 @@ export function ProductRail({
     tone === "mist"
       ? "bg-[var(--mist)]"
       : tone === "white"
-        ? "bg-[var(--surface)]"
-        : "bg-[var(--ivory)]";
+        ? "bg-[var(--bg-elevated)]"
+        : "bg-[var(--background)]";
 
   return (
     <section className={cn(bg, "overflow-x-clip py-16 sm:py-20 lg:py-24", className)}>

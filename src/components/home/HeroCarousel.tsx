@@ -124,7 +124,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
 
   return (
     <section
-      className="bg-[#faf8fc] px-4 pt-3 pb-5 sm:px-6 sm:pt-4 sm:pb-6"
+      className="bg-[var(--background)] px-4 pt-3 pb-5 sm:px-6 sm:pt-4 sm:pb-6"
       aria-label="VELORA campaigns"
     >
       <div
@@ -151,7 +151,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
               )}
               aria-hidden={!active}
             >
-              <div className="absolute inset-0 bg-[#e8dff0]">
+              <div className="absolute inset-0 bg-[var(--mist)]">
                 <HeroSlidePicture
                   src={mobileSrc}
                   className={cn(
@@ -222,7 +222,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
             >
               <Link
                 href={slide.href || "/shop"}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.8rem] font-medium text-[#32162f] shadow-[0_8px_24px_rgba(0,0,0,0.28)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--ivory-fixed)] px-5 py-2.5 text-[0.8rem] font-medium text-[var(--ink-deep)] shadow-[0_8px_24px_rgba(0,0,0,0.28)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {ar ? slide.ctaAr : slide.ctaEn}
                 <span aria-hidden className="text-[0.75rem] opacity-90">

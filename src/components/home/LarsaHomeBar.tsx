@@ -11,15 +11,15 @@ export function LarsaHomeBar() {
 
   return (
     <section
-      className="relative overflow-hidden border-b border-[var(--border)] bg-[linear-gradient(128deg,color-mix(in_srgb,var(--mist)_55%,var(--surface))_0%,var(--ivory)_42%,color-mix(in_srgb,var(--plum)_5%,var(--ivory))_100%)]"
+      className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg-elevated)]"
       aria-label={ar ? "لارسا" : "LARSA"}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-50"
+        className="pointer-events-none absolute inset-0 opacity-60"
         aria-hidden
         style={{
           background:
-            "radial-gradient(ellipse 70% 120% at 8% 50%, color-mix(in srgb, var(--blush) 22%, transparent), transparent 58%), radial-gradient(ellipse 50% 80% at 92% 30%, color-mix(in srgb, var(--plum) 8%, transparent), transparent 55%)",
+            "radial-gradient(ellipse 70% 120% at 8% 50%, color-mix(in srgb, var(--blush) 18%, transparent), transparent 58%), radial-gradient(ellipse 50% 80% at 92% 30%, color-mix(in srgb, var(--plum-fill) 12%, transparent), transparent 55%)",
         }}
       />
       <div
@@ -65,8 +65,8 @@ export function LarsaHomeBar() {
           href="/advisor"
           className={cn(
             "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 sm:gap-2 sm:px-5 sm:py-2.5",
-            "bg-[var(--plum)] text-[0.72rem] font-medium text-[var(--btn-fg)] sm:text-[0.8rem]",
-            "shadow-[0_8px_22px_rgba(50,22,47,0.16)] transition-transform duration-200",
+            "bg-[var(--btn-bg)] text-[0.72rem] font-medium text-[var(--btn-fg)] sm:text-[0.8rem]",
+            "shadow-[var(--shadow-md)] transition-transform duration-200",
             "hover:scale-[1.02] active:scale-[0.98]",
           )}
         >

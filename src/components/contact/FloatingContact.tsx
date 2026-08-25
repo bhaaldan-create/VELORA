@@ -187,7 +187,7 @@ export function FloatingContact() {
             className="text-[var(--btn-fg)] transition-transform duration-200 group-active:scale-90"
           />
         </button>
-        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[var(--plum)]/70">
+        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[var(--ink)]/75">
           {ar ? "تواصلي معنا" : "Contact us"}
         </span>
       </div>

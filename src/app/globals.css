@@ -584,7 +584,22 @@ html[data-locale="en"] .font-display {
 /* Homepage premium hero — inset card like reference mockup */
 .home-hero {
   min-height: clamp(340px, 52svh, 520px);
-  box-shadow: 0 14px 40px rgba(50, 22, 47, 0.06);
+  box-shadow: var(--shadow-md);
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
+}
+
+[data-theme="dark"] .home-hero {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Homepage contact help — softer atmosphere in dark */
+.home-help-atmosphere {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .home-help-atmosphere {
+  opacity: 0.35;
 }
 
 @media (min-width: 640px) {

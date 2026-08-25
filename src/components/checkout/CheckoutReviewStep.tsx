@@ -118,7 +118,7 @@ export function CheckoutReviewStep({
                   imageTone={product.imageTone}
                   imageUrl={product.imageUrl}
                   aspectClassName="h-16 w-16 shrink-0"
-                  className="rounded-[12px] border border-[var(--plum)]/6 bg-[var(--ivory)]"
+                  className="rounded-[12px] border border-[var(--plum)]/6"
                   sizes="64px"
                 />
                 <div className="min-w-0 flex-1">

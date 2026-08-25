@@ -14,7 +14,11 @@ type Props = {
   priority?: boolean;
 };
 
-/** صورة المنتج أو التدرج الاحتياطي إن لم تُرفع صورة */
+/**
+ * صورة المنتج داخل مساحة ثابتة (aspect).
+ * Full-bleed: تملأ الحاوية بالكامل بدون padding أو خلفية ثيم ظاهرة حولها.
+ * object-cover + object-center يملآن الإطار لأي نسبة أبعاد؛ القصّ يكون طفيفاً على الحواف فقط.
+ */
 export function ProductMedia({
   name,
   imageTone,
@@ -29,7 +33,7 @@ export function ProductMedia({
     return (
       <div
         className={cn(
-          "relative overflow-hidden bg-[var(--mist)]",
+          "relative isolate h-full w-full overflow-hidden",
           aspectClassName,
           className,
         )}
@@ -41,7 +45,7 @@ export function ProductMedia({
           sizes={sizes}
           priority={priority}
           unoptimized={isDataUrl}
-          className="object-contain p-1"
+          className="absolute inset-0 h-full w-full max-w-none object-cover object-center"
         />
       </div>
     );
@@ -49,7 +53,7 @@ export function ProductMedia({
 
   return (
     <div
-      className={cn(aspectClassName, className)}
+      className={cn("w-full", aspectClassName, className)}
       style={{ background: imageTone }}
       role="img"
       aria-label={name}

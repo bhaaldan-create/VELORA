@@ -26,7 +26,7 @@ export function CompactProductCard({
 
   return (
     <article className={cn("group flex h-full flex-col", className)}>
-      <div className="relative overflow-hidden rounded-2xl bg-[var(--mist)]/50">
+      <div className="relative overflow-hidden rounded-2xl">
         <WishlistHeartButton
           productId={product.id}
           size="sm"

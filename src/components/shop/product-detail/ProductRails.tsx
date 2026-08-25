@@ -60,7 +60,7 @@ export function ProductRoutine({
                 {i + 1} · {step.label}
               </p>
               <div className="mt-2.5 flex gap-2.5">
-                <div className="relative h-[4.25rem] w-[3.25rem] shrink-0 overflow-hidden rounded-[12px] bg-[var(--mist)]">
+                <div className="relative h-[4.25rem] w-[3.25rem] shrink-0 overflow-hidden rounded-[12px]">
                   <ProductMedia
                     name={step.product.nameAr}
                     imageTone={step.product.imageTone}
@@ -120,7 +120,7 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
         className="absolute end-1.5 top-1.5 z-[1] rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-1.5 shadow-[var(--shadow-sm)] backdrop-blur"
       />
       <Link href={`/shop/${product.slug}`} className="group block">
-        <div className="overflow-hidden rounded-[1.1rem] bg-[radial-gradient(90%_70%_at_50%_20%,var(--mist)_0%,var(--bg-sunken)_100%)] ring-1 ring-[var(--border)]">
+        <div className="overflow-hidden rounded-[1.1rem] ring-1 ring-[var(--border)]">
           <ProductMedia
             name={product.nameAr}
             imageTone={product.imageTone}

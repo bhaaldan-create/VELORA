@@ -39,16 +39,16 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow-md)] transition-shadow duration-300 hover:shadow-[var(--shadow-lg)]",
+        "group flex h-full flex-col overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-md)] ring-1 ring-[var(--border)] transition-shadow duration-300 hover:shadow-[var(--shadow-lg)]",
         className,
       )}
     >
-      <div className="relative overflow-hidden bg-[var(--mist)]/40">
+      <div className="relative overflow-hidden">
         <WishlistHeartButton
           productId={product.id}
           size={compactOverlayIcons ? "sm" : "md"}
           className={cn(
-            "absolute z-10 bg-[var(--bg-glass-strong)] text-[var(--icon)] backdrop-blur-sm",
+            "absolute z-10 rounded-full bg-[var(--bg-glass-strong)] text-[var(--icon)] backdrop-blur-sm",
             compactOverlayIcons ? "top-2.5 end-2.5" : "top-3 end-3",
           )}
         />

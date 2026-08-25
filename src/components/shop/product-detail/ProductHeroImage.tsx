@@ -4,7 +4,6 @@ import Image from "next/image";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import type { Product } from "@/types";
-import { cn } from "@/lib/utils";
 import { productCopy } from "./copy";
 
 type Props = {
@@ -24,31 +23,13 @@ export function ProductHeroImage({ product, ar }: Props) {
 
   return (
     <div className="motion-safe:animate-[velora-fade_0.95s_ease-out_both]">
-      <div
-        className={cn(
-          "relative overflow-hidden",
-          "rounded-[2rem] sm:rounded-[2.25rem]",
-          "bg-[radial-gradient(120%_90%_at_50%_12%,var(--mist)_0%,var(--bg-sunken)_42%,var(--champagne)_100%)]",
-          "shadow-[var(--shadow-md)]",
-          "ring-1 ring-[var(--border)]",
-        )}
-      >
-        {/* Soft editorial light wash */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-70"
-          aria-hidden
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 55% at 50% 18%, color-mix(in srgb, var(--bg-glass) 55%, transparent) 0%, transparent 62%), linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--plum) 4%, transparent) 100%)",
-          }}
-        />
-
+      <div className="relative overflow-hidden rounded-[2rem] shadow-[var(--shadow-md)] ring-1 ring-[var(--border)] sm:rounded-[2.25rem]">
         <ProductMedia
           name={ar ? product.nameAr : product.name}
           imageTone={product.imageTone}
           imageUrl={product.imageUrl}
           aspectClassName="aspect-[4/5] sm:aspect-[5/6]"
-          className="relative z-[1] w-full rounded-[2rem] sm:rounded-[2.25rem]"
+          className="w-full"
           sizes="(max-width: 1024px) 100vw, 46vw"
           priority
         />
@@ -95,10 +76,7 @@ export function ProductBrandLogo({
       className="mt-5 flex flex-col items-center motion-safe:animate-[velora-rise_0.7s_0.12s_ease-out_both] sm:mt-6"
       dir="ltr"
     >
-      <div
-        className="mb-3.5 h-px w-10 bg-[var(--plum)]/15"
-        aria-hidden
-      />
+      <div className="mb-3.5 h-px w-10 bg-[var(--plum)]/15" aria-hidden />
       <div className="relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[240px]">
         <Image
           src={brandLogoUrl}

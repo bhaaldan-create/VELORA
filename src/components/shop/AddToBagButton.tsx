@@ -115,7 +115,7 @@ export function AddToBagButton({
         "hover:-translate-y-px hover:brightness-[1.05]",
         "hover:shadow-[0_12px_28px_-12px_rgba(125,95,146,0.58),0_1px_0_rgba(255,255,255,0.32)_inset]",
         "active:translate-y-0 active:scale-[0.985] active:brightness-[0.97]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b39bc0]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ivory)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b39bc0]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
         "disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none",
         styles.btn,
         className,

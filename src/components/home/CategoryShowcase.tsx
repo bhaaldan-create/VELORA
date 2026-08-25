@@ -14,16 +14,16 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
   const visible = list.length ? list : cards.slice(0, 2);
 
   return (
-    <section className="bg-[#faf8fc] py-8 sm:py-10">
+    <section className="bg-[var(--background)] py-8 sm:py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-5 flex items-center justify-between gap-4 sm:mb-6">
           <Link
             href="/shop"
-            className="shrink-0 text-[0.78rem] font-medium text-[#8a7a88] transition-opacity hover:text-[#32162f] hover:opacity-80"
+            className="shrink-0 text-[0.78rem] font-medium text-[var(--muted)] transition-opacity hover:text-[var(--plum)] hover:opacity-80"
           >
             {ar ? "عرض الكل" : "View all"}
           </Link>
-          <h2 className="font-display text-[clamp(1.05rem,3.2vw,1.35rem)] font-black text-[#32162f]">
+          <h2 className="font-display text-[clamp(1.05rem,3.2vw,1.35rem)] font-black text-[var(--plum)]">
             {ar ? "تسوق حسب الفئة" : "Shop by category"}
           </h2>
         </div>
@@ -40,7 +40,7 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
                 href={href}
                 className={cn(
                   "group relative aspect-[3/4] overflow-hidden rounded-[20px] sm:rounded-[22px]",
-                  "shadow-[0_10px_32px_rgba(50,22,47,0.07)]",
+                  "shadow-[var(--shadow-md)] ring-1 ring-[var(--border)]",
                 )}
               >
                 {isData ? (
@@ -66,15 +66,15 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
                     priority={i === 0}
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-[rgba(255,255,255,0.35)] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent" />
                 <div
                   className="absolute inset-x-0 top-0 flex flex-col items-end gap-2 p-4 sm:gap-2.5 sm:p-5"
                   dir={ar ? "rtl" : "ltr"}
                 >
-                  <h3 className="text-[0.92rem] font-bold leading-tight text-[#32162f] sm:text-[1rem]">
+                  <h3 className="text-[0.92rem] font-bold leading-tight text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)] sm:text-[1rem]">
                     {ar ? card.titleAr : card.titleEn}
                   </h3>
-                  <span className="rounded-full bg-white px-3.5 py-1.5 text-[0.68rem] font-medium text-[#32162f] shadow-[0_4px_14px_rgba(50,22,47,0.1)] transition-transform duration-200 group-hover:scale-[1.03] group-active:scale-95">
+                  <span className="rounded-full bg-[var(--ivory-fixed)] px-3.5 py-1.5 text-[0.68rem] font-medium text-[var(--ink-deep)] shadow-[var(--shadow-sm)] transition-transform duration-200 group-hover:scale-[1.03] group-active:scale-95">
                     {ar ? card.ctaAr : card.ctaEn}
                   </span>
                 </div>
