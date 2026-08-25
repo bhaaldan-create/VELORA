@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { DEFAULT_VELORA_CARD_CONFIG } from "@/lib/my-velora/config";
+import { DEFAULT_VELORA_CARD_CONFIG } from "@/lib/my-velora/default-config";
 
 const TEMPLATE_ID = "tpl-signature";
 

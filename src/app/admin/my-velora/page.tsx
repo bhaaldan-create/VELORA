@@ -6,7 +6,7 @@ import { PageHeader, Surface } from "@/components/admin/ui/primitives";
 import {
   DEFAULT_VELORA_CARD_CONFIG,
   mergeVeloraCardConfig,
-} from "@/lib/my-velora/config";
+} from "@/lib/my-velora/default-config";
 import type { VeloraCardConfig } from "@/lib/my-velora/types";
 import type { MyVeloraAnalytics } from "@/lib/my-velora/analytics";
 
