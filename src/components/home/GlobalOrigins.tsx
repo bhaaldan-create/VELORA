@@ -47,7 +47,7 @@ export function GlobalOrigins() {
           <p className="t1 font-medium tracking-[0.2em] text-[var(--muted)]">
             الصفحة الرئيسية · اختيار عالمي
           </p>
-          <h2 className="font-display mt-2 text-[clamp(1.15rem,2.8vw,1.55rem)] font-bold leading-snug text-[var(--plum)]">
+          <h2 className="font-display mt-2 text-[clamp(1.35rem,3.2vw,1.85rem)] font-bold leading-snug text-[var(--plum)]">
             منتجات من أفضل البراندات حول العالم
           </h2>
           <p className="t3 mt-3 text-[var(--ink)]/70">
