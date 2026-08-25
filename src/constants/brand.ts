@@ -35,7 +35,7 @@ export const ui = {
   about: "عنّا",
   all: "الكل",
   search: "ابحثي عن منتج أو احتياج…",
-  addToBag: "أضيفي للحقيبة",
+  addToBag: "أضف للحقيبة",
   added: "تمت الإضافة",
   viewAll: "عرض الكل",
   checkout: "إتمام الطلب",

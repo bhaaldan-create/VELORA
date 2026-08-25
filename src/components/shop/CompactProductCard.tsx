@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
@@ -19,7 +20,7 @@ export function CompactProductCard({
   className?: string;
 }) {
   const { addItem } = useCart();
-  const { locale, t } = useLocale();
+  const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
 
@@ -73,13 +74,12 @@ export function CompactProductCard({
           originalPrice={product.originalPrice}
           discountPercent={product.discountPercent}
         />
-        <button
-          type="button"
+        <AddToBagButton
+          size="sm"
+          flashAdded
+          className="mt-2"
           onClick={() => addItem(product)}
-          className="mt-2 w-full rounded-full border border-[var(--plum)]/12 py-1.5 font-latin text-[9px] font-semibold tracking-[0.1em] text-[var(--plum)] uppercase transition-colors hover:bg-[var(--plum)] hover:text-[var(--btn-fg)]"
-        >
-          {t.addToBag}
-        </button>
+        />
       </div>
     </article>
   );

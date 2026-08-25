@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { LarsaAvatar } from "@/components/advisor/LarsaAvatar";
 import { LarsaMark } from "@/components/advisor/LarsaIcons";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import type { RecommendedProduct } from "@/components/advisor/ProductRecommendationCards";
@@ -163,20 +164,18 @@ export function LarsaResults({
                     {item.benefitsAr[0] ?? "يناسب احتياجكِ الحالي"}
                     {item.benefitsAr[1] ? `، و${item.benefitsAr[1]}` : ""}.
                   </p>
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
+                  <div className="mt-auto space-y-3 pt-4">
                     <ProductPrice
                       price={item.price}
                       originalPrice={item.originalPrice}
                       discountPercent={item.discountPercent}
                       size="sm"
                     />
-                    <button
-                      type="button"
+                    <AddToBagButton
+                      size="md"
+                      flashAdded
                       onClick={() => addItem(toProduct(item))}
-                      className="rounded-full border border-[var(--larsa-border-strong)] px-4 py-2 text-[12px] font-medium text-[var(--larsa-plum)] transition-colors duration-[200ms] hover:bg-[var(--larsa-lavender)]"
-                    >
-                      أضيفي للحقيبة
-                    </button>
+                    />
                   </div>
                 </div>
               </article>

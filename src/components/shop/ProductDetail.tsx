@@ -200,6 +200,7 @@ export function ProductDetail({ product, related, routine }: Props) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <QtyControl qty={qty} setQty={setQty} ar={ar} />
                   <AddToBagButton
+                    size="lg"
                     added={added}
                     onClick={handleAdd}
                     className="sm:flex-1"
@@ -259,8 +260,8 @@ export function ProductDetail({ product, related, routine }: Props) {
           </div>
           <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
           <AddToBagButton
+            size="compact"
             added={added}
-            compact
             onClick={handleAdd}
             className="min-w-0 flex-1"
           />

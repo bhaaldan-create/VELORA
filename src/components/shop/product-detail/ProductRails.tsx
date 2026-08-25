@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
@@ -141,7 +142,7 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
           {ar ? product.nameAr : product.name}
         </h3>
       </Link>
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="mt-2 space-y-2">
         <ProductPrice
           size="sm"
           price={product.price}
@@ -149,14 +150,11 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
           discountPercent={product.discountPercent}
         />
         {inStock ? (
-          <button
-            type="button"
-            aria-label={ar ? "أضيفي للحقيبة" : "Add to bag"}
+          <AddToBagButton
+            size="sm"
+            flashAdded
             onClick={() => addItem(product, 1)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--plum)] text-white transition active:scale-95"
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-          </button>
+          />
         ) : null}
       </div>
     </article>

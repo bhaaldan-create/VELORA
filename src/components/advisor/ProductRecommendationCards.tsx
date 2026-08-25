@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/Button";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { categoryLabels } from "@/constants/brand";
@@ -129,19 +130,18 @@ export function ProductRecommendationCards({
                 {item.benefitsAr.join(" · ")}
               </p>
             ) : null}
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Link href={`/shop/${item.slug}`}>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Link href={`/shop/${item.slug}`} className="sm:shrink-0">
                 <Button variant="ghost" className="!px-3 !py-1.5">
                   التفاصيل
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                className="!px-3 !py-1.5"
+              <AddToBagButton
+                size="sm"
+                flashAdded
+                className="sm:flex-1"
                 onClick={() => addItem(toProduct(item))}
-              >
-                أضيفي للحقيبة
-              </Button>
+              />
             </div>
           </div>
         </div>

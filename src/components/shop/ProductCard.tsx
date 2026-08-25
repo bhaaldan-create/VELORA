@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
@@ -21,7 +22,7 @@ export function ProductCard({
   compactOverlayIcons?: boolean;
 }) {
   const { addItem } = useCart();
-  const { locale, t } = useLocale();
+  const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
   const badge =
@@ -97,20 +98,12 @@ export function ProductCard({
           discountPercent={product.discountPercent}
         />
 
-        <div className="mt-auto pt-4">
-          <button
-            type="button"
+        <div className="mt-auto pt-3.5">
+          <AddToBagButton
+            size="md"
+            flashAdded
             onClick={() => addItem(product)}
-            className={cn(
-              "w-full rounded-full border border-[var(--plum)]/15 bg-transparent px-3 py-2.5",
-              "text-[11px] font-medium tracking-[0.14em] text-[var(--plum)] uppercase",
-              "transition-all duration-300",
-              "hover:border-[var(--plum)]/40 hover:bg-[var(--plum)] hover:text-[var(--btn-fg)]",
-              "active:scale-[0.98]",
-            )}
-          >
-            {t.addToBag}
-          </button>
+          />
         </div>
       </div>
     </article>

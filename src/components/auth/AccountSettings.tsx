@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ClubLogo } from "@/components/club/ClubLogo";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { useCart } from "@/context/CartContext";
@@ -1351,13 +1352,7 @@ function WishGridCard({
               : "Currently unavailable"}
         </p>
         {inStock ? (
-          <button
-            type="button"
-            onClick={onAdd}
-            className="mt-4 w-full rounded-full border border-[var(--account-border)] py-2.5 text-[0.8rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/50"
-          >
-            {ar ? "أضيفيه إلى الحقيبة" : "Add to bag"}
-          </button>
+          <AddToBagButton size="md" flashAdded className="mt-4" onClick={onAdd} />
         ) : (
           <p className="mt-4 py-2.5 text-center text-[0.8rem] text-[var(--account-muted)]">
             {ar ? "غير متوفر حالياً" : "Currently unavailable"}
@@ -1402,15 +1397,14 @@ function WishRow({
           {ar ? product.nameAr : product.name}
         </Link>
         <ProductPrice className="mt-1" size="sm" price={product.price} originalPrice={product.originalPrice} discountPercent={product.discountPercent} />
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           {inStock ? (
-            <button
-              type="button"
+            <AddToBagButton
+              size="sm"
+              flashAdded
+              className="w-auto min-w-[9.5rem] flex-1"
               onClick={onAdd}
-              className="rounded-full border border-[var(--account-border)] px-3 py-1 text-[10px] text-[var(--account-plum)] hover:bg-[var(--account-lilac)]/50"
-            >
-              {ar ? "أضيفيه إلى حقيبتك" : "Add to bag"}
-            </button>
+            />
           ) : (
             <span className="px-1 py-1 text-[10px] text-red-700/80">
               {ar ? "غير متوفر حالياً" : "Currently unavailable"}
