@@ -129,7 +129,7 @@ export function ContactHelpCard() {
               eyebrow={copy.waEyebrow}
               title={copy.waTitle}
               description={copy.waDesc}
-              icon={<IconWhatsApp size={26} />}
+              icon={<IconWhatsApp size={16} />}
             />
           ) : null}
 
@@ -147,7 +147,7 @@ export function ContactHelpCard() {
                 {socialLinks.instagram.handle}
               </span>
             }
-            icon={<IconInstagram size={24} />}
+            icon={<IconInstagram size={15} />}
           />
         </div>
 
@@ -212,7 +212,7 @@ function HelpCard({
       rel="noopener noreferrer"
       aria-label={ariaLabel}
       className={cn(
-        "group relative flex flex-col gap-5 overflow-hidden rounded-[1.75rem] p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6 lg:p-7",
+        "group relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-5 lg:p-6",
         "border border-white/70",
         "bg-white/75 backdrop-blur-md",
         "shadow-[0_12px_40px_-18px_rgba(61,38,64,0.18),0_1px_0_rgba(255,255,255,0.8)_inset]",
@@ -232,10 +232,10 @@ function HelpCard({
 
       <span
         className={cn(
-          "relative inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full sm:h-[3.75rem] sm:w-[3.75rem]",
+          "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10",
           "bg-[linear-gradient(145deg,#c9b6d4_0%,#9578a8_55%,#6f557f_100%)]",
           "text-white",
-          "shadow-[0_10px_24px_-10px_rgba(111,85,127,0.55),0_1px_0_rgba(255,255,255,0.35)_inset]",
+          "shadow-[0_8px_18px_-10px_rgba(111,85,127,0.5),0_1px_0_rgba(255,255,255,0.35)_inset]",
           "ring-1 ring-white/40",
           "transition-transform duration-300 ease-out group-hover:scale-[1.05] group-hover:-rotate-2",
         )}
@@ -262,7 +262,7 @@ function HelpCard({
 
       <span
         className={cn(
-          "relative ms-auto inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+          "relative ms-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
           "border border-[var(--plum)]/10 bg-white/80 text-[var(--plum)]",
           "shadow-[0_4px_14px_-8px_rgba(61,38,64,0.25)]",
           "transition-all duration-300 ease-out",
@@ -271,7 +271,7 @@ function HelpCard({
         )}
         aria-hidden
       >
-        <ArrowLeft className="h-4 w-4 rtl:rotate-0" strokeWidth={1.8} />
+        <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-0" strokeWidth={1.8} />
       </span>
     </a>
   );
