@@ -192,7 +192,8 @@ export default async function AdminInventoryPage() {
             </ul>
           )}
           <p className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] text-[var(--admin-text-muted)]">
-            قيمة التجزئة الحالية: {formatPrice(Math.round(retailValue))}
+            قيمة التجزئة الحالية: {formatPrice(Math.round(retailValue))} · سرعة
+            البيع وأيام النفاد: بيانات غير كافية قبل وجود مبيعات كافية.
           </p>
         </Surface>
       </div>

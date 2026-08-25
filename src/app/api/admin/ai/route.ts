@@ -19,8 +19,9 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, error: "أدخلي سؤالاً." }, { status: 400 });
   }
 
-  const [overview, profitability] = await Promise.all([
+  const [overview, lastMonth, profitability] = await Promise.all([
     getBusinessOverview("thisMonth"),
+    getBusinessOverview("lastMonth"),
     listProductProfitability(),
   ]);
 
@@ -65,6 +66,12 @@ export async function POST(req: Request) {
     lowMarginProducts: lowMargin,
     salesByBrand: overview.salesByBrand.slice(0, 8),
     salesByCategory: overview.salesByCategory.slice(0, 8),
+    comparison: {
+      lastMonthRevenue: lastMonth.revenue,
+      lastMonthOrders: lastMonth.orders,
+      lastMonthGrossProfit: lastMonth.grossProfit,
+      lastMonthNetProfit: lastMonth.netProfit,
+    },
   };
 
   const model = getAdvisorModel();
@@ -87,6 +94,7 @@ STRICT RULES:
 - NEVER invent revenue, profit, costs, or stock figures.
 - If a field is null, say البيانات غير كافية.
 - Distinguish Revenue vs Profit clearly.
+- If comparing months, use snapshot.comparison fields only.
 - End with one concrete recommended action.
 Snapshot JSON:
 ${JSON.stringify(snapshot)}`,

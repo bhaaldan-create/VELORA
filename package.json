@@ -11,6 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:prelaunch-reset-orders": "tsx scripts/prelaunch-reset-orders.ts",
+    "check:finance": "tsx scripts/check-finance-cost.ts",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "mobile:sync": "npx cap sync",

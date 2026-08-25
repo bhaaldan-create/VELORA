@@ -46,13 +46,22 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "suppliers",
     "imports",
     "expenses",
+    "payroll",
     "finance",
     "profitability",
     "reports",
+    "settings",
     "customers",
     "employees",
   ],
-  warehouse: ["overview", "orders", "products", "inventory", "imports"],
+  warehouse: [
+    "overview",
+    "orders",
+    "products",
+    "inventory",
+    "imports",
+    "suppliers",
+  ],
   cashier: ["overview", "orders", "customers", "products"],
   finance: [
     "overview",
@@ -63,10 +72,27 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "profitability",
     "reports",
     "orders",
+    "settings",
   ],
-  advisor: ["overview", "products", "customers"],
+  advisor: ["overview", "products", "customers", "orders"],
   delivery: ["overview", "orders"],
-  other: ["overview", "orders", "products"],
+  other: [
+    "overview",
+    "ai",
+    "orders",
+    "products",
+    "inventory",
+    "suppliers",
+    "imports",
+    "expenses",
+    "payroll",
+    "finance",
+    "profitability",
+    "reports",
+    "settings",
+    "customers",
+    "employees",
+  ],
 };
 
 export function canAccessModule(
@@ -75,7 +101,12 @@ export function canAccessModule(
   module: AdminModule,
 ): boolean {
   if (!subject || subject === "root") return true;
-  const role = (employeeRole || "other").toLowerCase();
+  if (!employeeRole || employeeRole === "root") return true;
+
+  const role = employeeRole.toLowerCase();
+  // Unknown / legacy roles must not lock the Business OS
+  if (!(role in ROLE_MODULES)) return true;
+
   const allowed = ROLE_MODULES[role] || ROLE_MODULES.other;
   return allowed.includes(module);
 }

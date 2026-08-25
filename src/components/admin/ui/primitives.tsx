@@ -14,6 +14,8 @@ export function StatCard({
   deltaPct,
   icon: Icon,
   tone = "default",
+  displayOverride,
+  footnote,
 }: {
   label: string;
   value: number;
@@ -21,9 +23,13 @@ export function StatCard({
   deltaPct?: number | null;
   icon?: LucideIcon;
   tone?: "default" | "success" | "warning" | "danger" | "info";
+  /** When set, replaces the formatted number (e.g. «غير كافٍ») */
+  displayOverride?: string;
+  footnote?: string;
 }) {
   const display =
-    format === "iqd" ? formatPrice(value) : value.toLocaleString("ar-IQ");
+    displayOverride ??
+    (format === "iqd" ? formatPrice(value) : value.toLocaleString("ar-IQ"));
 
   const toneIcon =
     tone === "success"
@@ -57,7 +63,7 @@ export function StatCard({
         <DeltaLine value={deltaPct} />
       ) : (
         <p className="mt-1.5 text-[11px] text-[var(--admin-text-muted)]">
-          عن الأسبوع الماضي
+          {footnote ?? "عن الفترة المحددة"}
         </p>
       )}
     </div>

@@ -67,20 +67,19 @@ export async function middleware(request: NextRequest) {
   const session = await parseAdminSessionToken(token);
 
   if (session?.ok) {
-    const mod = moduleForPath(pathname);
-    if (
-      mod &&
-      !canAccessModule(session.subject, session.role || "other", mod)
-    ) {
-      if (isAdminApi) {
+    // Page navigation: never bounce to overview (silent redirects feel broken).
+    // Enforce module RBAC on admin APIs only.
+    if (isAdminApi) {
+      const mod = moduleForPath(pathname);
+      if (
+        mod &&
+        !canAccessModule(session.subject, session.role, mod)
+      ) {
         return NextResponse.json(
           { ok: false, error: "ليس لديك صلاحية لهذا القسم." },
           { status: 403 },
         );
       }
-      const denied = new URL("/admin", request.url);
-      denied.searchParams.set("denied", mod);
-      return NextResponse.redirect(denied);
     }
     return NextResponse.next();
   }

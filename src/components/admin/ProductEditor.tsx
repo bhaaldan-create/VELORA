@@ -55,6 +55,7 @@ type Draft = {
   description: string;
   benefitsAr: string[];
   brandName: string;
+  supplierId: string;
   costCurrency: string;
   costExchangeRate: string;
   purchasePrice: string;
@@ -86,6 +87,7 @@ function draftFromProduct(p: AdminProductDetail): Draft {
     description: p.description,
     benefitsAr: [...p.benefitsAr],
     brandName: p.brandName || "",
+    supplierId: p.supplierId || "",
     costCurrency: p.costCurrency,
     costExchangeRate: String(p.costExchangeRate),
     purchasePrice: String(p.purchasePrice),
@@ -190,7 +192,24 @@ export function ProductEditor({
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [descAlign, setDescAlign] = useState<"right" | "center">("right");
+
+  useEffect(() => {
+    void fetch("/api/admin/suppliers")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.ok && Array.isArray(j.suppliers)) {
+          setSuppliers(
+            j.suppliers.map((s: { id: string; name: string }) => ({
+              id: s.id,
+              name: s.name,
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const basePrice = Number(draft.price) || 0;
   const previewSale = draft.customSale
@@ -228,6 +247,7 @@ export function ProductEditor({
       draft.isNew !== base.isNew ||
       draft.specialOffer !== base.specialOffer ||
       draft.brandName !== base.brandName ||
+      draft.supplierId !== base.supplierId ||
       draft.costCurrency !== base.costCurrency ||
       draft.costExchangeRate !== base.costExchangeRate ||
       draft.purchasePrice !== base.purchasePrice ||
@@ -333,6 +353,7 @@ export function ProductEditor({
           isBestseller: draft.isBestseller,
           isNew: draft.isNew,
           brandName: draft.brandName.trim() || null,
+          supplierId: draft.supplierId.trim() || null,
           costCurrency: draft.costCurrency,
           costExchangeRate: draft.costCurrency === "IQD" ? 1 : Number(draft.costExchangeRate),
           purchasePrice: Number(draft.purchasePrice),
@@ -971,6 +992,20 @@ export function ProductEditor({
 
         <SectionCard title="التكلفة والربحية">
           <div className="grid gap-3.5 sm:grid-cols-2">
+            <Field label="المورد">
+              <select
+                className={inputClass}
+                value={draft.supplierId}
+                onChange={(e) => patchDraft({ supplierId: e.target.value })}
+              >
+                <option value="">— بدون مورد —</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label="عملة الشراء"><select className={inputClass} value={draft.costCurrency} onChange={(e) => patchDraft({ costCurrency: e.target.value })}><option value="IQD">IQD</option><option value="USD">USD</option></select></Field>
             <Field label="سعر الصرف"><input className={inputClass} type="number" min={0} disabled={draft.costCurrency === "IQD"} value={draft.costExchangeRate} onChange={(e) => patchDraft({ costExchangeRate: e.target.value })} /></Field>
             <Field label="سعر شراء الوحدة"><input className={inputClass} type="number" min={0} value={draft.purchasePrice} onChange={(e) => patchDraft({ purchasePrice: e.target.value })} /></Field>
