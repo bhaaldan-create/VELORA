@@ -5,10 +5,8 @@ import {
   MEDIA_CACHE_CONTROL,
   MEDIA_IMMUTABLE_CACHE_CONTROL,
 } from "@/lib/media-cache";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
-
 export const runtime = "nodejs";
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 3600;
 
 function parseDataUrl(url: string): { mime: string; buffer: Buffer } | null {
   const match = url.match(/^data:([^;,]+)?(?:;base64)?,([\s\S]+)$/);

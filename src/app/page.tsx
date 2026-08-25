@@ -12,9 +12,8 @@ import {
   getHomeHeroConfigForStorefront,
 } from "@/lib/home/config";
 import { getHomePromoConfigForStorefront } from "@/lib/home/promo-config";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 3600;
 
 async function HomeAboveFold() {
   const [heroConfig, categoryConfig, promoConfig] = await Promise.all([
