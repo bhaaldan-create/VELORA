@@ -91,6 +91,20 @@ export default async function TrackOrderPage({ params }: Props) {
         </div>
       </div>
 
+      {entry.status === "delivered" ? (
+        <Link
+          href={`/account/my-velora/${entry.orderId}`}
+          className="mt-6 block rounded-[18px] border border-[var(--plum)]/15 bg-[#F6F0F8] px-5 py-4 text-center transition-colors hover:bg-[#EDE4F3]"
+        >
+          <p className="font-display text-[1.05rem] text-[var(--plum)]">
+            بطاقتك VELORA جاهزة ✦
+          </p>
+          <p className="mt-1 text-[0.85rem] text-[var(--muted)]">
+            عرض MY VELORA Card ←
+          </p>
+        </Link>
+      ) : null}
+
       <Link
         href="/shop"
         className="t3 mt-10 text-center text-[var(--plum)] underline-offset-4 hover:underline"

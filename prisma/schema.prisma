@@ -191,6 +191,9 @@ model Customer {
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]
   notifications CustomerNotification[]
+  veloraCards   VeloraCard[]
+  achievements  VeloraAchievement[]
+  referralLinks VeloraReferralLink[]
 }
 
 /// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
@@ -506,4 +509,159 @@ model AiInsight {
   @@index([severity, createdAt])
   @@index([kind, createdAt])
   @@index([dismissedAt])
+}
+
+/// —— MY VELORA: cards, referrals, journey, achievements ——
+
+/// Global MY VELORA config (referral rewards, review rewards, feature flags)
+model VeloraCardConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+model VeloraCampaign {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  nameAr     String
+  nameEn     String
+  startDate  String   @default("")
+  endDate    String   @default("")
+  configJson Json     @default("{}")
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  templates VeloraCardTemplate[]
+
+  @@index([isActive, startDate])
+}
+
+model VeloraCardTemplate {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  nameAr        String
+  nameEn        String
+  /// signature | soft-beauty | dark-luxury | editorial | brand-focus
+  styleKey      String   @default("signature")
+  backgroundUrl String   @default("")
+  layoutJson    Json     @default("{}")
+  isActive      Boolean  @default(true)
+  isDefault     Boolean  @default(false)
+  priority      Int      @default(0)
+  campaignId    String?
+  campaign      VeloraCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cards VeloraCard[]
+
+  @@index([isActive, priority])
+  @@index([styleKey])
+}
+
+model VeloraCard {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId       String?
+  /// order | journey | achievement | unboxing | personality
+  cardType      String   @default("order")
+  templateId    String?
+  template      VeloraCardTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  styleKey      String   @default("signature")
+  themeKey      String   @default("beauty-moment")
+  status        String   @default("ready")
+  payloadJson   Json     @default("{}")
+  referralToken String   @unique
+  pointsEarned  Int      @default(0)
+  productCount  Int      @default(0)
+  brandCount    Int      @default(0)
+  viewedAt      DateTime?
+  savedAt       DateTime?
+  sharedAt      DateTime?
+  generatedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  events        VeloraCardEvent[]
+  referralLinks VeloraReferralLink[]
+  reviews       VeloraOrderReview[]
+
+  @@unique([customerId, orderId, cardType])
+  @@index([customerId, generatedAt])
+  @@index([orderId])
+  @@index([referralToken])
+}
+
+model VeloraCardEvent {
+  id        String     @id @default(cuid())
+  cardId    String
+  card      VeloraCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  /// view | save | share | style_change | instagram_share | referral_click
+  eventType String
+  metaJson  Json       @default("{}")
+  createdAt DateTime   @default(now())
+
+  @@index([cardId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+model VeloraReferralLink {
+  id         String     @id @default(cuid())
+  token      String     @unique
+  customerId String
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  cardId     String?
+  card       VeloraCard? @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  expiresAt  DateTime?
+  createdAt  DateTime   @default(now())
+
+  events VeloraReferralEvent[]
+
+  @@index([customerId])
+}
+
+model VeloraReferralEvent {
+  id             String           @id @default(cuid())
+  referralLinkId String
+  referralLink   VeloraReferralLink @relation(fields: [referralLinkId], references: [id], onDelete: Cascade)
+  /// click | visit | registration | order | reward
+  eventType      String
+  visitorId      String           @default("")
+  orderId        String           @default("")
+  metaJson       Json             @default("{}")
+  createdAt      DateTime         @default(now())
+
+  @@index([referralLinkId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+model VeloraOrderReview {
+  id                 String     @id @default(cuid())
+  orderId            String
+  customerId         String
+  cardId             String?
+  card               VeloraCard? @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  rating             Int
+  comment            String     @default("")
+  productRatingsJson Json       @default("{}")
+  photoUrl           String     @default("")
+  pointsAwarded      Int        @default(0)
+  createdAt          DateTime   @default(now())
+
+  @@unique([orderId, customerId])
+  @@index([customerId, createdAt])
+}
+
+model VeloraAchievement {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  achievementKey String
+  unlockedAt     DateTime @default(now())
+  sharedAt       DateTime?
+  metaJson       Json     @default("{}")
+
+  @@unique([customerId, achievementKey])
+  @@index([customerId])
 }

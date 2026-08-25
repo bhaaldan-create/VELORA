@@ -406,6 +406,15 @@ export function AccountSettings() {
                 );
               })}
               <Link
+                href="/account/my-velora"
+                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+              >
+                <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                  <span aria-hidden>✦</span>
+                  <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
+                </span>
+              </Link>
+              <Link
                 href="/account/club"
                 className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
               >
@@ -881,22 +890,41 @@ export function AccountSettings() {
               ) : null}
               <div className="space-y-3">
                 {myOrders.map((o) => (
-                  <Link
+                  <div
                     key={o.orderId}
-                    href={`/track/${o.orderId}`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[var(--account-border)] px-4 py-4 transition-colors hover:bg-[var(--account-lilac)]/35"
+                    className="rounded-[18px] border border-[var(--account-border)] px-4 py-4"
                   >
-                    <div>
-                      <p className="font-latin text-[0.85rem] text-[var(--account-muted)]" dir="ltr">
-                        #{o.orderId}
-                      </p>
-                      <p className="mt-1 text-[0.95rem] text-[var(--account-plum)]">
-                        {o.statusLabel} · {o.itemCount}{" "}
-                        {ar ? "منتج" : "items"}
-                      </p>
-                    </div>
-                    <p className="font-medium text-[var(--account-plum)]">{o.totalLabel}</p>
-                  </Link>
+                    <Link
+                      href={`/track/${o.orderId}`}
+                      className="flex flex-wrap items-center justify-between gap-3 transition-colors hover:opacity-90"
+                    >
+                      <div>
+                        <p className="font-latin text-[0.85rem] text-[var(--account-muted)]" dir="ltr">
+                          #{o.orderId}
+                        </p>
+                        <p className="mt-1 text-[0.95rem] text-[var(--account-plum)]">
+                          {o.statusLabel} · {o.itemCount}{" "}
+                          {ar ? "منتج" : "items"}
+                        </p>
+                      </div>
+                      <p className="font-medium text-[var(--account-plum)]">{o.totalLabel}</p>
+                    </Link>
+                    {o.status === "delivered" ? (
+                      <Link
+                        href={`/account/my-velora/${o.orderId}`}
+                        className="mt-3 flex items-center justify-between rounded-[14px] bg-[var(--account-lilac)]/45 px-4 py-3 text-[0.88rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/70"
+                      >
+                        <span>
+                          {ar
+                            ? "بطاقتك VELORA جاهزة ✦"
+                            : "Your VELORA Card is Ready ✦"}
+                        </span>
+                        <span className="font-latin text-[0.78rem] tracking-[0.12em]">
+                          {ar ? "عرض البطاقة ←" : "View Card →"}
+                        </span>
+                      </Link>
+                    ) : null}
+                  </div>
                 ))}
                 {!myOrders.length && !ordersLoading ? (
                   <Empty

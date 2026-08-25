@@ -76,6 +76,7 @@ const NAV_ICONS: Record<AdminNavId, LucideIcon> = {
   notifications: Bell,
   homepage: Images,
   club: Gem,
+  "my-velora": Sparkles,
   settings: Settings,
 };
 

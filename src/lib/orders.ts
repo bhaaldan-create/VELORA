@@ -113,6 +113,35 @@ export async function listStoredOrders(opts?: {
     .filter((o): o is StoredOrder => o !== null);
 }
 
+async function maybeGenerateVeloraCard(stored: StoredOrder): Promise<void> {
+  try {
+    const { isMyVeloraEligibleOrder } = await import("@/lib/my-velora/eligibility");
+    if (!isMyVeloraEligibleOrder(stored)) return;
+
+    const customerId = stored.order.customerId;
+    const email = (stored.order.email || "").trim().toLowerCase();
+    if (!customerId && !email) return;
+
+    let resolvedCustomerId = customerId;
+    if (!resolvedCustomerId && email) {
+      const customer = await prisma.customer.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      resolvedCustomerId = customer?.id;
+    }
+    if (!resolvedCustomerId) return;
+
+    const { ensureVeloraCardForOrder } = await import("@/lib/my-velora/generate");
+    await ensureVeloraCardForOrder({
+      entry: stored,
+      customerId: resolvedCustomerId,
+    });
+  } catch (err) {
+    console.error("[my-velora] card generation failed:", err);
+  }
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
@@ -135,7 +164,11 @@ export async function updateOrderStatus(
     },
   });
 
-  return rowToStored(row);
+  const stored = rowToStored(row);
+  if (stored && status === "delivered") {
+    void maybeGenerateVeloraCard(stored);
+  }
+  return stored;
 }
 
 export function countOrdersByStatus(orders: StoredOrder[]) {
