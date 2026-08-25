@@ -166,7 +166,8 @@ export async function updateOrderStatus(
 
   const stored = rowToStored(row);
   if (stored && status === "delivered") {
-    void maybeGenerateVeloraCard(stored);
+    // Await so serverless (Vercel) does not kill generation mid-flight.
+    await maybeGenerateVeloraCard(stored);
   }
   return stored;
 }

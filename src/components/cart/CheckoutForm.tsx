@@ -207,7 +207,7 @@ export function CheckoutForm({
       notes: trimmedNotes || undefined,
       paymentMethod,
       paymentMethodLabel,
-      paymentStatus: needsWayl ? "unpaid" : "unpaid",
+      paymentStatus: needsWayl ? "unpaid" : paymentMethod === "cod" ? "pending" : "unpaid",
       customerId: customer?.id,
       items: items.map(({ product, quantity }) => ({
         id: product.id,

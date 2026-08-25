@@ -33,18 +33,29 @@ export function isTestOrder(
   return false;
 }
 
+function isCashOnDelivery(order: OrderPayload): boolean {
+  const method = (order.paymentMethod || "").trim().toLowerCase();
+  return (
+    method === "cod" ||
+    method === "cash_on_delivery" ||
+    method === "cash" ||
+    method.includes("cod")
+  );
+}
+
+/**
+ * Online unpaid (Wayl/card) must not get a card.
+ * COD is always eligible once the order is delivered — checkout stores COD as
+ * paymentStatus "unpaid" until collection, so COD is checked before unpaid.
+ */
 export function isPaidOrder(order: OrderPayload): boolean {
-  if (order.paymentStatus === "unpaid") return false;
-  if (
-    order.paymentMethod === "cod" ||
-    order.paymentMethod === "cash_on_delivery"
-  ) {
-    return true;
-  }
+  if (isCashOnDelivery(order)) return true;
   if (order.paymentStatus === "paid") return true;
+  if (order.paymentStatus === "unpaid") return false;
   if (order.paymentIntentId || order.waylLinkId || order.transferReference) {
     return true;
   }
+  // Legacy rows without paymentStatus
   return true;
 }
 
