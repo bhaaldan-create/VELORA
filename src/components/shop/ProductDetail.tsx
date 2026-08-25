@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Product } from "@/types";
 import { IconWhatsApp } from "@/components/contact/SocialIcons";
+import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -194,23 +195,15 @@ export function ProductDetail({ product, related, routine }: Props) {
 
             <ProductMicroTags product={product} ar={ar} />
 
-            <div ref={purchaseRef} className="mt-7 space-y-2.5">
+            <div ref={purchaseRef} className="mt-7 space-y-3">
               {inStock ? (
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <QtyControl qty={qty} setQty={setQty} ar={ar} />
-                  <button
-                    type="button"
+                  <AddToBagButton
+                    added={added}
                     onClick={handleAdd}
-                    className={cn(
-                      "inline-flex min-h-11 flex-1 items-center justify-center rounded-full",
-                      "bg-[var(--plum)] px-6 text-[0.84rem] font-medium text-white",
-                      "shadow-[0_12px_28px_-14px_rgba(61,38,64,0.55)]",
-                      "transition hover:bg-[var(--plum-soft)] active:scale-[0.98]",
-                      "sm:flex-none sm:min-w-[11.5rem]",
-                    )}
-                  >
-                    {added ? copy.added : copy.addToBag}
-                  </button>
+                    className="sm:flex-1"
+                  />
                 </div>
               ) : (
                 <p className="inline-flex min-h-11 items-center rounded-full border border-[var(--plum)]/12 bg-[var(--mist)]/80 px-5 text-[0.84rem] font-medium text-[var(--muted)]">
@@ -256,7 +249,7 @@ export function ProductDetail({ product, related, routine }: Props) {
         aria-hidden={!showSticky || !inStock}
       >
         <div className="mx-auto flex max-w-lg items-center gap-2">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 shrink-0">
             <ProductPrice
               size="sm"
               price={product.price}
@@ -265,13 +258,12 @@ export function ProductDetail({ product, related, routine }: Props) {
             />
           </div>
           <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
-          <button
-            type="button"
+          <AddToBagButton
+            added={added}
+            compact
             onClick={handleAdd}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--plum)] px-3.5 text-[0.74rem] font-medium text-white active:scale-[0.98]"
-          >
-            {added ? copy.added : copy.addToBag}
-          </button>
+            className="min-w-0 flex-1"
+          />
         </div>
       </div>
     </div>

@@ -28,8 +28,8 @@ export function productCopy(ar: boolean) {
       ? "اسألي لارسا — مستشارة VELORA للجمال والعناية بالبشرة"
       : "Ask Larsa — VELORA beauty & skincare advisor",
     askLarsa: ar ? "اسألي لارسا" : "Ask Larsa",
-    addToBag: ar ? "أضيفي للحقيبة" : "Add to Bag",
-    added: ar ? "أُضيفت ✓" : "Added ✓",
+    addToBag: "أضف للحقيبة",
+    added: "أُضيفت",
     outOfStock: ar ? "غير متوفر حالياً" : "Out of Stock",
     orderWhatsApp: ar ? "اطلبي عبر WhatsApp" : "Order via WhatsApp",
     qty: ar ? "الكمية" : "Quantity",
