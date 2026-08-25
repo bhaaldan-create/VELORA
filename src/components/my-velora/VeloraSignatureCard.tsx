@@ -44,7 +44,6 @@ export function VeloraSignatureCard({
         src={style.backgroundUrl}
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
-        crossOrigin="anonymous"
         draggable={false}
       />
 
@@ -138,7 +137,6 @@ export function VeloraSignatureCard({
               src={brand.logoUrl}
               alt={brand.name}
               className="max-h-[42px] max-w-[28%] object-contain opacity-90"
-              crossOrigin="anonymous"
               draggable={false}
             />
           ) : (

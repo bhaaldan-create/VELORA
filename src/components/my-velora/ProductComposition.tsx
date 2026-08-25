@@ -26,7 +26,6 @@ function ProductImg({
         "h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(61,38,64,0.18)]",
         className,
       )}
-      crossOrigin="anonymous"
       draggable={false}
     />
   );

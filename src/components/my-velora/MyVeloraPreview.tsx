@@ -8,7 +8,11 @@ import {
   type VeloraCardPayload,
   type VeloraCardStyleKey,
 } from "@/lib/my-velora/types";
-import { downloadMyVeloraPng, shareMyVeloraCard } from "@/lib/my-velora/card-image";
+import {
+  downloadMyVeloraPng,
+  shareMyVeloraCard,
+  shareMyVeloraToInstagramStories,
+} from "@/lib/my-velora/card-image";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
 import "./my-velora.css";
@@ -24,7 +28,6 @@ type Props = {
 
 export function MyVeloraPreview({
   orderId,
-  cardId,
   initialPayload,
   initialStyleKey,
   hasReview,
@@ -36,6 +39,7 @@ export function MyVeloraPreview({
   const [payload] = useState(initialPayload);
   const [styleOpen, setStyleOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sharingIg, setSharingIg] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
@@ -45,8 +49,7 @@ export function MyVeloraPreview({
 
   const qrDataUrl = useMemo(() => {
     if (!payload.showQrCode) return null;
-    const url = encodeURIComponent(payload.referralUrl);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${url}`;
+    return `/api/my-velora/qr?data=${encodeURIComponent(payload.referralUrl)}`;
   }, [payload.referralUrl, payload.showQrCode]);
 
   const previewScale = useMemo(() => {
@@ -92,11 +95,63 @@ export function MyVeloraPreview({
     try {
       await downloadMyVeloraPng(orderId);
       await recordEvent("save");
-      setMessage(ar ? "تم الحفظ ✦" : "Saved ✦");
+      setMessage(
+        ar
+          ? "تم حفظ الصورة بجودة 1080×1920 ✦"
+          : "Saved as 1080×1920 PNG ✦",
+      );
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : ar
+            ? "تعذّر حفظ الصورة"
+            : "Could not save image",
+      );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onInstagramStories() {
+    setSharingIg(true);
+    setMessage(null);
+    try {
+      const mode = await shareMyVeloraToInstagramStories({
+        orderId,
+        title: "MY VELORA ✦",
+        text: ar ? payload.pointsLabelAr : payload.pointsLabelEn,
+      });
+      await recordEvent("instagram_share", { mode });
+      if (mode === "native-file") {
+        setMessage(
+          ar
+            ? "اختاري Instagram ثم Story من قائمة المشاركة ✦"
+            : "Choose Instagram → Story in the share sheet ✦",
+        );
+      } else if (mode === "download-instagram") {
+        setMessage(
+          ar
+            ? "تم حفظ الصورة. افتحي Instagram Stories وأضيفيها من المعرض ✦"
+            : "Image saved. Open Instagram Stories and add it from your gallery ✦",
+        );
+      } else {
+        setMessage(
+          ar
+            ? "تم تنزيل الصورة — ارفعيها يدوياً على Instagram Stories"
+            : "Image downloaded — upload it to Instagram Stories",
+        );
+      }
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : ar
+            ? "تعذّرت المشاركة على Instagram"
+            : "Instagram share failed",
+      );
+    } finally {
+      setSharingIg(false);
     }
   }
 
@@ -105,11 +160,12 @@ export function MyVeloraPreview({
     setMessage(null);
     try {
       const mode = await shareMyVeloraCard({
-        title: ar ? "MY VELORA ✦" : "MY VELORA ✦",
+        title: "MY VELORA ✦",
         text: ar ? payload.pointsLabelAr : payload.pointsLabelEn,
         url: payload.referralUrl,
+        orderId,
       });
-      await recordEvent(mode === "native" ? "share" : "share");
+      await recordEvent("share", { mode });
       setMessage(
         mode === "clipboard"
           ? ar
@@ -202,37 +258,54 @@ export function MyVeloraPreview({
           </div>
         </div>
 
-        <div className="mt-5 flex w-full flex-wrap items-center justify-center gap-2">
+        <div className="mt-5 flex w-full flex-col gap-2">
           <button
             type="button"
-            onClick={() => setStyleOpen((v) => !v)}
-            className="rounded-full border border-[#D8CCE3] bg-white/80 px-4 py-2 text-[0.82rem] text-[#4A384F]"
+            onClick={onInstagramStories}
+            disabled={sharingIg || saving}
+            className="w-full rounded-full bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-5 py-3 text-[0.9rem] font-medium text-white shadow-[0_10px_28px_-12px_rgba(221,42,123,0.55)] disabled:opacity-60"
           >
-            {ar ? "الأسلوب" : "Style"}
+            {sharingIg
+              ? ar
+                ? "جارٍ تجهيز الستوري…"
+                : "Preparing Story…"
+              : ar
+                ? "مشاركة على Instagram Stories ✦"
+                : "Share to Instagram Stories ✦"}
           </button>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving}
-            className="rounded-full bg-[#3D2640] px-5 py-2 text-[0.82rem] text-white disabled:opacity-60"
-          >
-            {saving ? "…" : ar ? "حفظ" : "Save"}
-          </button>
-          <button
-            type="button"
-            onClick={onShare}
-            disabled={sharing}
-            className="rounded-full border border-[#3D2640] bg-white/80 px-5 py-2 text-[0.82rem] text-[#3D2640]"
-          >
-            {sharing ? "…" : ar ? "مشاركة" : "Share"}
-          </button>
-          <button
-            type="button"
-            onClick={onCopyLink}
-            className="rounded-full px-3 py-2 text-[0.78rem] text-[#7A6880] underline-offset-2 hover:underline"
-          >
-            {ar ? "نسخ الرابط" : "Copy link"}
-          </button>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setStyleOpen((v) => !v)}
+              className="rounded-full border border-[#D8CCE3] bg-white/80 px-4 py-2 text-[0.82rem] text-[#4A384F]"
+            >
+              {ar ? "الأسلوب" : "Style"}
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || sharingIg}
+              className="rounded-full bg-[#3D2640] px-5 py-2 text-[0.82rem] text-white disabled:opacity-60"
+            >
+              {saving ? "…" : ar ? "حفظ في الصور" : "Save to Photos"}
+            </button>
+            <button
+              type="button"
+              onClick={onShare}
+              disabled={sharing || sharingIg}
+              className="rounded-full border border-[#3D2640] bg-white/80 px-5 py-2 text-[0.82rem] text-[#3D2640]"
+            >
+              {sharing ? "…" : ar ? "مشاركة" : "Share"}
+            </button>
+            <button
+              type="button"
+              onClick={onCopyLink}
+              className="rounded-full px-3 py-2 text-[0.78rem] text-[#7A6880] underline-offset-2 hover:underline"
+            >
+              {ar ? "نسخ الرابط" : "Copy link"}
+            </button>
+          </div>
         </div>
 
         {styleOpen ? (
@@ -261,7 +334,9 @@ export function MyVeloraPreview({
         ) : null}
 
         {message ? (
-          <p className="mt-4 text-center text-[0.85rem] text-[#5E4A66]">{message}</p>
+          <p className="mt-4 text-center text-[0.85rem] leading-relaxed text-[#5E4A66]">
+            {message}
+          </p>
         ) : null}
       </div>
 
