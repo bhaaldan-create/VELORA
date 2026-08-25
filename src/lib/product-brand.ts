@@ -27,8 +27,9 @@ export function getProductBrand(name: string, nameAr?: string): string {
   return words || "VELORA";
 }
 
-const FRAGRANCE_RE =
-  /\bperfume\b|\bparfum\b|\beau[\s-]de\b|\bfragrance\b|بارفان|كولونيا|(?:^|[^\u0600-\u06FF])عطر(?:[^\u0600-\u06FF]|$)/i;
+/** كلمات عطر واضحة في الاسم فقط — الأوصاف غالباً تقول fragrance-free فتُخفى بالخطأ */
+const FRAGRANCE_NAME_RE =
+  /\bperfume\b|\bparfum\b|\beau[\s-]de\b|\bcologne\b|بارفان|كولونيا|(?:^|\s)عطر(?:\s|$)/i;
 
 export function isFragranceProduct(product: {
   name: string;
@@ -38,14 +39,6 @@ export function isFragranceProduct(product: {
   category?: string;
 }): boolean {
   if (product.category === "fragrance") return true;
-  const text = `${product.name} ${product.nameAr} ${product.description ?? ""} ${product.descriptionAr ?? ""}`;
-  // منتجات العناية غالباً تذكر «بدون عطر / fragrance-free» — لا تُصنَّف كعطور
-  const cleaned = text
-    .replace(/fragrance[\s-]*free/gi, " ")
-    .replace(/\bunscented\b/gi, " ")
-    .replace(/خالي[ة]? من ال?عطور?/gi, " ")
-    .replace(/بدون ال?عطور?/gi, " ")
-    .replace(/بلا ال?عطور?/gi, " ")
-    .replace(/free of (?:any )?fragrance/gi, " ");
-  return FRAGRANCE_RE.test(cleaned);
+  // لا نفحص الوصف: نصوص العناية تذكر العطور بالنفي («خالية من العطور»)
+  return FRAGRANCE_NAME_RE.test(`${product.name} ${product.nameAr}`);
 }
