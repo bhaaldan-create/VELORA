@@ -1,0 +1,179 @@
+"""Replace PDF-misnamed logos + save official SHEGLAM SVG from site."""
+from __future__ import annotations
+
+import re
+import ssl
+import urllib.request
+from pathlib import Path
+
+OUT = Path(__file__).resolve().parents[1] / "public" / "brands" / "logos"
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+}
+CTX = ssl._create_unverified_context()
+
+SHEGLAM_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" width="159" height="40" viewBox="0 0 159 40" fill="none"><path d="M10.5718 17.1416C8.55698 16.6682 6.77276 16.031 6.77276 14.8537C6.77276 13.8463 8.02697 13.1403 9.84558 13.1403C11.9231 13.1403 14.1362 14.0162 15.4916 15.2603L18.1011 10.8584C16.3817 9.2441 13.4423 8 9.90829 8C4.52731 8 0.924477 10.7896 0.924477 15.058C0.924477 19.3264 4.22994 21.4464 8.98382 22.6197C11.4275 23.2266 13.2138 23.6959 13.2138 24.94C13.2138 26.1173 11.6622 26.8557 9.84558 26.8557C7.53135 26.8557 4.82266 25.6784 2.90694 23.9649L0 28.3688C2.44369 30.5536 6.30951 31.998 9.87593 31.998C15.0324 31.998 19.0276 29.0748 19.0276 24.7053C19.0276 19.1929 12.5523 17.5786 10.5718 17.1416Z" fill="#111111"/><path d="M41.12 8.40459H35.4396V17.2104H27.2488V8.40459H21.5684V31.5974H27.2488V22.6561H35.4396V31.5974H41.12V8.40459Z" fill="#111111"/><path d="M60.2893 26.1497H50.2151V22.6561H59.0674V17.2104H50.2151V13.8463H60.1254V8.40459H44.5327V31.5974H60.2893V26.1497Z" fill="#111111"/><path d="M106.683 26.1497H97.6021V8.40459H91.9218V31.5974H106.683V26.1497Z" fill="#111111"/><path d="M120.049 14.7889L122.66 22.6197H117.443L120.049 14.7889ZM123.451 8.40459H116.745L108.358 31.5954H114.467L115.693 27.9299H124.412L125.634 31.5954H131.844L123.451 8.40459Z" fill="#111111"/><path d="M158.832 8.40459H151.893L146.345 19.2272L140.83 8.40459H133.792V31.5974H139.475V17.6797L144.692 27.9319H147.931L153.148 17.6797V31.5974H158.832V8.40459Z" fill="#111111"/><path d="M76.1025 8C74.4619 8 72.9204 8.29535 71.5206 8.83951C72.8516 10.9616 74.7552 12.5738 77.1362 13.5711C78.8092 13.7977 80.2738 14.6312 81.2549 15.8307L85.5495 12.3372C83.5347 9.64666 80.033 8 76.1025 8Z" fill="#111111"/><path d="M87.5644 18.0499H76.3675V23.1942H81.4531C80.6925 25.1767 78.6797 26.4875 76.1996 26.4875C73.0074 26.4875 70.4889 24.2906 69.9609 21.2117C68.9555 18.6001 67.2744 16.5327 65.0189 15.1247C64.3897 16.6035 64.0458 18.2461 64.0458 20C64.0458 26.8254 69.1659 32 76.0013 32C82.8368 32 87.5644 26.9609 87.5644 20.0668V18.0499Z" fill="#111111"/><path d="M74.7734 14.0506C72.9224 13.0067 71.4032 11.4572 70.3756 9.57788L70.3473 9.52529L70.321 9.57788C69.2933 11.4572 67.77 13.0067 65.9272 14.0506L65.8786 14.0789L65.9272 14.1072C67.7721 15.151 69.2953 16.6966 70.321 18.5799L70.3473 18.6325L70.3756 18.5799C71.4032 16.7006 72.9224 15.151 74.7734 14.1072L74.822 14.0789L74.7734 14.0506Z" fill="#111111"/></svg>
+'''
+
+
+def fetch(url: str) -> bytes:
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=45, context=CTX) as r:
+        return r.read()
+
+
+def save(slug: str, data: bytes, ext: str) -> None:
+    for old in OUT.glob(f"{slug}.*"):
+        old.unlink()
+    (OUT / f"{slug}.{ext}").write_bytes(data)
+    print(f"SAVED {slug}.{ext} ({len(data)})")
+
+
+def is_real_image(data: bytes) -> bool:
+    if data.startswith(b"%PDF"):
+        return False
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return True
+    if data[:2] == b"\xff\xd8":
+        return True
+    if data[:4] == b"RIFF":
+        return True
+    if b"<svg" in data[:500].lower():
+        return True
+    return False
+
+
+def scrape_logo(home: str, keywords: tuple[str, ...] = ("logo",)) -> list[str]:
+    html = fetch(home).decode("utf-8", "ignore")
+    urls = re.findall(
+        r"""(?:src|href|content)=["']([^"']+\.(?:png|svg|webp|jpe?g))["']""",
+        html,
+        flags=re.I,
+    )
+    out = []
+    for u in urls:
+        low = u.lower()
+        if not any(k in low for k in keywords):
+            continue
+        if u.startswith("//"):
+            u = "https:" + u
+        elif u.startswith("/"):
+            u = home.rstrip("/") + u
+        out.append(u)
+    # also shopify files that look like logos by filename
+    for u in re.findall(r"https?://[^\"']+/cdn/shop/files/[^\"']+\.(?:png|svg|webp)", html, flags=re.I):
+        if any(k in u.lower() for k in keywords + ("logo", "wordmark", "brand")):
+            out.append(u)
+    return list(dict.fromkeys(out))
+
+
+def try_urls(slug: str, urls: list[str]) -> bool:
+    for u in urls:
+        try:
+            d = fetch(u)
+            print(f"  {slug} try {len(d)} {u[:110]}")
+            if not is_real_image(d):
+                print("   skip non-image")
+                continue
+            if len(d) < 800:
+                continue
+            ext = "svg" if b"<svg" in d[:300].lower() or u.lower().endswith(".svg") else "png"
+            if d[:2] == b"\xff\xd8":
+                ext = "jpg"
+            save(slug, d, ext)
+            return True
+        except Exception as e:
+            print(f"  fail {e}")
+    return False
+
+
+def main() -> None:
+    # SHEGLAM official SVG (from sheglam.com header; fill adapted to dark for light cards)
+    save("sheglam", SHEGLAM_SVG.encode("utf-8"), "svg")
+
+    replacements = {
+        "bourjois": {
+            "homes": ["https://www.bourjois.com/", "https://www.bourjois.co.uk/"],
+            "direct": [
+                "https://www.bourjois.com/cdn/shop/files/Bourjois_Logo.png",
+                "https://logo.clearbit.com/bourjois.com",
+            ],
+            "keys": ("logo", "bourjois"),
+        },
+        "sol-de-janeiro": {
+            "homes": ["https://www.soldejaneiro.com/"],
+            "direct": [
+                "https://www.soldejaneiro.com/cdn/shop/files/SoldeJaneiro_Logo.png",
+                "https://www.soldejaneiro.com/cdn/shop/files/logo.png",
+                "https://logo.clearbit.com/soldejaneiro.com",
+            ],
+            "keys": ("logo", "sol"),
+        },
+        "catrice": {
+            "homes": ["https://www.catrice.eu/", "https://us.catrice.eu/"],
+            "direct": [
+                "https://www.catrice.eu/on/demandware.static/-/Sites-catrice-master/default/dw/logo.png",
+                "https://logo.clearbit.com/catrice.eu",
+            ],
+            "keys": ("logo", "catrice"),
+        },
+        "dr-althea": {
+            "homes": ["https://draltheakorea.com/", "https://www.dralthea.com/"],
+            "direct": [
+                "https://draltheakorea.com/cdn/shop/files/logo.png",
+                "https://logo.clearbit.com/draltheakorea.com",
+            ],
+            "keys": ("logo", "althea"),
+        },
+        "seapuri": {
+            "homes": ["https://www.seapuri.co.kr/"],
+            "direct": [],
+            "keys": ("logo", "seapuri", "brand"),
+        },
+    }
+
+    for slug, cfg in replacements.items():
+        print("===", slug)
+        # delete PDF impostors
+        for old in OUT.glob(f"{slug}.*"):
+            head = old.read_bytes()[:8]
+            if head.startswith(b"%PDF") or old.stat().st_size > 2_000_000:
+                print(" remove bad", old.name, old.stat().st_size)
+                old.unlink()
+
+        if try_urls(slug, cfg["direct"]):
+            continue
+
+        urls: list[str] = []
+        for home in cfg["homes"]:
+            try:
+                urls.extend(scrape_logo(home, cfg["keys"]))
+            except Exception as e:
+                print(" scrape", home, e)
+        print(" scraped", urls[:12])
+        if try_urls(slug, urls):
+            continue
+        print("STILL FAIL", slug)
+
+    # final audit of our 39
+    print("--- audit ---")
+    for f in sorted(OUT.iterdir()):
+        if f.stem in {
+            "velora",
+            "cerave",
+            "vichy",
+            "garnier",
+            "neutrogena",
+            "clinique",
+            "the-ordinary",
+            "la-roche-posay",
+        }:
+            continue
+        d = f.read_bytes()[:20]
+        bad = d.startswith(b"%PDF") or (f.stat().st_size > 1_500_000)
+        print(f"{f.name:40} {f.stat().st_size:8} {'BAD' if bad else 'ok'} {d[:12]!r}")
+
+
+if __name__ == "__main__":
+    main()
