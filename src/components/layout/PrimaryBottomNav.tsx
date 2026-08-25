@@ -175,10 +175,10 @@ export function PrimaryBottomNav() {
     >
       <ul
         className={cn(
-          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[22px] px-1 py-1",
-          // خلفية صلبة بدل blur الشفاف — أكثر ثباتاً على الجوال
-          "border border-[var(--plum)]/10 bg-[var(--ivory)]",
-          "shadow-[0_8px_28px_rgba(50,22,47,0.1)]",
+          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[24px] px-1.5 py-1.5",
+          "border border-white/70 bg-white/80 backdrop-blur-xl",
+          "shadow-[0_10px_32px_-10px_rgba(50,22,47,0.16)]",
+          "ring-1 ring-[var(--plum)]/[0.06]",
         )}
       >
         {bottomNavLinks.map((link) => {

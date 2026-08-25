@@ -157,35 +157,40 @@ export function FloatingContact() {
         </div>
       </div>
 
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-label={
-          open
-            ? ar
-              ? "إغلاق قائمة التواصل"
-              : "Close contact menu"
-            : ar
-              ? "فتح تواصل VELORA"
-              : "Open VELORA contact"
-        }
-        title={ar ? "تواصلي معنا" : "Contact us"}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "group flex h-11 w-11 items-center justify-center rounded-full",
-          "border border-[var(--plum)]/12 bg-[var(--plum)] text-[var(--btn-fg)]",
-          "shadow-[0_10px_28px_rgba(50,22,47,0.18)]",
-          "transition-transform duration-250 ease-out",
-          "hover:scale-[1.04] active:scale-[0.95]",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]",
-        )}
-      >
-        <IconWhatsApp
-          size={17}
-          className="text-[#a8d9c0] transition-transform duration-250 group-active:scale-90"
-        />
-      </button>
+      <div className="flex flex-col items-center gap-1.5">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={
+            open
+              ? ar
+                ? "إغلاق قائمة التواصل"
+                : "Close contact menu"
+              : ar
+                ? "فتح تواصل VELORA"
+                : "Open VELORA contact"
+          }
+          title={ar ? "تواصلي معنا" : "Contact us"}
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            "group flex h-12 w-12 items-center justify-center rounded-full",
+            "bg-[#3D243F] text-white",
+            "shadow-[0_12px_30px_-8px_rgba(61,36,63,0.45)]",
+            "transition-transform duration-200 ease-out",
+            "hover:scale-[1.04] active:scale-[0.95]",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]",
+          )}
+        >
+          <IconWhatsApp
+            size={18}
+            className="text-white transition-transform duration-200 group-active:scale-90"
+          />
+        </button>
+        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[#3D243F]/70">
+          {ar ? "تواصلي معنا" : "Contact us"}
+        </span>
+      </div>
     </div>
   );
 }
