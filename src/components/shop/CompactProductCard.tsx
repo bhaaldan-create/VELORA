@@ -63,7 +63,7 @@ export function CompactProductCard({
           {brand}
         </p>
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="font-display mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--ink)]">
+          <h3 className="font-display mt-0.5 line-clamp-2 min-h-[2.4em] text-[0.78rem] font-medium leading-snug text-[var(--ink)]">
             {title}
           </h3>
         </Link>
@@ -74,12 +74,13 @@ export function CompactProductCard({
           originalPrice={product.originalPrice}
           discountPercent={product.discountPercent}
         />
-        <AddToBagButton
-          size="sm"
-          flashAdded
-          className="mt-2"
-          onClick={() => addItem(product)}
-        />
+        <div className="mt-auto pt-2">
+          <AddToBagButton
+            size="sm"
+            flashAdded
+            onClick={() => addItem(product)}
+          />
+        </div>
       </div>
     </article>
   );

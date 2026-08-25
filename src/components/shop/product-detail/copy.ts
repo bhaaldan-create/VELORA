@@ -31,7 +31,7 @@ export function productCopy(ar: boolean) {
     addToBag: "أضف للحقيبة",
     added: "أُضيفت",
     outOfStock: ar ? "غير متوفر حالياً" : "Out of Stock",
-    orderWhatsApp: ar ? "اطلبي عبر WhatsApp" : "Order via WhatsApp",
+    orderWhatsApp: ar ? "اطلب عبر WhatsApp" : "Order via WhatsApp",
     qty: ar ? "الكمية" : "Quantity",
     decrease: ar ? "تقليل الكمية" : "Decrease quantity",
     increase: ar ? "زيادة الكمية" : "Increase quantity",

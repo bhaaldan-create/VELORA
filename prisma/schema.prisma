@@ -54,12 +54,37 @@ model Product {
   brandLogoUrl   String?
   stock          Int      @default(100)
   isActive       Boolean  @default(true)
+
+  /// —— Product cost / landed cost (IQD cents not used — whole IQD / USD units) ——
+  supplierId           String?
+  supplier             Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  /// Purchase currency for unit cost: IQD | USD
+  costCurrency         String    @default("IQD")
+  /// Exchange rate used: 1 costCurrency unit → IQD (1 when IQD)
+  costExchangeRate     Float     @default(1)
+  /// Unit purchase price in costCurrency
+  purchasePrice        Float     @default(0)
+  /// Allocated import extras per unit, already in IQD
+  shippingCostIqd      Float     @default(0)
+  customsCostIqd       Float     @default(0)
+  brokerageCostIqd     Float     @default(0)
+  handlingCostIqd      Float     @default(0)
+  otherCostIqd         Float     @default(0)
+  /// Cached: purchasePrice*rate + extras (IQD). 0 means unknown/not set when purchasePrice=0
+  landedCostIqd        Float     @default(0)
+  /// Minimum acceptable gross margin % (e.g. 25)
+  minMarginPct         Float     @default(20)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   wishlistItems  CustomerWishlistItem[]
+  importItems    ImportItem[]
+  inventoryMoves InventoryMovement[]
 
   @@index([categorySlug])
   @@index([isActive, isBestseller])
+  @@index([supplierId])
+  @@index([brandName])
 }
 
 /// فروع VELORA (الدوام)
@@ -280,4 +305,205 @@ model Order {
 
   @@index([status, savedAt])
   @@index([savedAt])
+}
+
+/// —— VELORA Business OS: suppliers, imports, finance, insights ——
+
+model Supplier {
+  id                String   @id @default(cuid())
+  name              String
+  country           String   @default("")
+  website           String   @default("")
+  catalogUrl        String   @default("")
+  contactName       String   @default("")
+  contactPhone      String   @default("")
+  contactEmail      String   @default("")
+  whatsappUrl       String   @default("")
+  instagramUrl      String   @default("")
+  alibabaUrl        String   @default("")
+  otherLinksJson    Json     @default("[]")
+  currency          String   @default("USD")
+  paymentTerms      String   @default("")
+  shippingMethod    String   @default("")
+  /// 1–5
+  reliabilityRating Int      @default(3)
+  avgDeliveryDays   Int      @default(0)
+  notes             String   @default("")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  products  Product[]
+  shipments ImportShipment[]
+  brands    BrandProfile[]
+
+  @@index([isActive, name])
+}
+
+/// Brand intelligence layer (linked by name to Product.brandName)
+model BrandProfile {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  countryOfOrigin String    @default("")
+  officialWebsite String    @default("")
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  sourceCountry   String    @default("")
+  currency        String    @default("USD")
+  notes           String    @default("")
+  documentsJson   Json      @default("[]")
+  linksJson       Json      @default("[]")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([supplierId])
+  @@index([name])
+}
+
+model ImportShipment {
+  id              String   @id @default(cuid())
+  /// Human-readable code e.g. IMP-2026-001
+  code            String   @unique
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  /// Planned | Ordered | Paid | Shipped | InTransit | Arrived | Received | Completed
+  status          String   @default("Planned")
+  currency        String   @default("USD")
+  exchangeRate    Float    @default(1)
+  purchaseDate    String   @default("")
+  shippingDate    String   @default("")
+  arrivalDate     String   @default("")
+  receivedDate    String   @default("")
+  trackingNumber  String   @default("")
+  /// Totals in shipment currency (before converting)
+  purchaseTotal   Float    @default(0)
+  shippingCost    Float    @default(0)
+  customsCost     Float    @default(0)
+  brokerageCost   Float    @default(0)
+  otherFees       Float    @default(0)
+  /// Cached total landed IQD
+  totalLandedIqd  Float    @default(0)
+  notes           String   @default("")
+  documentsJson   Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items ImportItem[]
+
+  @@index([status, createdAt])
+  @@index([supplierId])
+}
+
+model ImportItem {
+  id           String         @id @default(cuid())
+  shipmentId   String
+  shipment     ImportShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity     Int            @default(1)
+  /// Unit purchase in shipment currency
+  unitCost     Float          @default(0)
+  /// Allocated landed cost per unit in IQD (after receive)
+  landedUnitIqd Float         @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([shipmentId])
+  @@index([productId])
+}
+
+model InventoryMovement {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// receive | adjust | sale_commit | return | write_off
+  type        String
+  quantity    Int
+  /// Stock after this movement
+  balanceAfter Int
+  reference   String   @default("")
+  note        String   @default("")
+  actorId     String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([productId, createdAt])
+  @@index([type, createdAt])
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  slug      String    @unique
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Expense {
+  id              String          @id @default(cuid())
+  name            String
+  categoryId      String?
+  category        ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  amount          Float
+  currency        String          @default("IQD")
+  exchangeRate    Float           @default(1)
+  /// Amount in IQD for reporting
+  amountIqd       Float
+  date            String
+  /// one_time | recurring
+  recurrence      String          @default("one_time")
+  vendor          String          @default("")
+  paymentMethod   String          @default("")
+  description     String          @default("")
+  attachmentUrl   String          @default("")
+  notes           String          @default("")
+  createdBy       String          @default("")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([date])
+  @@index([categoryId])
+  @@index([recurrence])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String   @default("root")
+  actorLabel String   @default("root")
+  action     String
+  entityType String
+  entityId   String   @default("")
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model AiInsight {
+  id          String    @id @default(cuid())
+  /// low_margin | stock | dead_stock | cost_increase | supplier | opportunity | profit | other
+  kind        String
+  /// critical | high | medium | low | info
+  severity    String    @default("medium")
+  titleAr     String
+  titleEn     String
+  bodyAr      String
+  bodyEn      String
+  whyAr       String    @default("")
+  whyEn       String    @default("")
+  evidenceJson Json     @default("{}")
+  entityType  String    @default("")
+  entityId    String    @default("")
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([severity, createdAt])
+  @@index([kind, createdAt])
+  @@index([dismissedAt])
 }

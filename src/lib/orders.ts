@@ -87,9 +87,26 @@ export async function getStoredOrder(
   return rowToStored(row);
 }
 
-export async function listStoredOrders(): Promise<StoredOrder[]> {
+export async function listStoredOrders(opts?: {
+  /** Inclusive lower bound on savedAt */
+  from?: Date;
+  /** Exclusive upper bound on savedAt */
+  to?: Date;
+  /** Cap rows for dashboards (newest first) */
+  take?: number;
+}): Promise<StoredOrder[]> {
   const rows = await prisma.order.findMany({
+    where:
+      opts?.from || opts?.to
+        ? {
+            savedAt: {
+              ...(opts.from ? { gte: opts.from } : {}),
+              ...(opts.to ? { lt: opts.to } : {}),
+            },
+          }
+        : undefined,
     orderBy: { savedAt: "desc" },
+    ...(opts?.take ? { take: opts.take } : {}),
   });
   return rows
     .map(rowToStored)

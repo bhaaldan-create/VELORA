@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/types";
-import { IconWhatsApp } from "@/components/contact/SocialIcons";
 import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductPrice } from "@/components/shop/ProductPrice";
+import { ProductWhatsAppButton } from "@/components/shop/ProductWhatsAppButton";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { getProductWhatsAppUrl } from "@/lib/social-links";
@@ -89,8 +89,6 @@ export function ProductDetail({ product, related, routine }: Props) {
   const copy = productCopy(ar);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [showSticky, setShowSticky] = useState(false);
-  const purchaseRef = useRef<HTMLDivElement>(null);
   const waProductUrl = getProductWhatsAppUrl(product, ar ? "ar" : "en");
   const inStock = (product.stock ?? 1) > 0;
 
@@ -101,28 +99,22 @@ export function ProductDetail({ product, related, routine }: Props) {
     window.setTimeout(() => setAdded(false), 1800);
   };
 
+  /* Mobile sticky CTA is always docked — reserve bottom space so content never jumps. */
   useEffect(() => {
-    const el = purchaseRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        setShowSticky(!entry.isIntersecting);
-      },
-      { rootMargin: "-40px 0px 0px 0px", threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--pdp-sticky-offset",
-      showSticky ? "4.5rem" : "0px",
-    );
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      document.documentElement.style.setProperty(
+        "--pdp-sticky-offset",
+        mq.matches && inStock ? "4.5rem" : "0px",
+      );
+    };
+    apply();
+    mq.addEventListener("change", apply);
     return () => {
+      mq.removeEventListener("change", apply);
       document.documentElement.style.removeProperty("--pdp-sticky-offset");
     };
-  }, [showSticky]);
+  }, [inStock]);
 
   return (
     <div className="bg-[var(--ivory)] pb-[calc(6.25rem+var(--pdp-sticky-offset,0px)+env(safe-area-inset-bottom))] lg:pb-20">
@@ -133,17 +125,15 @@ export function ProductDetail({ product, related, routine }: Props) {
 
           {/* Editorial product story */}
           <div className="motion-safe:animate-[velora-rise_0.8s_0.06s_ease-out_both]">
-            <h1 className="font-display text-[clamp(1.35rem,3.8vw,1.95rem)] font-bold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
+            <h1 className="font-display line-clamp-2 min-h-[calc(1.28em*2)] text-[clamp(1.35rem,3.8vw,1.95rem)] font-bold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
               {ar ? product.nameAr : product.name}
             </h1>
             <p
-              className="font-display mt-1.5 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
+              className="font-display mt-1.5 line-clamp-1 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
               dir={ar ? "ltr" : undefined}
             >
               {ar ? product.name : product.nameAr}
             </p>
-
-            <ProductBenefits product={product} ar={ar} />
 
             <div className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.78rem] text-[var(--muted)]">
               {product.reviews > 0 ? (
@@ -193,9 +183,8 @@ export function ProductDetail({ product, related, routine }: Props) {
               ) : null}
             </div>
 
-            <ProductMicroTags product={product} ar={ar} />
-
-            <div ref={purchaseRef} className="mt-7 space-y-3">
+            {/* Purchase stays directly under price so length of benefits/tags never shifts it */}
+            <div className="mt-7 hidden space-y-3 lg:block">
               {inStock ? (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <QtyControl qty={qty} setQty={setQty} ar={ar} />
@@ -213,19 +202,25 @@ export function ProductDetail({ product, related, routine }: Props) {
               )}
 
               {waProductUrl ? (
-                <a
+                <ProductWhatsAppButton
                   href={waProductUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-1 text-[0.78rem] font-medium text-[var(--plum)]/70 transition hover:text-[var(--plum)]"
-                  aria-label={copy.orderWhatsApp}
-                >
-                  <IconWhatsApp size={15} className="text-[#3d8b6e]" />
-                  {copy.orderWhatsApp}
-                </a>
+                  label={copy.orderWhatsApp}
+                />
               ) : null}
             </div>
 
+            {/* Mobile: docked sticky CTA only — keep WhatsApp reachable in-flow */}
+            {waProductUrl ? (
+              <div className="mt-7 lg:hidden">
+                <ProductWhatsAppButton
+                  href={waProductUrl}
+                  label={copy.orderWhatsApp}
+                />
+              </div>
+            ) : null}
+
+            <ProductMicroTags product={product} ar={ar} />
+            <ProductBenefits product={product} ar={ar} />
             <ProductAbout product={product} ar={ar} />
             <ProductIngredients product={product} ar={ar} />
             <ProductSuitability product={product} ar={ar} />
@@ -237,36 +232,31 @@ export function ProductDetail({ product, related, routine }: Props) {
         <ProductRelated products={related} ar={ar} />
       </div>
 
-      {/* Sticky purchase — mobile */}
-      <div
-        className={cn(
-          "fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--bg-glass-strong)] px-4 py-2.5 backdrop-blur-xl transition-all duration-300 lg:hidden",
-          "bottom-[calc(4.15rem+env(safe-area-inset-bottom))]",
-          showSticky && inStock
-            ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-3 opacity-0",
-        )}
-        style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}
-        aria-hidden={!showSticky || !inStock}
-      >
-        <div className="mx-auto flex max-w-lg items-center gap-2">
-          <div className="min-w-0 shrink-0">
-            <ProductPrice
-              size="sm"
-              price={product.price}
-              originalPrice={product.originalPrice}
-              discountPercent={product.discountPercent}
+      {/* Sticky purchase — mobile: always docked above bottom nav */}
+      {inStock ? (
+        <div
+          className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--bg-glass-strong)] px-4 py-2.5 backdrop-blur-xl lg:hidden bottom-[calc(4.15rem+env(safe-area-inset-bottom))]"
+          style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-2">
+            <div className="min-w-0 shrink-0">
+              <ProductPrice
+                size="sm"
+                price={product.price}
+                originalPrice={product.originalPrice}
+                discountPercent={product.discountPercent}
+              />
+            </div>
+            <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
+            <AddToBagButton
+              size="compact"
+              added={added}
+              onClick={handleAdd}
+              className="min-w-0 flex-1"
             />
           </div>
-          <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
-          <AddToBagButton
-            size="compact"
-            added={added}
-            onClick={handleAdd}
-            className="min-w-0 flex-1"
-          />
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

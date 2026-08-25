@@ -12,7 +12,7 @@ import { formatPrice } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPaymentsPage() {
-  const orders = await listStoredOrders();
+  const orders = await listStoredOrders({ take: 400 });
   const paid = orders.filter((o) => o.order.paymentStatus === "paid");
   const pending = orders.filter(
     (o) =>

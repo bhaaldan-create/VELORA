@@ -17,6 +17,8 @@ export type AdminSession = {
   ok: true;
   subject: AdminSessionSubject;
   exp: number;
+  /** Employee.role or "root" — present on v3 tokens */
+  role?: string;
 };
 
 function getUsername() {
@@ -103,6 +105,7 @@ export function verifyAdminAccessCode(code: string) {
 
 export async function createAdminSessionToken(
   subject: AdminSessionSubject = "root",
+  role = "root",
 ) {
   const secret = getSecret();
   if (!secret) {
@@ -111,7 +114,9 @@ export async function createAdminSessionToken(
 
   const exp = Date.now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000;
   const safeSubject = encodeURIComponent(subject || "root");
-  const payload = `v2.${exp}.${safeSubject}`;
+  const safeRole = encodeURIComponent(role || "other");
+  // v3 includes role for Edge RBAC without a DB lookup
+  const payload = `v3.${exp}.${safeSubject}.${safeRole}`;
   const sig = await hmacSign(payload, secret);
   return `${payload}.${sig}`;
 }
@@ -131,7 +136,7 @@ export async function parseAdminSessionToken(
     if (!Number.isFinite(exp) || Date.now() > exp) return null;
     const payload = `${ver}.${expRaw}`;
     if (!(await hmacVerify(payload, sig, secret))) return null;
-    return { ok: true, subject: "root", exp };
+    return { ok: true, subject: "root", exp, role: "root" };
   }
 
   if (parts.length === 4 && parts[0] === "v2") {
@@ -147,7 +152,32 @@ export async function parseAdminSessionToken(
     } catch {
       subject = subjectRaw;
     }
-    return { ok: true, subject, exp };
+    return {
+      ok: true,
+      subject,
+      exp,
+      role: subject === "root" ? "root" : undefined,
+    };
+  }
+
+  if (parts.length === 5 && parts[0] === "v3") {
+    const [ver, expRaw, subjectRaw, roleRaw, sig] = parts;
+    if (!ver || !expRaw || !subjectRaw || !roleRaw || !sig) return null;
+    const exp = Number(expRaw);
+    if (!Number.isFinite(exp) || Date.now() > exp) return null;
+    const payload = `${ver}.${expRaw}.${subjectRaw}.${roleRaw}`;
+    if (!(await hmacVerify(payload, sig, secret))) return null;
+    let subject: AdminSessionSubject = "root";
+    let role = "other";
+    try {
+      subject = decodeURIComponent(subjectRaw) || "root";
+      role = decodeURIComponent(roleRaw) || "other";
+    } catch {
+      subject = subjectRaw;
+      role = roleRaw;
+    }
+    if (subject === "root") role = "root";
+    return { ok: true, subject, exp, role };
   }
 
   return null;

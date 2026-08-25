@@ -28,6 +28,17 @@ export type AdminProductDetail = AdminProduct & {
   benefitsAr: string[];
   ingredients: string[];
   concerns: string[];
+  supplierId: string | null;
+  costCurrency: string;
+  costExchangeRate: number;
+  purchasePrice: number;
+  shippingCostIqd: number;
+  customsCostIqd: number;
+  brokerageCostIqd: number;
+  handlingCostIqd: number;
+  otherCostIqd: number;
+  landedCostIqd: number;
+  minMarginPct: number;
 };
 
 export type AdminProductStats = {

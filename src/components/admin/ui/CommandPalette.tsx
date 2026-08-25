@@ -22,11 +22,25 @@ const STATIC_COMMANDS: Command[] = [
     keywords: `${n.labelAr} ${n.labelEn} ${n.id}`,
   })),
   {
+    id: "ai-ask",
+    label: "اسألي وكيل الأعمال",
+    hint: "AI Agent",
+    href: "/admin/ai",
+    keywords: "ai ذكي سؤال ربح مبيعات مخزون",
+  },
+  {
     id: "create-product",
     label: "إضافة منتج",
     hint: "Products",
     href: "/admin/products#create",
     keywords: "منتج جديد add product",
+  },
+  {
+    id: "audit-log",
+    label: "سجل التدقيق",
+    hint: "Audit",
+    href: "/admin/settings/audit",
+    keywords: "audit سجل تدقيق تغييرات",
   },
   {
     id: "store",

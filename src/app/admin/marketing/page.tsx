@@ -2,8 +2,6 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { PageHeader, Surface } from "@/components/admin/ui/primitives";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
 export default function AdminMarketingPage() {
   return (
     <AdminShell active="marketing" title="التسويق">

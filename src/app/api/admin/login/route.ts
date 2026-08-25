@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
     // 1) حساب الجذر من البيئة
     if (verifyAdminCredentials(username, password)) {
-      const token = await createAdminSessionToken("root");
+      const token = await createAdminSessionToken("root", "root");
       const res = NextResponse.json({
         ok: true,
         role: "root",
@@ -83,10 +83,10 @@ export async function POST(req: Request) {
     }
 
     await touchEmployeePresence(employee.id);
-    const token = await createAdminSessionToken(employee.id);
+    const token = await createAdminSessionToken(employee.id, employee.role);
     const res = NextResponse.json({
       ok: true,
-      role: "employee",
+      role: employee.role,
       displayName: employee.name,
       employeeId: employee.id,
     });

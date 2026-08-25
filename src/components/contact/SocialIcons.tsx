@@ -37,13 +37,60 @@ export function IconInstagram({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.5"
       aria-hidden
       className={cn(className)}
     >
       <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconTikTok({
+  className,
+  size = 18,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      className={className}
+    >
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.52.6 2.89 2.89 0 0 1 2.31-4.1c.28 0 .55.04.81.1v3.5a6.2 6.2 0 0 0-.81-.05 6.34 6.34 0 1 0 6.34 6.34V8.73a8.18 8.18 0 0 0 4.76 1.52V6.84c-.31 0-.63-.05-.92-.15Z" />
+    </svg>
+  );
+}
+
+export function IconMail({
+  className,
+  size = 18,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={className}
+    >
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
+      <path d="m5.5 8 6.5 5 6.5-5" />
     </svg>
   );
 }

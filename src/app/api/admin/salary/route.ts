@@ -5,9 +5,12 @@ import {
   deleteSalaryItem,
   listSalaryItems,
 } from "@/lib/admin-hr";
+import { assertAdminModule } from "@/lib/admin/guard";
 import { currentMonthKey, isSalaryItemType } from "@/lib/hr-types";
 
 export async function GET(req: Request) {
+  const gate = await assertAdminModule("payroll");
+  if (!gate.ok) return gate.response;
   const { searchParams } = new URL(req.url);
   const monthKey = searchParams.get("month") || currentMonthKey();
   if (!/^\d{4}-\d{2}$/.test(monthKey)) {
@@ -36,6 +39,8 @@ const createSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const gate = await assertAdminModule("payroll");
+    if (!gate.ok) return gate.response;
     const body = await req.json();
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) {
@@ -66,6 +71,8 @@ const deleteSchema = z.object({ id: z.string().min(1) });
 
 export async function DELETE(req: Request) {
   try {
+    const gate = await assertAdminModule("payroll");
+    if (!gate.ok) return gate.response;
     const body = await req.json();
     const parsed = deleteSchema.safeParse(body);
     if (!parsed.success) {

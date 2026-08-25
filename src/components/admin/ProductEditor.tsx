@@ -55,6 +55,15 @@ type Draft = {
   description: string;
   benefitsAr: string[];
   brandName: string;
+  costCurrency: string;
+  costExchangeRate: string;
+  purchasePrice: string;
+  shippingCostIqd: string;
+  customsCostIqd: string;
+  brokerageCostIqd: string;
+  handlingCostIqd: string;
+  otherCostIqd: string;
+  minMarginPct: string;
   isActive: boolean;
   isBestseller: boolean;
   isNew: boolean;
@@ -77,6 +86,15 @@ function draftFromProduct(p: AdminProductDetail): Draft {
     description: p.description,
     benefitsAr: [...p.benefitsAr],
     brandName: p.brandName || "",
+    costCurrency: p.costCurrency,
+    costExchangeRate: String(p.costExchangeRate),
+    purchasePrice: String(p.purchasePrice),
+    shippingCostIqd: String(p.shippingCostIqd),
+    customsCostIqd: String(p.customsCostIqd),
+    brokerageCostIqd: String(p.brokerageCostIqd),
+    handlingCostIqd: String(p.handlingCostIqd),
+    otherCostIqd: String(p.otherCostIqd),
+    minMarginPct: String(p.minMarginPct),
     isActive: p.isActive,
     isBestseller: p.isBestseller,
     isNew: p.isNew,
@@ -178,6 +196,17 @@ export function ProductEditor({
   const previewSale = draft.customSale
     ? Number(draft.customSalePrice) || 0
     : salePriceFromBase(basePrice, draft.discountPercent);
+  const costRate = draft.costCurrency === "IQD" ? 1 : Number(draft.costExchangeRate) || 0;
+  const landedCost =
+    (Number(draft.purchasePrice) || 0) * costRate +
+    (Number(draft.shippingCostIqd) || 0) +
+    (Number(draft.customsCostIqd) || 0) +
+    (Number(draft.brokerageCostIqd) || 0) +
+    (Number(draft.handlingCostIqd) || 0) +
+    (Number(draft.otherCostIqd) || 0);
+  const grossMargin = previewSale > 0 && landedCost > 0
+    ? ((previewSale - landedCost) / previewSale) * 100
+    : null;
 
   const dirty = useMemo(() => {
     const base = draftFromProduct(product);
@@ -199,6 +228,15 @@ export function ProductEditor({
       draft.isNew !== base.isNew ||
       draft.specialOffer !== base.specialOffer ||
       draft.brandName !== base.brandName ||
+      draft.costCurrency !== base.costCurrency ||
+      draft.costExchangeRate !== base.costExchangeRate ||
+      draft.purchasePrice !== base.purchasePrice ||
+      draft.shippingCostIqd !== base.shippingCostIqd ||
+      draft.customsCostIqd !== base.customsCostIqd ||
+      draft.brokerageCostIqd !== base.brokerageCostIqd ||
+      draft.handlingCostIqd !== base.handlingCostIqd ||
+      draft.otherCostIqd !== base.otherCostIqd ||
+      draft.minMarginPct !== base.minMarginPct ||
       JSON.stringify(draft.benefitsAr) !== JSON.stringify(base.benefitsAr)
     );
   }, [draft, product]);
@@ -295,6 +333,15 @@ export function ProductEditor({
           isBestseller: draft.isBestseller,
           isNew: draft.isNew,
           brandName: draft.brandName.trim() || null,
+          costCurrency: draft.costCurrency,
+          costExchangeRate: draft.costCurrency === "IQD" ? 1 : Number(draft.costExchangeRate),
+          purchasePrice: Number(draft.purchasePrice),
+          shippingCostIqd: Number(draft.shippingCostIqd),
+          customsCostIqd: Number(draft.customsCostIqd),
+          brokerageCostIqd: Number(draft.brokerageCostIqd),
+          handlingCostIqd: Number(draft.handlingCostIqd),
+          otherCostIqd: Number(draft.otherCostIqd),
+          minMarginPct: Number(draft.minMarginPct),
         }),
       });
       const json = (await res.json()) as {
@@ -920,6 +967,24 @@ export function ProductEditor({
               </Field>
             </div>
           ) : null}
+        </SectionCard>
+
+        <SectionCard title="التكلفة والربحية">
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <Field label="عملة الشراء"><select className={inputClass} value={draft.costCurrency} onChange={(e) => patchDraft({ costCurrency: e.target.value })}><option value="IQD">IQD</option><option value="USD">USD</option></select></Field>
+            <Field label="سعر الصرف"><input className={inputClass} type="number" min={0} disabled={draft.costCurrency === "IQD"} value={draft.costExchangeRate} onChange={(e) => patchDraft({ costExchangeRate: e.target.value })} /></Field>
+            <Field label="سعر شراء الوحدة"><input className={inputClass} type="number" min={0} value={draft.purchasePrice} onChange={(e) => patchDraft({ purchasePrice: e.target.value })} /></Field>
+            <Field label="الشحن / وحدة (د.ع)"><input className={inputClass} type="number" min={0} value={draft.shippingCostIqd} onChange={(e) => patchDraft({ shippingCostIqd: e.target.value })} /></Field>
+            <Field label="الجمارك / وحدة"><input className={inputClass} type="number" min={0} value={draft.customsCostIqd} onChange={(e) => patchDraft({ customsCostIqd: e.target.value })} /></Field>
+            <Field label="التخليص / وحدة"><input className={inputClass} type="number" min={0} value={draft.brokerageCostIqd} onChange={(e) => patchDraft({ brokerageCostIqd: e.target.value })} /></Field>
+            <Field label="المناولة / وحدة"><input className={inputClass} type="number" min={0} value={draft.handlingCostIqd} onChange={(e) => patchDraft({ handlingCostIqd: e.target.value })} /></Field>
+            <Field label="تكاليف أخرى / وحدة"><input className={inputClass} type="number" min={0} value={draft.otherCostIqd} onChange={(e) => patchDraft({ otherCostIqd: e.target.value })} /></Field>
+            <Field label="الحد الأدنى للهامش %"><input className={inputClass} type="number" min={0} max={100} value={draft.minMarginPct} onChange={(e) => patchDraft({ minMarginPct: e.target.value })} /></Field>
+          </div>
+          <div className={`mt-4 rounded-[12px] p-4 ${grossMargin !== null && grossMargin < Number(draft.minMarginPct) ? "bg-[var(--admin-danger-bg)] text-[var(--admin-danger)]" : "bg-[var(--admin-success-bg)] text-[var(--admin-success)]"}`}>
+            <div className="flex justify-between text-[13px]"><span>التكلفة الواصلة</span><strong>{formatPrice(Math.round(landedCost))}</strong></div>
+            <div className="mt-2 flex justify-between text-[13px]"><span>هامش الربح</span><strong>{grossMargin === null ? "غير متوفر" : `${grossMargin.toFixed(2)}%`}</strong></div>
+          </div>
         </SectionCard>
 
         {/* Inventory */}

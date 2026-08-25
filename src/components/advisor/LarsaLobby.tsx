@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { LARSA_PATHS } from "@/data/larsa-consultation";
-import { LarsaAvatar } from "@/components/advisor/LarsaAvatar";
-import { LarsaMark, LarsaPathIcon } from "@/components/advisor/LarsaIcons";
+import { LarsaPathIcon } from "@/components/advisor/LarsaIcons";
 import { cn } from "@/lib/utils";
 import type { LarsaPathDef } from "@/data/larsa-consultation";
 
@@ -10,50 +10,44 @@ export function LarsaLobby({ onSelect }: { onSelect: (path: LarsaPathDef) => voi
   return (
     <div
       dir="rtl"
-      className="relative min-h-[calc(100vh-5rem)] overflow-x-hidden bg-[var(--larsa-white)]"
+      className="larsa-lobby relative min-h-[calc(100vh-5rem)] overflow-x-hidden bg-[var(--larsa-wash)]"
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 55% 38% at 50% 0%, rgba(243,237,245,0.95), transparent 58%), radial-gradient(ellipse 35% 30% at 90% 40%, rgba(232,221,235,0.45), transparent 55%)",
-        }}
-      />
+      <div className="larsa-lobby-ambient pointer-events-none absolute inset-0" aria-hidden />
 
-      <div className="relative mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16 lg:py-20">
-        <header className="flex flex-col items-center text-center">
-          <p className="font-latin text-[11px] font-medium tracking-[0.28em] text-[var(--larsa-plum-soft)] uppercase">
-            VELORA BEAUTY
-          </p>
-          <div className="mt-5 flex items-center gap-3">
-            <LarsaMark size={42} />
+      <div className="relative mx-auto w-full max-w-6xl px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-12 lg:pb-20 lg:pt-14">
+        {/* Hero — LARSA concierge identity only */}
+        <header className="larsa-hero mx-auto flex max-w-xl flex-col items-center text-center">
+          <div className="larsa-hero-logo-stage relative">
+            <div className="larsa-hero-glow" aria-hidden />
+            <Image
+              src="/brand/larsa-logo.png"
+              alt="LARSA"
+              width={320}
+              height={256}
+              priority
+              className="larsa-hero-logo relative z-[1] h-auto w-[148px] sm:w-[176px] lg:w-[196px]"
+              sizes="(max-width: 640px) 148px, (max-width: 1024px) 176px, 196px"
+            />
           </div>
-          <p className="font-latin mt-4 text-[1.45rem] font-semibold tracking-[0.3em] text-[var(--larsa-plum)]">
-            LARSA
+
+          <p className="larsa-hero-eyebrow mt-7 font-latin text-[10px] font-medium tracking-[0.26em] text-[var(--larsa-muted)] uppercase sm:mt-8">
+            VELORA Beauty Concierge
           </p>
-          <p className="mt-2 text-[1rem] text-[var(--larsa-plum-soft)]">
-            مستشارتكِ الشخصية للجمال
+
+          <h1 className="larsa-hero-title font-display mt-3 text-[clamp(1.55rem,4.5vw,2.15rem)] font-semibold leading-[var(--lh-snug)] text-[var(--larsa-plum)]">
+            مستشارك الشخصي للجمال
+          </h1>
+
+          <p className="larsa-hero-desc mt-3 max-w-sm text-[0.95rem] leading-relaxed text-[var(--larsa-plum-soft)] sm:mt-3.5 sm:text-[1.02rem]">
+            استشارة خاصة ترشدكِ لما يناسبكِ من مجموعة VELORA.
+          </p>
+
+          <p className="larsa-hero-invite mt-6 text-[0.95rem] font-medium text-[var(--larsa-plum)] sm:mt-7">
+            كيف يمكنني مساعدتكِ اليوم؟
           </p>
         </header>
 
-        <div className="mt-12 flex justify-center sm:mt-14">
-          <LarsaAvatar size="xl" active />
-        </div>
-
-        <div className="mx-auto mt-12 max-w-2xl text-center sm:mt-14">
-          <h1 className="font-display text-[clamp(1.75rem,4.2vw,2.65rem)] font-semibold leading-snug text-[var(--larsa-plum)]">
-            أهلاً بكِ في لارسا
-          </h1>
-          <p className="mx-auto mt-4 max-w-lg text-[1.05rem] leading-relaxed text-[var(--larsa-plum-soft)]">
-            مستشارتكِ الشخصية لاكتشاف ما يناسب جمالكِ.
-          </p>
-          <p className="mt-10 text-[1.1rem] font-medium text-[var(--larsa-plum)]">
-            كيف يمكنني مساعدتكِ اليوم؟
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
           {LARSA_PATHS.map((path) => (
             <button
               key={path.id}

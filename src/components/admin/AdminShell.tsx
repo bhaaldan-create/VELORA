@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -35,22 +37,75 @@ type Props = {
   children: ReactNode;
 };
 
+type ShellMeta = {
+  title?: string;
+  subtitle?: string;
+  active?: AdminNavId;
+};
+
+const AdminLayoutCtx = createContext(false);
+const AdminMetaCtx = createContext<{
+  meta: ShellMeta;
+  setMeta: (m: ShellMeta) => void;
+} | null>(null);
+
 function resolveActive(pathname: string, active?: AdminNavId): AdminNavId {
   if (active) return active;
   if (pathname === "/admin" || pathname === "/admin/") return "overview";
-  const match = ADMIN_NAV.find(
-    (n) => n.href !== "/admin" && pathname.startsWith(n.href),
-  );
-  return match?.id ?? "overview";
+  // Prefer longest matching href so /admin/settings/audit ≠ /admin/settings only incorrectly
+  let best: (typeof ADMIN_NAV)[number] | undefined;
+  for (const n of ADMIN_NAV) {
+    if (n.href === "/admin") continue;
+    if (pathname === n.href || pathname.startsWith(`${n.href}/`)) {
+      if (!best || n.href.length > best.href.length) best = n;
+    }
+  }
+  return best?.id ?? "overview";
 }
 
-export function AdminShell({ title, subtitle, active, children }: Props) {
+function NavLink({
+  href,
+  className,
+  title,
+  children,
+  onNavigate,
+}: {
+  href: string;
+  className: string;
+  title?: string;
+  children: ReactNode;
+  onNavigate?: () => void;
+}) {
+  const router = useRouter();
+  return (
+    <Link
+      href={href}
+      title={title}
+      prefetch
+      className={className}
+      onClick={onNavigate}
+      onMouseEnter={() => router.prefetch(href)}
+      onFocus={() => router.prefetch(href)}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/** Persistent chrome — mount once from admin/layout.tsx */
+export function AdminShellLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const current = resolveActive(pathname, active);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [meta, setMetaState] = useState<ShellMeta>({});
+  const setMeta = useCallback((m: ShellMeta) => {
+    setMetaState(m);
+  }, []);
+
+  const isLogin = pathname.startsWith("/admin/login");
+  const current = resolveActive(pathname, meta.active);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -67,24 +122,54 @@ export function AdminShell({ title, subtitle, active, children }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // نبضة حضور كل دقيقة — مؤشر «نشط على الموقع»
+  // Presence once per layout lifetime (not per page)
   useEffect(() => {
-    function beat() {
-      void fetch("/api/admin/presence", { method: "POST" }).catch(() => {});
-    }
-    beat();
-    const id = window.setInterval(beat, 60_000);
-    return () => window.clearInterval(id);
-  }, []);
+    if (isLogin) return;
+    let cancelled = false;
+    const beat = () => {
+      if (cancelled || document.visibilityState === "hidden") return;
+      void fetch("/api/admin/presence", {
+        method: "POST",
+        keepalive: true,
+      }).catch(() => {});
+    };
+    const t = window.setTimeout(beat, 2500);
+    const id = window.setInterval(beat, 120_000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+      window.clearInterval(id);
+    };
+  }, [isLogin]);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("velora-admin-sidebar");
-      if (saved === "1") setCollapsed(true);
+      if (localStorage.getItem("velora-admin-sidebar") === "1") {
+        setCollapsed(true);
+      }
     } catch {
       /* ignore */
     }
   }, []);
+
+  // Warm common routes after first paint
+  useEffect(() => {
+    if (isLogin) return;
+    const warm = [
+      "/admin",
+      "/admin/orders",
+      "/admin/products",
+      "/admin/customers",
+      "/admin/inventory",
+      "/admin/sales",
+      "/admin/expenses",
+      "/admin/ai",
+    ];
+    const id = window.setTimeout(() => {
+      for (const href of warm) router.prefetch(href);
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [isLogin, router]);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((v) => {
@@ -98,275 +183,321 @@ export function AdminShell({ title, subtitle, active, children }: Props) {
     });
   }, []);
 
-  const navByGroup = useMemo(() => {
-    return ADMIN_NAV_GROUPS.map((g) => ({
-      ...g,
-      items: ADMIN_NAV.filter((n) => n.group === g.id),
-    })).filter((g) => g.items.length > 0);
-  }, []);
+  const navByGroup = useMemo(
+    () =>
+      ADMIN_NAV_GROUPS.map((g) => ({
+        ...g,
+        items: ADMIN_NAV.filter((n) => n.group === g.id),
+      })).filter((g) => g.items.length > 0),
+    [],
+  );
+
+  const metaValue = useMemo(() => ({ meta, setMeta }), [meta, setMeta]);
+
+  if (isLogin) {
+    return <>{children}</>;
+  }
 
   const pageTitle =
-    title || ADMIN_NAV.find((n) => n.id === current)?.labelAr || "VELORA";
+    meta.title ||
+    ADMIN_NAV.find((n) => n.id === current)?.labelAr ||
+    "VELORA";
 
   return (
-    <AdminToastProvider>
-      <div className="admin-os" dir="rtl">
-        {/* Desktop sidebar */}
-        <aside
-          className={`fixed inset-y-0 end-0 z-40 hidden border-s border-[var(--admin-border)] bg-[var(--admin-surface)] transition-[width] duration-200 lg:flex lg:flex-col ${
-            collapsed
-              ? "w-[var(--admin-sidebar-collapsed)]"
-              : "w-[var(--admin-sidebar-w)]"
-          }`}
-        >
-          <div
-            className={`flex h-[var(--admin-topbar-h)] items-center border-b border-[var(--admin-border)] ${
-              collapsed ? "justify-center px-2" : "justify-between px-4"
-            }`}
-          >
-            {!collapsed ? (
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium tracking-[0.2em] text-[var(--admin-text-muted)]">
-                  VELORA
-                </p>
-                <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
-                  Admin OS
-                </p>
-              </div>
-            ) : (
-              <span className="text-[11px] font-semibold tracking-widest text-[var(--admin-plum)]">
-                V
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className="flex size-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-soft)] hover:text-[var(--admin-text)]"
-              aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
-            >
-              <PanelLeft className="size-4" strokeWidth={1.6} />
-            </button>
-          </div>
-
-          <nav className="admin-scroll flex-1 overflow-y-auto px-2 py-3">
-            {navByGroup.map((group) => (
-              <div key={group.id} className="mb-4">
-                {!collapsed ? (
-                  <p className="mb-1.5 px-2 text-[10px] font-medium tracking-wide text-[var(--admin-text-muted)]">
-                    {group.label}
-                  </p>
-                ) : null}
-                <ul className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const isActive = item.id === current;
-                    return (
-                      <li key={item.id}>
-                        <Link
-                          href={item.href}
-                          title={item.labelAr}
-                          className={`flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] transition ${
-                            isActive
-                              ? "bg-[var(--admin-plum)] text-white"
-                              : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] hover:text-[var(--admin-text)]"
-                          } ${collapsed ? "justify-center px-0" : ""}`}
-                        >
-                          <AdminNavIcon
-                            id={item.id}
-                            className="size-4 shrink-0"
-                          />
-                          {!collapsed ? (
-                            <span className="truncate font-medium">
-                              {item.labelAr}
-                            </span>
-                          ) : null}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </nav>
-
-          <div
-            className={`border-t border-[var(--admin-border)] p-2 ${
-              collapsed ? "flex flex-col items-center gap-1" : "space-y-1"
-            }`}
-          >
-            <Link
-              href="/"
-              className={`flex items-center gap-2 rounded-[8px] px-2.5 py-2 text-[12px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] ${
-                collapsed ? "justify-center px-0" : ""
+    <AdminLayoutCtx.Provider value={true}>
+      <AdminMetaCtx.Provider value={metaValue}>
+        <AdminToastProvider>
+          <div className="admin-os" dir="rtl">
+            <aside
+              className={`fixed inset-y-0 end-0 z-40 hidden border-s border-[var(--admin-border)] bg-[var(--admin-surface)] transition-[width] duration-150 lg:flex lg:flex-col ${
+                collapsed
+                  ? "w-[var(--admin-sidebar-collapsed)]"
+                  : "w-[var(--admin-sidebar-w)]"
               }`}
             >
-              <Store className="size-4" strokeWidth={1.6} />
-              {!collapsed ? <span>المتجر</span> : null}
-            </Link>
-            {!collapsed ? (
-              <div className="px-1">
-                <AdminLogoutButton />
-              </div>
-            ) : null}
-          </div>
-        </aside>
-
-        {/* Mobile drawer */}
-        {mobileOpen ? (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <button
-              type="button"
-              className="absolute inset-0 bg-[rgba(44,35,48,0.4)]"
-              aria-label="إغلاق"
-              onClick={() => setMobileOpen(false)}
-            />
-            <div className="absolute inset-y-0 end-0 flex w-[min(100%,18rem)] flex-col bg-[var(--admin-surface)] shadow-[var(--admin-shadow-md)] admin-animate-in">
-              <div className="flex h-[var(--admin-topbar-h)] items-center justify-between border-b border-[var(--admin-border)] px-4">
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[var(--admin-text-muted)]">
-                    VELORA
-                  </p>
-                  <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
-                    Admin OS
-                  </p>
-                </div>
+              <div
+                className={`flex h-[var(--admin-topbar-h)] items-center border-b border-[var(--admin-border)] ${
+                  collapsed ? "justify-center px-2" : "justify-between px-4"
+                }`}
+              >
+                {!collapsed ? (
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium tracking-[0.2em] text-[var(--admin-text-muted)]">
+                      VELORA
+                    </p>
+                    <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
+                      Admin OS
+                    </p>
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-semibold tracking-widest text-[var(--admin-plum)]">
+                    V
+                  </span>
+                )}
                 <button
                   type="button"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex size-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)]"
-                  aria-label="إغلاق"
+                  onClick={toggleCollapsed}
+                  className="flex size-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] hover:bg-[var(--admin-surface-soft)] hover:text-[var(--admin-text)]"
+                  aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
                 >
-                  <X className="size-4" />
+                  <PanelLeft className="size-4" strokeWidth={1.6} />
                 </button>
               </div>
+
               <nav className="admin-scroll flex-1 overflow-y-auto px-2 py-3">
-                {ADMIN_NAV.map((item) => {
-                  const isActive = item.id === current;
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={`mb-0.5 flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[13px] ${
-                        isActive
-                          ? "bg-[var(--admin-plum)] text-white"
-                          : "text-[var(--admin-text-secondary)]"
-                      }`}
-                    >
-                      <AdminNavIcon id={item.id} />
-                      <span className="font-medium">{item.labelAr}</span>
-                    </Link>
-                  );
-                })}
+                {navByGroup.map((group) => (
+                  <div key={group.id} className="mb-4">
+                    {!collapsed ? (
+                      <p className="mb-1.5 px-2 text-[10px] font-medium tracking-wide text-[var(--admin-text-muted)]">
+                        {group.label}
+                      </p>
+                    ) : null}
+                    <ul className="space-y-0.5">
+                      {group.items.map((item) => {
+                        const isActive = item.id === current;
+                        return (
+                          <li key={item.id}>
+                            <NavLink
+                              href={item.href}
+                              title={item.labelAr}
+                              className={`flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] transition ${
+                                isActive
+                                  ? "bg-[var(--admin-plum)] text-white"
+                                  : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] hover:text-[var(--admin-text)]"
+                              } ${collapsed ? "justify-center px-0" : ""}`}
+                            >
+                              <AdminNavIcon
+                                id={item.id}
+                                className="size-4 shrink-0"
+                              />
+                              {!collapsed ? (
+                                <span className="truncate font-medium">
+                                  {item.labelAr}
+                                </span>
+                              ) : null}
+                            </NavLink>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
               </nav>
-              <div className="space-y-2 border-t border-[var(--admin-border)] p-3">
-                <Link
-                  href="/"
-                  className="flex items-center gap-2 text-[13px] text-[var(--admin-text-secondary)]"
-                >
-                  <Store className="size-4" />
-                  المتجر
-                </Link>
-                <AdminLogoutButton />
-              </div>
-            </div>
-          </div>
-        ) : null}
 
-        {/* Main column */}
-        <div
-          className={`flex min-h-dvh flex-col transition-[padding] duration-200 ${
-            collapsed
-              ? "lg:pe-[var(--admin-sidebar-collapsed)]"
-              : "lg:pe-[var(--admin-sidebar-w)]"
-          }`}
-        >
-          <header className="sticky top-0 z-30 flex h-[var(--admin-topbar-h)] items-center gap-2 border-b border-[var(--admin-border)] bg-[var(--admin-bg-elevated)]/90 px-3 backdrop-blur-md sm:px-5">
-            <button
-              type="button"
-              className="flex size-9 items-center justify-center rounded-lg text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] lg:hidden"
-              onClick={() => setMobileOpen(true)}
-              aria-label="القائمة"
-            >
-              <Menu className="size-[18px]" strokeWidth={1.6} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setCmdOpen(true)}
-              className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-start text-[13px] text-[var(--admin-text-muted)] transition hover:border-[var(--admin-border-strong)] sm:max-w-md"
-            >
-              <Search className="size-3.5 shrink-0" strokeWidth={1.6} />
-              <span className="truncate">بحث أو أمر…</span>
-              <kbd className="ms-auto hidden rounded border border-[var(--admin-border)] px-1.5 py-0.5 text-[10px] text-[var(--admin-text-muted)] sm:inline">
-                ⌘K
-              </kbd>
-            </button>
-
-            <div className="ms-auto flex items-center gap-1">
-              <button
-                type="button"
-                className="relative flex size-9 items-center justify-center rounded-lg text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)]"
-                aria-label="الإشعارات"
-                onClick={() => router.push("/admin/orders?status=new")}
+              <div
+                className={`border-t border-[var(--admin-border)] p-2 ${
+                  collapsed ? "flex flex-col items-center gap-1" : "space-y-1"
+                }`}
               >
-                <Bell className="size-4" strokeWidth={1.6} />
-              </button>
-            </div>
-          </header>
-
-          <main className="admin-animate-in flex-1 px-3 pb-24 pt-5 sm:px-5 sm:pb-8 lg:px-7">
-            {(title || subtitle) && current !== "overview" ? (
-              <div className="mb-5 lg:hidden">
-                <h1 className="text-[1.25rem] font-semibold text-[var(--admin-text)]">
-                  {pageTitle}
-                </h1>
-                {subtitle ? (
-                  <p className="mt-1 text-[13px] text-[var(--admin-text-secondary)]">
-                    {subtitle}
-                  </p>
+                <NavLink
+                  href="/"
+                  className={`flex items-center gap-2 rounded-[8px] px-2.5 py-2 text-[12px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] ${
+                    collapsed ? "justify-center px-0" : ""
+                  }`}
+                >
+                  <Store className="size-4" strokeWidth={1.6} />
+                  {!collapsed ? <span>المتجر</span> : null}
+                </NavLink>
+                {!collapsed ? (
+                  <div className="px-1">
+                    <AdminLogoutButton />
+                  </div>
                 ) : null}
               </div>
+            </aside>
+
+            {mobileOpen ? (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-[rgba(44,35,48,0.4)]"
+                  aria-label="إغلاق"
+                  onClick={() => setMobileOpen(false)}
+                />
+                <div className="absolute inset-y-0 end-0 flex w-[min(100%,18rem)] flex-col bg-[var(--admin-surface)] shadow-[var(--admin-shadow-md)]">
+                  <div className="flex h-[var(--admin-topbar-h)] items-center justify-between border-b border-[var(--admin-border)] px-4">
+                    <div>
+                      <p className="text-[10px] tracking-[0.2em] text-[var(--admin-text-muted)]">
+                        VELORA
+                      </p>
+                      <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
+                        Admin OS
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex size-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)]"
+                      aria-label="إغلاق"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  <nav className="admin-scroll flex-1 overflow-y-auto px-2 py-3">
+                    {ADMIN_NAV.map((item) => {
+                      const isActive = item.id === current;
+                      return (
+                        <NavLink
+                          key={item.id}
+                          href={item.href}
+                          onNavigate={() => setMobileOpen(false)}
+                          className={`mb-0.5 flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[13px] ${
+                            isActive
+                              ? "bg-[var(--admin-plum)] text-white"
+                              : "text-[var(--admin-text-secondary)]"
+                          }`}
+                        >
+                          <AdminNavIcon id={item.id} />
+                          <span className="font-medium">{item.labelAr}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </nav>
+                  <div className="space-y-2 border-t border-[var(--admin-border)] p-3">
+                    <NavLink
+                      href="/"
+                      className="flex items-center gap-2 text-[13px] text-[var(--admin-text-secondary)]"
+                    >
+                      <Store className="size-4" />
+                      المتجر
+                    </NavLink>
+                    <AdminLogoutButton />
+                  </div>
+                </div>
+              </div>
             ) : null}
-            {children}
-          </main>
-        </div>
 
-        {/* Mobile bottom tabs */}
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-border)] bg-[var(--admin-surface)]/95 backdrop-blur-md lg:hidden pb-[env(safe-area-inset-bottom)]">
-          <ul className="grid grid-cols-5">
-            {MOBILE_TAB_IDS.map((id) => {
-              const item = ADMIN_NAV.find((n) => n.id === id)!;
-              const isActive = current === id;
-              return (
-                <li key={id}>
-                  <Link
-                    href={item.href}
-                    className={`flex flex-col items-center gap-0.5 py-2 text-[10px] ${
-                      isActive
-                        ? "text-[var(--admin-plum)]"
-                        : "text-[var(--admin-text-muted)]"
-                    }`}
+            <div
+              className={`flex min-h-dvh flex-col transition-[padding] duration-150 ${
+                collapsed
+                  ? "lg:pe-[var(--admin-sidebar-collapsed)]"
+                  : "lg:pe-[var(--admin-sidebar-w)]"
+              }`}
+            >
+              <header className="sticky top-0 z-30 flex h-[var(--admin-topbar-h)] items-center gap-2 border-b border-[var(--admin-border)] bg-[var(--admin-bg-elevated)]/90 px-3 backdrop-blur-md sm:px-5">
+                <button
+                  type="button"
+                  className="flex size-9 items-center justify-center rounded-lg text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)] lg:hidden"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="القائمة"
+                >
+                  <Menu className="size-[18px]" strokeWidth={1.6} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCmdOpen(true)}
+                  className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-start text-[13px] text-[var(--admin-text-muted)] transition hover:border-[var(--admin-border-strong)] sm:max-w-md"
+                >
+                  <Search className="size-3.5 shrink-0" strokeWidth={1.6} />
+                  <span className="truncate">بحث أو أمر…</span>
+                  <kbd className="ms-auto hidden rounded border border-[var(--admin-border)] px-1.5 py-0.5 text-[10px] text-[var(--admin-text-muted)] sm:inline">
+                    ⌘K
+                  </kbd>
+                </button>
+
+                <div className="ms-auto flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="relative flex size-9 items-center justify-center rounded-lg text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-soft)]"
+                    aria-label="الإشعارات"
+                    onClick={() => router.push("/admin/orders?status=new")}
                   >
-                    <AdminNavIcon id={id} className="size-[18px]" />
-                    <span>{item.labelAr}</span>
-                  </Link>
-                </li>
-              );
-            })}
-            <li>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="flex w-full flex-col items-center gap-0.5 py-2 text-[10px] text-[var(--admin-text-muted)]"
-              >
-                <Menu className="size-[18px]" strokeWidth={1.6} />
-                <span>المزيد</span>
-              </button>
-            </li>
-          </ul>
-        </nav>
+                    <Bell className="size-4" strokeWidth={1.6} />
+                  </button>
+                </div>
+              </header>
 
-        <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
-      </div>
-    </AdminToastProvider>
+              <main className="flex-1 px-3 pb-24 pt-5 sm:px-5 sm:pb-8 lg:px-7">
+                {(meta.title || meta.subtitle) && current !== "overview" ? (
+                  <div className="mb-5 lg:hidden">
+                    <h1 className="text-[1.25rem] font-semibold text-[var(--admin-text)]">
+                      {pageTitle}
+                    </h1>
+                    {meta.subtitle ? (
+                      <p className="mt-1 text-[13px] text-[var(--admin-text-secondary)]">
+                        {meta.subtitle}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {children}
+              </main>
+            </div>
+
+            <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-border)] bg-[var(--admin-surface)]/95 backdrop-blur-md lg:hidden pb-[env(safe-area-inset-bottom)]">
+              <ul className="grid grid-cols-5">
+                {MOBILE_TAB_IDS.map((id) => {
+                  const item = ADMIN_NAV.find((n) => n.id === id)!;
+                  const isActive = current === id;
+                  return (
+                    <li key={id}>
+                      <NavLink
+                        href={item.href}
+                        className={`flex flex-col items-center gap-0.5 py-2 text-[10px] ${
+                          isActive
+                            ? "text-[var(--admin-plum)]"
+                            : "text-[var(--admin-text-muted)]"
+                        }`}
+                      >
+                        <AdminNavIcon id={id} className="size-[18px]" />
+                        <span>{item.labelAr}</span>
+                      </NavLink>
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(true)}
+                    className="flex w-full flex-col items-center gap-0.5 py-2 text-[10px] text-[var(--admin-text-muted)]"
+                  >
+                    <Menu className="size-[18px]" strokeWidth={1.6} />
+                    <span>المزيد</span>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+
+            <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+          </div>
+        </AdminToastProvider>
+      </AdminMetaCtx.Provider>
+    </AdminLayoutCtx.Provider>
   );
+}
+
+/**
+ * Page wrapper — when inside AdminShellLayout, only content remounts.
+ * Outside layout (legacy), renders full chrome once.
+ */
+export function AdminShell({ title, subtitle, active, children }: Props) {
+  const inLayout = useContext(AdminLayoutCtx);
+  const metaCtx = useContext(AdminMetaCtx);
+  const setMeta = metaCtx?.setMeta;
+
+  useEffect(() => {
+    setMeta?.({ title, subtitle, active });
+  }, [setMeta, title, subtitle, active]);
+
+  if (inLayout) {
+    return <>{children}</>;
+  }
+
+  return (
+    <AdminShellLayout>
+      <AdminShellInner title={title} subtitle={subtitle} active={active}>
+        {children}
+      </AdminShellInner>
+    </AdminShellLayout>
+  );
+}
+
+function AdminShellInner({ title, subtitle, active, children }: Props) {
+  const metaCtx = useContext(AdminMetaCtx);
+  const setMeta = metaCtx?.setMeta;
+  useEffect(() => {
+    setMeta?.({ title, subtitle, active });
+  }, [setMeta, title, subtitle, active]);
+  return <>{children}</>;
 }

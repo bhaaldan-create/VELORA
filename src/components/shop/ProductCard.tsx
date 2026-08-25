@@ -86,7 +86,7 @@ export function ProductCard({
           {brand}
         </p>
         <Link href={`/shop/${product.slug}`} className="mt-1.5">
-          <h3 className="font-display line-clamp-2 text-[0.95rem] font-medium leading-snug text-[var(--ink)] transition-opacity group-hover:opacity-75">
+          <h3 className="font-display line-clamp-2 min-h-[2.4em] text-[0.95rem] font-medium leading-snug text-[var(--ink)] transition-opacity group-hover:opacity-75">
             {title}
           </h3>
         </Link>

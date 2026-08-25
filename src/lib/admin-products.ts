@@ -3,6 +3,8 @@ import type {
   AdminProduct,
   AdminProductDetail,
 } from "@/lib/admin-product-types";
+import { writeAuditLog } from "@/lib/finance/audit";
+import { computeLandedCostIqd } from "@/lib/finance/product-cost";
 import { salePriceFromBase } from "@/lib/pricing";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import type { CategorySlug, SkinConcern } from "@/types";
@@ -88,6 +90,17 @@ function toAdminProductDetail(row: {
   benefitsArJson: unknown;
   ingredientsJson: unknown;
   concernsJson: unknown;
+  supplierId: string | null;
+  costCurrency: string;
+  costExchangeRate: number;
+  purchasePrice: number;
+  shippingCostIqd: number;
+  customsCostIqd: number;
+  brokerageCostIqd: number;
+  handlingCostIqd: number;
+  otherCostIqd: number;
+  landedCostIqd: number;
+  minMarginPct: number;
 }): AdminProductDetail {
   return {
     ...toAdminProduct(row),
@@ -97,6 +110,17 @@ function toAdminProductDetail(row: {
     benefitsAr: asStringArray(row.benefitsArJson),
     ingredients: asStringArray(row.ingredientsJson),
     concerns: asStringArray(row.concernsJson),
+    supplierId: row.supplierId,
+    costCurrency: row.costCurrency,
+    costExchangeRate: row.costExchangeRate,
+    purchasePrice: row.purchasePrice,
+    shippingCostIqd: row.shippingCostIqd,
+    customsCostIqd: row.customsCostIqd,
+    brokerageCostIqd: row.brokerageCostIqd,
+    handlingCostIqd: row.handlingCostIqd,
+    otherCostIqd: row.otherCostIqd,
+    landedCostIqd: row.landedCostIqd,
+    minMarginPct: row.minMarginPct,
   };
 }
 
@@ -139,6 +163,16 @@ export type AdminProductUpdate = {
   reviews?: number;
   imageTone?: string;
   slug?: string;
+  supplierId?: string | null;
+  costCurrency?: string;
+  costExchangeRate?: number;
+  purchasePrice?: number;
+  shippingCostIqd?: number;
+  customsCostIqd?: number;
+  brokerageCostIqd?: number;
+  handlingCostIqd?: number;
+  otherCostIqd?: number;
+  minMarginPct?: number;
 };
 
 export type AdminProductCreateInput = {
@@ -310,11 +344,83 @@ export async function updateAdminProduct(
         ? { imageTone: data.imageTone.trim() || DEFAULT_TONE }
         : {}),
       ...(nextSlug ? { slug: nextSlug } : {}),
+      ...(data.supplierId !== undefined ? { supplierId: data.supplierId } : {}),
+      ...(typeof data.costCurrency === "string"
+        ? { costCurrency: data.costCurrency.toUpperCase() }
+        : {}),
+      ...(typeof data.costExchangeRate === "number"
+        ? { costExchangeRate: data.costExchangeRate }
+        : {}),
+      ...(typeof data.purchasePrice === "number"
+        ? { purchasePrice: data.purchasePrice }
+        : {}),
+      ...(typeof data.shippingCostIqd === "number"
+        ? { shippingCostIqd: data.shippingCostIqd }
+        : {}),
+      ...(typeof data.customsCostIqd === "number"
+        ? { customsCostIqd: data.customsCostIqd }
+        : {}),
+      ...(typeof data.brokerageCostIqd === "number"
+        ? { brokerageCostIqd: data.brokerageCostIqd }
+        : {}),
+      ...(typeof data.handlingCostIqd === "number"
+        ? { handlingCostIqd: data.handlingCostIqd }
+        : {}),
+      ...(typeof data.otherCostIqd === "number"
+        ? { otherCostIqd: data.otherCostIqd }
+        : {}),
+      ...(typeof data.minMarginPct === "number"
+        ? { minMarginPct: data.minMarginPct }
+        : {}),
     },
   });
 
-  revalidateStorefront({ slug: row.slug, oldSlug: existing.slug });
-  return toAdminProduct(row);
+  // Recompute landed cost when any cost field changed
+  const costTouched =
+    data.costCurrency !== undefined ||
+    data.costExchangeRate !== undefined ||
+    data.purchasePrice !== undefined ||
+    data.shippingCostIqd !== undefined ||
+    data.customsCostIqd !== undefined ||
+    data.brokerageCostIqd !== undefined ||
+    data.handlingCostIqd !== undefined ||
+    data.otherCostIqd !== undefined;
+
+  let finalRow = row;
+  if (costTouched) {
+    const landed = computeLandedCostIqd({
+      costCurrency: row.costCurrency,
+      costExchangeRate: row.costExchangeRate,
+      purchasePrice: row.purchasePrice,
+      shippingCostIqd: row.shippingCostIqd,
+      customsCostIqd: row.customsCostIqd,
+      brokerageCostIqd: row.brokerageCostIqd,
+      handlingCostIqd: row.handlingCostIqd,
+      otherCostIqd: row.otherCostIqd,
+      price: row.price,
+      discountPercent: row.discountPercent,
+    });
+    finalRow = await prisma.product.update({
+      where: { id },
+      data: { landedCostIqd: landed },
+    });
+    await writeAuditLog({
+      action: "product.cost.update",
+      entityType: "Product",
+      entityId: id,
+      before: {
+        landedCostIqd: existing.landedCostIqd,
+        purchasePrice: existing.purchasePrice,
+      },
+      after: {
+        landedCostIqd: landed,
+        purchasePrice: finalRow.purchasePrice,
+      },
+    });
+  }
+
+  revalidateStorefront({ slug: finalRow.slug, oldSlug: existing.slug });
+  return toAdminProduct(finalRow);
 }
 
 export async function deleteAdminProduct(id: string): Promise<boolean> {

@@ -153,6 +153,16 @@ const patchSchema = z.object({
   reviews: z.number().int().nonnegative().optional(),
   imageTone: z.string().max(300).optional(),
   slug: z.string().max(120).optional(),
+  supplierId: z.string().nullable().optional(),
+  costCurrency: z.enum(["IQD", "USD"]).optional(),
+  costExchangeRate: z.number().nonnegative().optional(),
+  purchasePrice: z.number().nonnegative().optional(),
+  shippingCostIqd: z.number().nonnegative().optional(),
+  customsCostIqd: z.number().nonnegative().optional(),
+  brokerageCostIqd: z.number().nonnegative().optional(),
+  handlingCostIqd: z.number().nonnegative().optional(),
+  otherCostIqd: z.number().nonnegative().optional(),
+  minMarginPct: z.number().min(0).max(100).optional(),
 });
 
 export async function PATCH(req: Request) {

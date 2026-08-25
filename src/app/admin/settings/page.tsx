@@ -2,8 +2,6 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { PageHeader, Surface } from "@/components/admin/ui/primitives";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
 export default function AdminSettingsPage() {
   return (
     <AdminShell active="settings" title="الإعدادات">
@@ -34,6 +32,11 @@ export default function AdminSettingsPage() {
               title: "الموظفون والصلاحيات",
               desc: "الفريق، الحضور، والرواتب",
               href: "/admin/employees",
+            },
+            {
+              title: "سجل التدقيق",
+              desc: "تتبع تغييرات التكلفة والاستيراد والمصروفات",
+              href: "/admin/settings/audit",
             },
             {
               title: "المتجر",

@@ -3,8 +3,9 @@ import type { NextRequest } from "next/server";
 import {
   ADMIN_COOKIE,
   isAdminAuthConfigured,
-  verifyAdminSessionToken,
+  parseAdminSessionToken,
 } from "@/lib/admin-auth";
+import { canAccessModule, moduleForPath } from "@/lib/admin/rbac";
 import {
   CUSTOMER_COOKIE,
   verifyCustomerSessionToken,
@@ -63,9 +64,24 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get(ADMIN_COOKIE)?.value;
-  const ok = await verifyAdminSessionToken(token);
+  const session = await parseAdminSessionToken(token);
 
-  if (ok) {
+  if (session?.ok) {
+    const mod = moduleForPath(pathname);
+    if (
+      mod &&
+      !canAccessModule(session.subject, session.role || "other", mod)
+    ) {
+      if (isAdminApi) {
+        return NextResponse.json(
+          { ok: false, error: "ليس لديك صلاحية لهذا القسم." },
+          { status: 403 },
+        );
+      }
+      const denied = new URL("/admin", request.url);
+      denied.searchParams.set("denied", mod);
+      return NextResponse.redirect(denied);
+    }
     return NextResponse.next();
   }
 

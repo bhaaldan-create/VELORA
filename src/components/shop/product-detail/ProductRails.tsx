@@ -113,7 +113,7 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
   const inStock = (product.stock ?? 1) > 0;
 
   return (
-    <article className="relative w-[38vw] max-w-[168px] shrink-0 sm:w-auto sm:max-w-none">
+    <article className="relative flex h-full w-[38vw] max-w-[168px] shrink-0 flex-col sm:w-auto sm:max-w-none">
       <WishlistHeartButton
         productId={product.id}
         size="sm"
@@ -138,11 +138,11 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
             {product.brandName}
           </p>
         ) : null}
-        <h3 className="font-display mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--plum)]">
+        <h3 className="font-display mt-0.5 line-clamp-2 min-h-[2.4em] text-[0.78rem] font-medium leading-snug text-[var(--plum)]">
           {ar ? product.nameAr : product.name}
         </h3>
       </Link>
-      <div className="mt-2 space-y-2">
+      <div className="mt-auto space-y-2 pt-2">
         <ProductPrice
           size="sm"
           price={product.price}

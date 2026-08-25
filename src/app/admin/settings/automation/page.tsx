@@ -1,8 +1,6 @@
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PageHeader, Surface } from "@/components/admin/ui/primitives";
 
-export const dynamic = "force-dynamic";
-
 const RULES = [
   {
     when: "الحالة = جاهز للشحن",

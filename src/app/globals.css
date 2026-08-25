@@ -94,6 +94,25 @@
   --account-plum: #3a1836;
   --account-muted: #7a6578;
   --account-border: rgba(58, 24, 54, 0.08);
+
+  /* Add-to-bag CTA — soft white plate + deep plum type */
+  --bag-cta-bg: #ffffff;
+  --bag-cta-bg-hover: #fbf8fc;
+  --bag-cta-fg: #3d2640;
+  --bag-cta-border: rgba(61, 38, 64, 0.1);
+  --bag-cta-shadow: 0 1px 2px rgba(50, 22, 47, 0.04), 0 8px 22px -14px rgba(125, 95, 146, 0.22);
+  --bag-cta-shadow-hover: 0 2px 4px rgba(50, 22, 47, 0.05), 0 12px 28px -12px rgba(125, 95, 146, 0.28);
+
+  /* Product WhatsApp CTA — plum-led, muted chat accent */
+  --wa-cta-bg: color-mix(in srgb, var(--mist) 70%, #ffffff);
+  --wa-cta-bg-hover: color-mix(in srgb, var(--blush) 18%, #ffffff);
+  --wa-cta-fg: #3d2640;
+  --wa-cta-fg-hover: #2f1c33;
+  --wa-cta-border: rgba(61, 38, 64, 0.1);
+  --wa-cta-border-hover: rgba(61, 38, 64, 0.18);
+  --wa-cta-icon: #6f6578;
+  --wa-cta-icon-hover: #5c5266;
+  --wa-cta-shadow: 0 1px 2px rgba(50, 22, 47, 0.04);
 }
 
 /* مظهر ليلي دافئ — Deep Plum / Charcoal، لا #000 خالص */
@@ -166,6 +185,24 @@
   --account-plum: #e8dce0;
   --account-muted: #9a8a92;
   --account-border: rgba(243, 235, 230, 0.1);
+
+  /* Soft ivory plate — not harsh pure white on charcoal */
+  --bag-cta-bg: #f3ebe6;
+  --bag-cta-bg-hover: #f8f4f1;
+  --bag-cta-fg: #3d2640;
+  --bag-cta-border: rgba(243, 235, 230, 0.14);
+  --bag-cta-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 10px 28px -14px rgba(0, 0, 0, 0.45);
+  --bag-cta-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.32), 0 14px 32px -12px rgba(149, 120, 168, 0.28);
+
+  --wa-cta-bg: #221e22;
+  --wa-cta-bg-hover: #2a2428;
+  --wa-cta-fg: #e8dce0;
+  --wa-cta-fg-hover: #f3ebe6;
+  --wa-cta-border: rgba(243, 235, 230, 0.12);
+  --wa-cta-border-hover: rgba(243, 235, 230, 0.2);
+  --wa-cta-icon: #b5a3b0;
+  --wa-cta-icon-hover: #cbb6ba;
+  --wa-cta-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 /* جسر: bg-white الصلب → سطح ثيم */
@@ -287,6 +324,36 @@ html.theme-animating .surface-input {
 
 .theme-shadow-md {
   box-shadow: var(--shadow-md);
+}
+
+/* «أضف للحقيبة» — توهج بنفسجي حريري خفيف على الحروف */
+.velora-bag-cta-label {
+  text-shadow:
+    0 0 10px rgba(179, 155, 192, 0.28),
+    0 0 22px rgba(149, 120, 168, 0.16),
+    0 0 36px rgba(125, 95, 146, 0.08);
+  transition: text-shadow 220ms ease;
+}
+
+.velora-bag-cta:hover .velora-bag-cta-label {
+  text-shadow:
+    0 0 12px rgba(179, 155, 192, 0.36),
+    0 0 26px rgba(149, 120, 168, 0.22),
+    0 0 42px rgba(125, 95, 146, 0.12);
+}
+
+[data-theme="dark"] .velora-bag-cta-label {
+  text-shadow:
+    0 0 12px rgba(179, 155, 192, 0.4),
+    0 0 26px rgba(149, 120, 168, 0.22),
+    0 0 40px rgba(125, 95, 146, 0.12);
+}
+
+[data-theme="dark"] .velora-bag-cta:hover .velora-bag-cta-label {
+  text-shadow:
+    0 0 14px rgba(179, 155, 192, 0.48),
+    0 0 30px rgba(149, 120, 168, 0.28),
+    0 0 48px rgba(125, 95, 146, 0.14);
 }
 
 /* شعار VELORA — يتبع data-theme فوراً بدون hydration flash */
@@ -575,8 +642,112 @@ html[data-locale="en"] .font-display {
   }
 }
 
+/* LARSA lobby hero — quiet premium motion */
+@keyframes larsa-hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes larsa-hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes larsa-hero-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(1.05) translate(1.5%, -1%);
+  }
+}
+
+.larsa-lobby-ambient {
+  background:
+    radial-gradient(
+      ellipse 58% 40% at 50% -8%,
+      color-mix(in srgb, var(--larsa-orbit) 32%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      ellipse 42% 34% at 88% 18%,
+      color-mix(in srgb, var(--larsa-lavender-deep) 70%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 36% 28% at 8% 32%,
+      color-mix(in srgb, var(--larsa-lavender) 55%, transparent),
+      transparent 55%
+    );
+}
+
+.larsa-hero-logo-stage {
+  isolation: isolate;
+  animation:
+    larsa-hero-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both,
+    larsa-hero-float 6.2s ease-in-out 0.85s infinite;
+}
+
+.larsa-hero-glow {
+  position: absolute;
+  inset: -28% -18%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--larsa-orbit) 38%, transparent) 0%,
+    color-mix(in srgb, var(--larsa-lavender-deep) 22%, transparent) 42%,
+    transparent 72%
+  );
+  filter: blur(2px);
+  animation: larsa-hero-glow 7.5s ease-in-out infinite;
+}
+
+.larsa-hero-logo {
+  display: block;
+}
+
+.larsa-hero-eyebrow {
+  animation: larsa-hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.larsa-hero-title {
+  animation: larsa-hero-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.larsa-hero-desc {
+  animation: larsa-hero-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+.larsa-hero-invite {
+  animation: larsa-hero-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.36s both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .motion-safe\:animate-\[larsa-orbit_4\.5s_linear_infinite\] {
+    animation: none !important;
+  }
+
+  .larsa-hero-glow,
+  .larsa-hero-logo-stage,
+  .larsa-hero-eyebrow,
+  .larsa-hero-title,
+  .larsa-hero-desc,
+  .larsa-hero-invite {
     animation: none !important;
   }
 }
@@ -799,7 +970,7 @@ html[data-locale="en"] .font-display {
 }
 
 .admin-animate-in {
-  animation: admin-fade-in 0.28s var(--admin-ease) both;
+  animation: none;
 }
 
 @keyframes admin-skeleton {

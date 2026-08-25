@@ -242,6 +242,7 @@ export async function findEmployeeByUsername(username: string) {
       username: true,
       passwordHash: true,
       isActive: true,
+      role: true,
     },
   });
   const hit = rows.find(

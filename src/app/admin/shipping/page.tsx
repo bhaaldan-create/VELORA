@@ -23,7 +23,7 @@ const SHIPPING_STATUSES = [
 export default async function AdminShippingPage() {
   const [providers, orders] = await Promise.all([
     Promise.resolve(listShippingProviders()),
-    listStoredOrders(),
+    listStoredOrders({ take: 400 }),
   ]);
 
   const shipments = orders.filter((o) =>
