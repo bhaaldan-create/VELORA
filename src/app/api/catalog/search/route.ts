@@ -1,6 +1,6 @@
 import { searchProducts } from "@/lib/catalog";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 /** بحث خفيف — يُستدعى عند الكتابة فقط */
 export async function GET(req: Request) {

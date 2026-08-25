@@ -1,6 +1,6 @@
 import { getAllProducts } from "@/lib/catalog";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 /** قائمة خفيفة للتسوق — تُحمَّل بعد عرض الصفحة */
 export async function GET() {

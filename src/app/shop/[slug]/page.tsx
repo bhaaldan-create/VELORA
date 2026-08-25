@@ -3,20 +3,11 @@ import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/shop/ProductDetail";
 import {
   getProductBySlug,
-  getProductSlugs,
   getRelatedProducts,
   getRoutineCompanions,
 } from "@/lib/catalog";
-export const revalidate = 3600;
-
-export async function generateStaticParams() {
-  try {
-    const slugs = await getProductSlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
-}
+/** Dynamic: product pages with embedded images exceed Vercel ISR size limits. */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

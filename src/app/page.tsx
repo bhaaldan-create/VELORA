@@ -13,7 +13,8 @@ import {
 } from "@/lib/home/config";
 import { getHomePromoConfigForStorefront } from "@/lib/home/promo-config";
 
-export const revalidate = 3600;
+/** Dynamic: product image payloads exceed Vercel ISR size limits when prerendered. */
+export const dynamic = "force-dynamic";
 
 async function HomeAboveFold() {
   const [heroConfig, categoryConfig, promoConfig] = await Promise.all([

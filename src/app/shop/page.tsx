@@ -9,7 +9,8 @@ export const metadata: Metadata = {
     "تسوّقي من VELORA — تمرير سريع على العناية والمكياج بأسعار الدينار العراقي.",
 };
 
-export const revalidate = 3600;
+/** Dynamic: full catalog with image data exceeds Vercel ISR size limits. */
+export const dynamic = "force-dynamic";
 
 export default async function ShopPage() {
   const categories = await getAllCategories();

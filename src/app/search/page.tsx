@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "ابحثي في منتجات وبراندات VELORA.",
 };
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export default function SearchPage() {
   return (
