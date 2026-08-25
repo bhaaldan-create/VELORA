@@ -95,7 +95,7 @@
   --color-mist: var(--mist);
   --color-muted: var(--muted);
   --font-sans: var(--font-body);
-  --font-display: var(--font-thmanyah), var(--font-body), Georgia, serif;
+  --font-display: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
   --font-latin: var(--font-latin);
 }
 
@@ -136,7 +136,7 @@ html[data-locale="en"] body {
 }
 
 html[data-locale="en"] .font-display {
-  font-family: var(--font-latin), var(--font-thmanyah), sans-serif;
+  font-family: var(--font-latin), var(--font-kufyan), sans-serif;
 }
 
 /* درجات الخط الثمانية */
@@ -179,20 +179,26 @@ html[data-locale="en"] .font-display {
 }
 
 /*
- * Thmanyah Serif Display — عناوين فاخرة فقط
- * Light 300 · Regular 400 · Bold 700 · Black 900
+ * Kufyan Arabic — عناوين العرض
+ * Thin 100 · UltraLight 200 · Light 300 · Regular 400 · Bold 700 · Heavy 800 · Black 900
  * النص التشغيلي يبقى IBM Plex Sans Arabic (--font-body)
  */
 .font-display {
-  font-family: var(--font-thmanyah), var(--font-body), Georgia, serif;
+  font-family: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
   font-feature-settings: "kern" 1;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.01em;
   text-rendering: optimizeLegibility;
 }
 
-/* مطابقة أوزان Tailwind مع ملفات Thmanyah الفعلية */
-.font-display.font-thin,
-.font-display.font-extralight,
+/* مطابقة أوزان Tailwind مع ملفات Kufyan */
+.font-display.font-thin {
+  font-weight: 100;
+}
+
+.font-display.font-extralight {
+  font-weight: 200;
+}
+
 .font-display.font-light {
   font-weight: 300;
 }
@@ -203,9 +209,12 @@ html[data-locale="en"] .font-display {
 
 .font-display.font-medium,
 .font-display.font-semibold,
-.font-display.font-bold,
-.font-display.font-extrabold {
+.font-display.font-bold {
   font-weight: 700;
+}
+
+.font-display.font-extrabold {
+  font-weight: 800;
 }
 
 .font-display.font-black {
