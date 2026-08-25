@@ -51,11 +51,11 @@ export function DeliveryFeeNotice({
         </p>
         {highlightAdded ? (
           <p className="t3 mt-0.5 font-medium text-[var(--plum)]">
-            تم إضافة {formatPrice(feeIqd)} أجور توصيل
+            تم إضافة <span className="font-price">{formatPrice(feeIqd)}</span> أجور توصيل
           </p>
         ) : (
           <p className="t3 mt-0.5 text-[var(--ink)]/75">
-            أجور التوصيل: {formatPrice(feeIqd)}
+            أجور التوصيل: <span className="font-price">{formatPrice(feeIqd)}</span>
           </p>
         )}
       </div>

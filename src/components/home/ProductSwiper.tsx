@@ -53,7 +53,7 @@ export function ProductSwiper({ products, className }: Props) {
         aria-label="Previous"
         className={cn(
           "absolute top-[32%] z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center",
-          "border border-[var(--plum)]/12 bg-[var(--ivory)]/90 text-[var(--plum)] backdrop-blur-sm",
+          "border border-[var(--plum)]/12 bg-[var(--bg-glass-strong)] text-[var(--plum)] backdrop-blur-sm",
           "transition-opacity duration-300 hover:border-[var(--plum)]/30 md:flex",
           dir === "rtl" ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2",
           atStart && "pointer-events-none opacity-0",
@@ -67,7 +67,7 @@ export function ProductSwiper({ products, className }: Props) {
         aria-label="Next"
         className={cn(
           "absolute top-[32%] z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center",
-          "border border-[var(--plum)]/12 bg-[var(--ivory)]/90 text-[var(--plum)] backdrop-blur-sm",
+          "border border-[var(--plum)]/12 bg-[var(--bg-glass-strong)] text-[var(--plum)] backdrop-blur-sm",
           "transition-opacity duration-300 hover:border-[var(--plum)]/30 md:flex",
           dir === "rtl" ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2",
           atEnd && "pointer-events-none opacity-0",

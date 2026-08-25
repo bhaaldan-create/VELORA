@@ -30,7 +30,7 @@ export function CompactProductCard({
         <WishlistHeartButton
           productId={product.id}
           size="sm"
-          className="absolute top-2 end-2 rounded-full bg-[var(--ivory)]/90 backdrop-blur-sm"
+          className="absolute top-2 end-2 rounded-full bg-[var(--bg-glass-strong)] text-[var(--icon)] backdrop-blur-sm"
         />
         <Link href={`/shop/${product.slug}`} className="block">
           <ProductMedia
@@ -42,7 +42,7 @@ export function CompactProductCard({
             sizes="(max-width: 768px) 42vw, 18vw"
           />
           {product.isNew || product.isBestseller ? (
-            <span className="absolute top-2 start-2 rounded-full bg-[var(--ivory)]/95 px-2 py-0.5 font-latin text-[9px] font-semibold tracking-[0.08em] text-[var(--plum)] uppercase">
+            <span className="absolute top-2 start-2 rounded-full bg-[var(--bg-glass-strong)] px-2 py-0.5 font-latin text-[9px] font-semibold tracking-[0.08em] text-[var(--plum)] uppercase backdrop-blur-sm">
               {product.isNew
                 ? locale === "en"
                   ? "New"
@@ -63,7 +63,7 @@ export function CompactProductCard({
           {brand}
         </p>
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--ink)]">
+          <h3 className="font-display mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--ink)]">
             {title}
           </h3>
         </Link>

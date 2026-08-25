@@ -34,7 +34,7 @@ export function NotificationsInbox() {
             <button
               type="button"
               onClick={() => void markAllRead()}
-              className="rounded-full border border-[var(--plum)]/15 bg-white px-3.5 py-2 text-[0.75rem] font-medium text-[var(--plum)]"
+              className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-2 text-[0.75rem] font-medium text-[var(--plum)]"
             >
               {ar ? "تعليم الكل كمقروء" : "Mark all read"}
             </button>
@@ -42,7 +42,7 @@ export function NotificationsInbox() {
           <button
             type="button"
             onClick={() => void refresh()}
-            className="rounded-full border border-[var(--plum)]/15 bg-white px-3.5 py-2 text-[0.75rem] font-medium text-[var(--plum)]"
+            className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-2 text-[0.75rem] font-medium text-[var(--plum)]"
           >
             {ar ? "تحديث" : "Refresh"}
           </button>

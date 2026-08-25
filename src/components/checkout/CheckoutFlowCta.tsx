@@ -96,7 +96,7 @@ export function CheckoutFlowCta({
                 {label}
               </span>
               {showTotal && total != null && !compact ? (
-                <span className="t2 mt-0.5 block text-white/75">
+                <span className="font-price t2 mt-0.5 block text-white/75">
                   الإجمالي {formatPrice(total)}
                 </span>
               ) : null}
@@ -120,7 +120,7 @@ export function CheckoutFlowCta({
 export function CheckoutStickyBar({ children }: { children: ReactNode }) {
   return (
     <div
-      className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--ivory)]/97 shadow-[0_-10px_40px_-16px_rgba(61,38,64,0.2)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--bg-glass-strong)] shadow-[0_-10px_40px_-16px_rgba(61,38,64,0.2)] backdrop-blur-md lg:hidden"
       style={{
         bottom: "calc(4.75rem + env(safe-area-inset-bottom))",
       }}

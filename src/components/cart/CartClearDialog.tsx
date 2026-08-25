@@ -26,7 +26,7 @@ export function CartClearDialog({ open, onClose, onConfirm }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/35 p-4 sm:items-center"
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-[var(--bg-overlay)] p-4 sm:items-center"
       role="presentation"
       onClick={onClose}
     >
@@ -36,7 +36,7 @@ export function CartClearDialog({ open, onClose, onConfirm }: Props) {
         aria-labelledby="cart-clear-title"
         aria-describedby="cart-clear-desc"
         className={cn(
-          "w-full max-w-sm rounded-[20px] border border-[var(--plum)]/10 bg-[var(--surface)] p-6 shadow-[0_20px_60px_-20px_rgba(61,38,64,0.35)]",
+          "w-full max-w-sm rounded-[20px] border border-[var(--border)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-md)]",
           "transition-opacity duration-200",
         )}
         onClick={(e) => e.stopPropagation()}
@@ -65,7 +65,7 @@ export function CartClearDialog({ open, onClose, onConfirm }: Props) {
               onConfirm();
               onClose();
             }}
-            className="t3 flex-1 rounded-[12px] bg-[var(--plum)] px-4 py-2.5 font-medium text-[var(--ivory)] transition-colors hover:bg-[var(--plum-soft)]"
+            className="t3 flex-1 rounded-[12px] bg-[var(--btn-bg)] px-4 py-2.5 font-medium text-[var(--btn-fg)] transition-colors hover:bg-[var(--btn-bg-hover)]"
           >
             إفراغ الحقيبة
           </button>

@@ -20,6 +20,24 @@
   --auth-transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="dark"] {
+  --velora-plum: #e2d2d5;
+  --velora-plum-dark: #cbb6ba;
+  --velora-plum-light: #f3ebe6;
+  --velora-mauve: #9a8a92;
+  --velora-ivory: #141114;
+  --velora-white: #1c181b;
+  --velora-blush: #241f26;
+  --velora-border: rgba(243, 235, 230, 0.12);
+  --velora-success: #7aaf90;
+  --velora-success-bg: rgba(90, 143, 114, 0.2);
+  --velora-error: #d48a90;
+  --velora-error-bg: rgba(158, 79, 87, 0.22);
+  --velora-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  --velora-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --velora-focus: 0 0 0 3px rgba(226, 210, 213, 0.2);
+}
+
 .auth-page {
   position: relative;
   min-height: 100dvh;
@@ -34,9 +52,9 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(243, 232, 229, 0.7), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(233, 223, 214, 0.45), transparent 50%),
-    linear-gradient(180deg, #faf7f5 0%, #f8f3f0 45%, #faf7f5 100%);
+    radial-gradient(ellipse 80% 60% at 20% 10%, color-mix(in srgb, var(--velora-blush) 70%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 20%, color-mix(in srgb, var(--champagne, #e9dfd6) 45%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--velora-ivory) 0%, color-mix(in srgb, var(--velora-ivory) 92%, var(--velora-blush)) 45%, var(--velora-ivory) 100%);
   z-index: 0;
 }
 

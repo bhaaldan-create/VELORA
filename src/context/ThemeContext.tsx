@@ -22,28 +22,63 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function applyTheme(mode: ThemeMode) {
+function readStoredTheme(): ThemeMode {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "dark"
+      ? "dark"
+      : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function applyTheme(mode: ThemeMode, animate = false) {
   const root = document.documentElement;
+  if (animate) {
+    root.classList.add("theme-animating");
+    window.setTimeout(() => root.classList.remove("theme-animating"), 260);
+  }
   root.setAttribute("data-theme", mode);
   root.style.colorScheme = mode;
+
+  /* مزامنة لون شريط المتصفح مع اختيار المستخدم (لا مع نظام OS) */
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    meta.setAttribute("content", mode === "dark" ? "#141114" : "#F8F4F1");
+  }
+
+  root.dispatchEvent(
+    new CustomEvent("velora-theme-change", { detail: { theme: mode } }),
+  );
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("light");
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.getAttribute("data-theme") === "dark"
+        ? "dark"
+        : "light";
+    }
+    return "light";
+  });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const initial: ThemeMode = stored === "dark" ? "dark" : "light";
+    const initial = readStoredTheme();
     setThemeState(initial);
-    applyTheme(initial);
+    applyTheme(initial, false);
+    document.documentElement.classList.add("theme-ready");
     setReady(true);
   }, []);
 
   const setTheme = useCallback((mode: ThemeMode) => {
     setThemeState(mode);
-    applyTheme(mode);
-    window.localStorage.setItem(STORAGE_KEY, mode);
+    applyTheme(mode, true);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, mode);
+    } catch {
+      /* ignore quota / private mode */
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {

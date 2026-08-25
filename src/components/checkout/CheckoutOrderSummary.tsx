@@ -46,7 +46,7 @@ export function CheckoutOrderSummary({
         <span className="font-display text-[1.05rem] font-medium text-[var(--plum)]">
           الإجمالي
         </span>
-        <span className="font-display text-[1.35rem] font-semibold text-[var(--plum)]">
+        <span className="font-price text-[1.35rem] font-semibold text-[var(--plum)]">
           {formatPrice(total)}
         </span>
       </div>
@@ -76,7 +76,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt className="t3 text-[var(--muted)]">{label}</dt>
-      <dd className="t3 font-medium text-[var(--ink)]/90">{value}</dd>
+      <dd className="font-price t3 font-medium text-[var(--ink)]/90">{value}</dd>
     </div>
   );
 }

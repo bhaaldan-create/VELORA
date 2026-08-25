@@ -71,7 +71,7 @@ export default async function TrackOrderPage({ params }: Props) {
               <span>
                 {item.nameAr} × {item.quantity}
               </span>
-              <span>{formatPrice(item.price * item.quantity)}</span>
+              <span className="font-price">{formatPrice(item.price * item.quantity)}</span>
             </li>
           ))}
           {deliveryFee > 0 ? (
@@ -80,14 +80,14 @@ export default async function TrackOrderPage({ params }: Props) {
                 أجور التوصيل ·{" "}
                 {entry.order.shippingCarrierLabel || WASEET_CARRIER.nameAr}
               </span>
-              <span>{formatPrice(deliveryFee)}</span>
+              <span className="font-price">{formatPrice(deliveryFee)}</span>
             </li>
           ) : null}
         </ul>
 
         <div className="mt-4 flex justify-between border-t border-[var(--plum)] pt-3 t4 font-medium text-[var(--plum)]">
           <span>الإجمالي</span>
-          <span>{formatPrice(total)}</span>
+          <span className="font-price">{formatPrice(total)}</span>
         </div>
       </div>
 

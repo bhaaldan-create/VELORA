@@ -60,7 +60,7 @@ export function WorldBrands() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(26,18,28,0.55)] via-transparent to-transparent opacity-80" />
                 <span
-                  className="absolute top-3 start-3 bg-[var(--ivory)]/95 px-2.5 py-1 t1 font-medium tracking-[0.06em] text-[var(--plum)]"
+                  className="absolute top-3 start-3 bg-[var(--bg-glass-strong)] px-2.5 py-1 t1 font-medium tracking-[0.06em] text-[var(--plum)]"
                   dir="ltr"
                 >
                   {item.brand}

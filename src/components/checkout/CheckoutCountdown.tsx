@@ -51,7 +51,7 @@ export function CheckoutCountdown({ onConfirm, onCancel }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-[var(--ivory)]/92 px-5 backdrop-blur-sm motion-safe:animate-[velora-fade_0.35s_ease-out_both]"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-[var(--bg-glass-strong)] px-5 backdrop-blur-sm motion-safe:animate-[velora-fade_0.35s_ease-out_both]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="checkout-countdown-title"

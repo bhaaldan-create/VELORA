@@ -39,7 +39,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-[22px] border border-[var(--plum)]/8 bg-[color-mix(in_srgb,var(--ivory)_92%,white)] shadow-[0_10px_28px_rgba(50,22,47,0.04)] transition-shadow duration-300 hover:shadow-[0_16px_36px_rgba(50,22,47,0.07)]",
+        "group flex h-full flex-col overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow-md)] transition-shadow duration-300 hover:shadow-[var(--shadow-lg)]",
         className,
       )}
     >
@@ -48,7 +48,7 @@ export function ProductCard({
           productId={product.id}
           size={compactOverlayIcons ? "sm" : "md"}
           className={cn(
-            "absolute z-10 bg-[var(--ivory)]/90 backdrop-blur-sm",
+            "absolute z-10 bg-[var(--bg-glass-strong)] text-[var(--icon)] backdrop-blur-sm",
             compactOverlayIcons ? "top-2.5 end-2.5" : "top-3 end-3",
           )}
         />
@@ -56,7 +56,7 @@ export function ProductCard({
         {badge ? (
           <span
             className={cn(
-              "absolute z-10 rounded-full bg-[var(--ivory)]/95 font-medium tracking-[0.12em] text-[var(--plum)] uppercase",
+              "absolute z-10 rounded-full bg-[var(--bg-glass-strong)] font-medium tracking-[0.12em] text-[var(--plum)] uppercase backdrop-blur-sm",
               compactOverlayIcons
                 ? "top-2.5 start-2.5 px-2 py-0.5 text-[9px]"
                 : "top-3 start-3 px-2.5 py-1 text-[10px]",
@@ -86,7 +86,7 @@ export function ProductCard({
           {brand}
         </p>
         <Link href={`/shop/${product.slug}`} className="mt-1.5">
-          <h3 className="line-clamp-2 text-[0.95rem] font-medium leading-snug text-[var(--ink)] transition-opacity group-hover:opacity-75">
+          <h3 className="font-display line-clamp-2 text-[0.95rem] font-medium leading-snug text-[var(--ink)] transition-opacity group-hover:opacity-75">
             {title}
           </h3>
         </Link>

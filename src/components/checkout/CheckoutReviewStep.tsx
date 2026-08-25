@@ -140,7 +140,7 @@ export function CheckoutReviewStep({
                     الكمية: {quantity}
                   </p>
                 </div>
-                <p className="t4 shrink-0 font-medium text-[var(--plum)]">
+                <p className="font-price t4 shrink-0 font-medium text-[var(--plum)]">
                   {formatPrice(lineTotal)}
                 </p>
               </li>
@@ -159,9 +159,14 @@ export function CheckoutReviewStep({
               {WASEET_CARRIER.nameAr}
             </p>
             <p className="t3 mt-0.5 text-[var(--muted)]">
-              {deliveryFee > 0
-                ? `أجور التوصيل: ${formatPrice(deliveryFee)}`
-                : "التوصيل مجاني"}
+              {deliveryFee > 0 ? (
+                <>
+                  أجور التوصيل:{" "}
+                  <span className="font-price">{formatPrice(deliveryFee)}</span>
+                </>
+              ) : (
+                "التوصيل مجاني"
+              )}
             </p>
           </div>
           <span className="inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-[#1B4F9C] px-1.5">
@@ -195,7 +200,7 @@ export function CheckoutReviewStep({
           <span className="font-display text-[1.1rem] font-medium text-[var(--plum)]">
             الإجمالي
           </span>
-          <span className="font-display text-[1.5rem] font-semibold text-[var(--plum)]">
+          <span className="font-price text-[1.5rem] font-semibold text-[var(--plum)]">
             {formatPrice(total)}
           </span>
         </div>
@@ -260,7 +265,7 @@ function PriceRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt className="t3 text-[var(--muted)]">{label}</dt>
-      <dd className="t3 font-medium text-[var(--ink)]/90">{value}</dd>
+      <dd className="font-price t3 font-medium text-[var(--ink)]/90">{value}</dd>
     </div>
   );
 }

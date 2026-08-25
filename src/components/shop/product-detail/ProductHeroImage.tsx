@@ -28,9 +28,9 @@ export function ProductHeroImage({ product, ar }: Props) {
         className={cn(
           "relative overflow-hidden",
           "rounded-[2rem] sm:rounded-[2.25rem]",
-          "bg-[radial-gradient(120%_90%_at_50%_12%,#faf6f3_0%,#f3ebe6_42%,#ebe2dc_100%)]",
-          "shadow-[0_28px_64px_-28px_rgba(50,22,47,0.22)]",
-          "ring-1 ring-[var(--plum)]/[0.06]",
+          "bg-[radial-gradient(120%_90%_at_50%_12%,var(--mist)_0%,var(--bg-sunken)_42%,var(--champagne)_100%)]",
+          "shadow-[var(--shadow-md)]",
+          "ring-1 ring-[var(--border)]",
         )}
       >
         {/* Soft editorial light wash */}
@@ -39,7 +39,7 @@ export function ProductHeroImage({ product, ar }: Props) {
           aria-hidden
           style={{
             background:
-              "radial-gradient(ellipse 70% 55% at 50% 18%, rgba(255,255,255,0.55) 0%, transparent 62%), linear-gradient(180deg, transparent 55%, rgba(61,38,64,0.04) 100%)",
+              "radial-gradient(ellipse 70% 55% at 50% 18%, color-mix(in srgb, var(--bg-glass) 55%, transparent) 0%, transparent 62%), linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--plum) 4%, transparent) 100%)",
           }}
         />
 
@@ -55,7 +55,7 @@ export function ProductHeroImage({ product, ar }: Props) {
 
         <WishlistHeartButton
           productId={product.id}
-          className="absolute end-3.5 top-3.5 z-[2] rounded-full border border-white/55 bg-white/80 p-2.5 text-[var(--plum)] shadow-[0_10px_28px_rgba(50,22,47,0.12)] backdrop-blur-md sm:end-4 sm:top-4"
+          className="absolute end-3.5 top-3.5 z-[2] rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-2.5 text-[var(--plum)] shadow-[var(--shadow-md)] backdrop-blur-md sm:end-4 sm:top-4"
         />
 
         {badges.length > 0 ? (
@@ -63,7 +63,7 @@ export function ProductHeroImage({ product, ar }: Props) {
             {badges.map((b) => (
               <span
                 key={b.key}
-                className="rounded-full bg-[var(--plum)]/88 px-2.5 py-1 text-[0.62rem] font-medium tracking-[0.06em] text-white backdrop-blur-sm"
+                className="rounded-full bg-[var(--plum-fill)]/88 px-2.5 py-1 text-[0.62rem] font-medium tracking-[0.06em] text-white backdrop-blur-sm"
               >
                 {b.label}
               </span>

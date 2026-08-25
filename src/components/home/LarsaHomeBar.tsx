@@ -11,7 +11,7 @@ export function LarsaHomeBar() {
 
   return (
     <section
-      className="relative overflow-hidden border-b border-[var(--plum)]/8 bg-[linear-gradient(128deg,color-mix(in_srgb,var(--mist)_55%,white)_0%,var(--ivory)_42%,color-mix(in_srgb,var(--plum)_5%,var(--ivory))_100%)]"
+      className="relative overflow-hidden border-b border-[var(--border)] bg-[linear-gradient(128deg,color-mix(in_srgb,var(--mist)_55%,var(--surface))_0%,var(--ivory)_42%,color-mix(in_srgb,var(--plum)_5%,var(--ivory))_100%)]"
       aria-label={ar ? "لارسا" : "LARSA"}
     >
       <div
@@ -19,7 +19,7 @@ export function LarsaHomeBar() {
         aria-hidden
         style={{
           background:
-            "radial-gradient(ellipse 70% 120% at 8% 50%, rgba(212,181,184,0.22), transparent 58%), radial-gradient(ellipse 50% 80% at 92% 30%, rgba(92,58,94,0.08), transparent 55%)",
+            "radial-gradient(ellipse 70% 120% at 8% 50%, color-mix(in srgb, var(--blush) 22%, transparent), transparent 58%), radial-gradient(ellipse 50% 80% at 92% 30%, color-mix(in srgb, var(--plum) 8%, transparent), transparent 55%)",
         }}
       />
       <div
@@ -30,7 +30,7 @@ export function LarsaHomeBar() {
       <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-5 sm:px-8 sm:py-4">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-white/85 shadow-[0_6px_22px_rgba(50,22,47,0.07)] ring-1 ring-[var(--plum)]/10 sm:h-11 sm:w-11 sm:rounded-2xl"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[var(--border-glass)] bg-[var(--bg-glass)] shadow-[var(--shadow-md)] backdrop-blur-sm ring-1 ring-[var(--plum)]/10 sm:h-11 sm:w-11 sm:rounded-2xl"
           >
             <LarsaMark
               size={26}

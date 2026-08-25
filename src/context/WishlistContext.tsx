@@ -219,7 +219,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           role="status"
           className="pointer-events-none fixed inset-x-0 bottom-24 z-[80] flex justify-center px-4 sm:bottom-8"
         >
-          <p className="animate-[velora-rise_0.35s_ease-out_both] rounded-full border border-[var(--plum)]/12 bg-[var(--ivory)]/95 px-5 py-2.5 text-center text-[0.85rem] text-[var(--plum)] shadow-[0_12px_40px_rgba(58,24,54,0.08)] backdrop-blur-md">
+          <p className="animate-[velora-rise_0.35s_ease-out_both] rounded-full border border-[var(--plum)]/12 bg-[var(--bg-glass-strong)] px-5 py-2.5 text-center text-[0.85rem] text-[var(--plum)] shadow-[0_12px_40px_rgba(58,24,54,0.08)] backdrop-blur-md">
             {toast.message}
           </p>
         </div>

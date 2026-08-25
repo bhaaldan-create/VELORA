@@ -27,7 +27,7 @@ export function SuperQiPaymentTeaser({
       </h3>
       <p className="t3 mt-2 text-[var(--ink)]/70">
         اخترتِ {paymentLabelAr}. حوّلي المبلغ{" "}
-        <strong className="text-[var(--plum)]">{formatPrice(amountIqd)}</strong>{" "}
+        <strong className="font-price text-[var(--plum)]">{formatPrice(amountIqd)}</strong>{" "}
         إلى حساب سوبر كي التالي:
       </p>
       <p

@@ -6,7 +6,10 @@ interface LogoProps {
   className?: string;
   priority?: boolean;
   size?: "sm" | "md" | "lg";
-  /** White mark for dark surfaces (footer) */
+  /**
+   * White mark for always-dark surfaces (footer).
+   * When omitted, both assets render and CSS picks by [data-theme].
+   */
   light?: boolean;
 }
 
@@ -16,6 +19,9 @@ const sizes = {
   lg: { width: 260, height: 98, className: "w-[210px] sm:w-[260px]" },
 } as const;
 
+/**
+ * الشعار يتبع data-theme عبر CSS (بدون تأخير React/hydration).
+ */
 export function Logo({
   className,
   priority = false,
@@ -24,20 +30,57 @@ export function Logo({
 }: LogoProps) {
   const s = sizes[size];
 
+  if (light) {
+    return (
+      <Link
+        href="/"
+        className={cn("group inline-flex items-center justify-center", className)}
+        aria-label="VELORA — Beauty Revealed"
+      >
+        <Image
+          src="/brand/velora-logo-clear.png"
+          alt="VELORA Beauty Revealed"
+          width={s.width}
+          height={s.height}
+          priority={priority}
+          className={cn(
+            "h-auto transition-opacity duration-300 group-hover:opacity-85",
+            s.className,
+          )}
+        />
+      </Link>
+    );
+  }
+
   return (
     <Link
       href="/"
-      className={cn("group inline-flex items-center justify-center", className)}
+      className={cn(
+        "group relative inline-flex items-center justify-center",
+        className,
+      )}
       aria-label="VELORA — Beauty Revealed"
     >
       <Image
-        src={light ? "/brand/velora-logo-clear.png" : "/brand/velora-logo-dark.png"}
+        src="/brand/velora-logo-dark.png"
         alt="VELORA Beauty Revealed"
         width={s.width}
         height={s.height}
         priority={priority}
         className={cn(
-          "h-auto transition-opacity duration-300 group-hover:opacity-85",
+          "logo-mark-light h-auto transition-opacity duration-300 group-hover:opacity-85",
+          s.className,
+        )}
+      />
+      <Image
+        src="/brand/velora-logo-clear.png"
+        alt=""
+        aria-hidden
+        width={s.width}
+        height={s.height}
+        priority={priority}
+        className={cn(
+          "logo-mark-dark absolute inset-0 m-auto h-auto transition-opacity duration-300 group-hover:opacity-85",
           s.className,
         )}
       />

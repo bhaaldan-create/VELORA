@@ -50,7 +50,7 @@ export function ShopProductSwiper({
         type="button"
         aria-label="Previous"
         className={cn(
-          "absolute top-[28%] z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--plum)]/12 bg-[var(--ivory)]/90 text-[var(--plum)] backdrop-blur-sm md:flex",
+          "absolute top-[28%] z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--plum)]/12 bg-[var(--bg-glass-strong)] text-[var(--plum)] backdrop-blur-sm md:flex",
           dir === "rtl" ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2",
         )}
       >
@@ -61,7 +61,7 @@ export function ShopProductSwiper({
         type="button"
         aria-label="Next"
         className={cn(
-          "absolute top-[28%] z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--plum)]/12 bg-[var(--ivory)]/90 text-[var(--plum)] backdrop-blur-sm md:flex",
+          "absolute top-[28%] z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--plum)]/12 bg-[var(--bg-glass-strong)] text-[var(--plum)] backdrop-blur-sm md:flex",
           dir === "rtl" ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2",
         )}
       >

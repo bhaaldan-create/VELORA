@@ -15,6 +15,7 @@
   --vc-gold: #c4a574;
   --vc-gold-soft: #e8d5b5;
   --vc-gold-deep: #9a7a4a;
+  --vc-card: #ffffff;
   --vc-radius-xl: 28px;
   --vc-radius-lg: 22px;
   --vc-radius-md: 18px;
@@ -26,9 +27,27 @@
   background:
     radial-gradient(780px 380px at 50% -12%, rgba(196, 165, 116, 0.09), transparent 55%),
     radial-gradient(640px 320px at 88% 8%, rgba(201, 188, 198, 0.18), transparent 50%),
-    linear-gradient(180deg, var(--vc-ivory) 0%, var(--vc-cream) 55%, #f3ebe8 100%);
+    linear-gradient(180deg, var(--vc-ivory) 0%, var(--vc-cream) 55%, color-mix(in srgb, var(--vc-cream) 80%, var(--vc-mauve-soft)) 100%);
   min-height: 70vh;
   padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+}
+
+[data-theme="dark"] .club-shell {
+  --vc-ivory: #141114;
+  --vc-cream: #1c181b;
+  --vc-mauve: #8a748c;
+  --vc-mauve-soft: #2a2228;
+  --vc-plum: #e8dce0;
+  --vc-plum-mid: #cbb6ba;
+  --vc-plum-deep: #f3ebe6;
+  --vc-espresso: #f3ebe6;
+  --vc-graphite: #b5a8b0;
+  --vc-muted: #9a8a92;
+  --vc-border: rgba(243, 235, 230, 0.12);
+  --vc-card: #1c181b;
+  --vc-shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.4);
+  --vc-shadow-card: 0 12px 36px rgba(0, 0, 0, 0.45);
+  color: var(--vc-espresso);
 }
 
 .club-frame {
@@ -269,7 +288,7 @@
   margin-top: 1.35rem;
   border-radius: var(--vc-radius-lg);
   border: 1px solid var(--vc-border);
-  background: color-mix(in srgb, var(--vc-ivory) 88%, white);
+  background: var(--vc-card);
   padding: 1.35rem 1.15rem 1.2rem;
   box-shadow: var(--vc-shadow-soft);
   text-align: center;
@@ -389,7 +408,7 @@
 .club-surface {
   border-radius: var(--vc-radius-lg);
   border: 1px solid var(--vc-border);
-  background: color-mix(in srgb, var(--vc-ivory) 90%, white);
+  background: var(--vc-card);
   padding: 1.15rem 1.1rem;
   box-shadow: 0 8px 28px rgba(50, 22, 47, 0.03);
 }
@@ -482,7 +501,7 @@
 
 .club-tier-node.is-done .dot {
   border-color: color-mix(in srgb, var(--vc-gold) 50%, var(--vc-plum));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, var(--vc-card));
   color: var(--vc-plum);
 }
 
@@ -544,7 +563,7 @@
   border-radius: var(--vc-radius-xl);
   border: 1px solid color-mix(in srgb, var(--vc-gold) 28%, var(--vc-border));
   background:
-    linear-gradient(160deg, #fffdfb 0%, var(--vc-ivory) 45%, #f3ebe8 100%);
+    linear-gradient(160deg, var(--vc-card) 0%, var(--vc-ivory) 45%, var(--vc-cream) 100%);
   padding: 1.25rem 1.15rem;
   box-shadow: var(--vc-shadow-soft);
 }
@@ -609,7 +628,7 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--vc-mauve-soft) 70%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 70%, var(--vc-card));
   color: var(--vc-plum);
   border: 1px solid var(--vc-border);
 }
@@ -768,7 +787,7 @@
 
 .club-btn-ghost:hover {
   border-color: color-mix(in srgb, var(--vc-plum) 25%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 40%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 40%, var(--vc-card));
 }
 
 /* —— Birthday / mystery / referral / larsa —— */
@@ -807,7 +826,7 @@
   margin-inline: auto;
   border-radius: 1rem;
   border: 1px solid color-mix(in srgb, var(--vc-gold) 40%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 50%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 50%, var(--vc-card));
   display: grid;
   place-items: center;
   color: var(--vc-plum);
@@ -824,7 +843,7 @@
   padding: 0.85rem 1rem;
   border-radius: var(--vc-radius-md);
   border: 1px dashed color-mix(in srgb, var(--vc-gold) 40%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 25%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 25%, var(--vc-card));
   color: var(--vc-plum);
   text-align: center;
 }
@@ -834,7 +853,7 @@
   gap: 1rem;
   border-radius: var(--vc-radius-xl);
   border: 1px solid var(--vc-border);
-  background: color-mix(in srgb, var(--vc-ivory) 88%, white);
+  background: var(--vc-card);
   padding: 1.25rem 1.15rem;
   box-shadow: var(--vc-shadow-soft);
 }
@@ -896,7 +915,7 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, white);
+  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, var(--vc-card));
   color: var(--vc-plum);
   border: 1px solid var(--vc-border);
 }

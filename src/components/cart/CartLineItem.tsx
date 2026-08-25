@@ -77,7 +77,7 @@ export function CartLineItem({
                 <p className="t3 mt-1.5 text-[var(--muted)]">{product.size}</p>
               ) : null}
             </div>
-            <p className="t4 shrink-0 font-medium text-[var(--plum)]">
+            <p className="font-price t4 shrink-0 font-medium text-[var(--plum)]">
               {formatPrice(lineTotal)}
             </p>
           </div>

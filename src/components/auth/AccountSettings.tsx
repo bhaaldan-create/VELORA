@@ -368,7 +368,7 @@ export function AccountSettings() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Sidebar */}
         <aside className="shrink-0 lg:w-[240px]">
-          <div className="rounded-[22px] border border-[var(--account-border)] bg-white/90 px-5 py-6 lg:sticky lg:top-24">
+          <div className="rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] px-5 py-6 lg:sticky lg:top-24">
             {/* dir=ltr يمنع عكس حرفَي My في الواجهة العربية */}
             <div className="text-center" dir="ltr">
               <p className="font-latin text-[0.62rem] font-medium tracking-[0.38em] text-[var(--account-muted)] uppercase">
@@ -798,10 +798,10 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              <section className="mt-5 rounded-[22px] border border-[rgba(168,62,72,0.12)] bg-gradient-to-l from-[#fdf6f7] to-white p-5 sm:mt-6 sm:p-6">
+              <section className="mt-5 rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] p-5 sm:mt-6 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-[0.95rem] font-semibold text-[#9b3440]">
+                    <p className="text-[0.95rem] font-semibold text-[var(--plum)]">
                       {ar ? "إنهاء الجلسة" : "End session"}
                     </p>
                     <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">
@@ -851,7 +851,7 @@ export function AccountSettings() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[24px] border border-[var(--account-border)] bg-white px-6 py-16 text-center">
+                <div className="rounded-[24px] border border-[var(--account-border)] bg-[var(--bg-elevated)] px-6 py-16 text-center">
                   <p className="text-[1.75rem] text-[var(--account-orchid)]" aria-hidden>
                     ♡
                   </p>
@@ -865,7 +865,7 @@ export function AccountSettings() {
                   </p>
                   <Link
                     href="/shop"
-                    className="mt-8 inline-flex rounded-full bg-[var(--account-plum)] px-6 py-2.5 text-[0.85rem] font-medium text-white"
+                    className="mt-8 inline-flex rounded-full bg-[var(--btn-bg)] px-6 py-2.5 text-[0.85rem] font-medium text-[var(--btn-fg)]"
                   >
                     {ar ? "اكتشفي المنتجات" : "Discover products"}
                   </Link>
@@ -999,10 +999,10 @@ export function AccountSettings() {
                       type="button"
                       onClick={() => setTheme(mode)}
                       className={cn(
-                        "rounded-full px-4 py-2 text-[0.85rem]",
+                        "rounded-full px-4 py-2 text-[0.85rem] transition-colors",
                         theme === mode
-                          ? "bg-[var(--account-plum)] text-white"
-                          : "border border-[var(--account-border)] text-[var(--account-plum)]",
+                          ? "bg-[var(--btn-bg)] text-[var(--btn-fg)]"
+                          : "border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--ink)] hover:border-[var(--plum)]/25",
                       )}
                     >
                       {mode === "light"
@@ -1297,7 +1297,7 @@ function WishGridCard({
   const inStock = product.inStock !== false && (product.stock ?? 1) > 0;
   const brand = getProductBrand(product.name, product.nameAr);
   return (
-    <article className="overflow-hidden rounded-[22px] border border-[var(--account-border)] bg-white">
+    <article className="overflow-hidden rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)]">
       <div className="relative">
         <Link href={`/shop/${product.slug}`} className="block">
           <ProductMedia
@@ -1312,7 +1312,7 @@ function WishGridCard({
           type="button"
           onClick={onToggle}
           aria-label="wishlist"
-          className="absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--account-plum)] backdrop-blur-sm"
+          className="absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--account-plum)] backdrop-blur-sm"
         >
           <AccIcon name="heart" size={15} />
         </button>
@@ -1421,7 +1421,7 @@ function WishRow({
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-[24px] border border-[var(--account-border)] bg-white p-6 sm:p-8">
+    <section className="rounded-[24px] border border-[var(--account-border)] bg-[var(--bg-elevated)] p-6 sm:p-8">
       <h2 className="font-display text-[1.25rem] font-semibold text-[var(--account-plum)]">
         {title}
       </h2>
@@ -1475,7 +1475,7 @@ function ServiceStrip({ ar }: { ar: boolean }) {
         { t: "Refined client care", d: "We’re always here for you" },
       ];
   return (
-    <section className="grid gap-4 rounded-[22px] border border-[var(--account-border)] bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-4 rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] p-6 sm:grid-cols-2 lg:grid-cols-4">
       {items.map((item) => (
         <div key={item.t} className="text-center sm:text-start">
           <p className="text-[0.9rem] font-medium text-[var(--account-plum)]">{item.t}</p>

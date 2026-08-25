@@ -14,11 +14,11 @@ import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { brand } from "@/constants/brand";
 import "./globals.css";
 
-/** نص الواجهة — قراءة مريحة للأزرار والنماذج */
+/** نص الواجهة والأسعار — IBM Plex Sans Arabic */
 const sans = IBM_Plex_Sans_Arabic({
   variable: "--font-body",
   subsets: ["arabic", "latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   display: "swap",
   preload: true,
 });
@@ -106,13 +106,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F8F4F1" },
-    { media: "(prefers-color-scheme: dark)", color: "#141114" },
-  ],
+  /* يُحدَّث ديناميكياً عبر ThemeContext ليتوافق مع اختيار المستخدم */
+  themeColor: "#F8F4F1",
 };
 
-const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}}catch(e){}})();`;
+const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");var dark=t==="dark";if(dark){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute("content",dark?"#141114":"#F8F4F1");}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

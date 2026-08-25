@@ -42,7 +42,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[var(--plum)]/8 bg-[var(--ivory)]/92 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-glass-strong)] backdrop-blur-md">
         <div className="relative mx-auto flex h-[3.85rem] max-w-7xl items-center justify-between gap-2 px-4 sm:h-20 sm:px-8">
           <div className="flex items-center gap-0.5 sm:gap-1.5">
             <Link

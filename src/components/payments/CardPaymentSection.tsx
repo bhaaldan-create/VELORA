@@ -175,7 +175,7 @@ export function CardPaymentSection(props: Props) {
           البطاقة على موقعنا.
         </p>
         <p className="t2 mt-2 text-[var(--muted)]">
-          المبلغ: {formatPrice(intent.amountIqd)} ≈ $
+          المبلغ: <span className="font-price">{formatPrice(intent.amountIqd)}</span> ≈ $
           {(intent.amountUsdCents / 100).toFixed(2)}{" "}
           <span dir="ltr">(1 USD = {USD_TO_IQD_RATE} IQD)</span>
         </p>

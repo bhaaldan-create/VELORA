@@ -184,7 +184,7 @@ export function ProductDetail({ product, related, routine }: Props) {
                 price={product.price}
                 originalPrice={product.originalPrice}
                 discountPercent={product.discountPercent}
-                className="[&>span:first-child]:font-display [&>span:first-child]:text-[1.35rem] [&>span:first-child]:font-semibold [&>span:first-child]:text-[var(--plum)] sm:[&>span:first-child]:text-[1.5rem]"
+                className="[&>span:first-child]:text-[1.35rem] [&>span:first-child]:font-semibold [&>span:first-child]:text-[var(--plum)] sm:[&>span:first-child]:text-[1.5rem]"
               />
               {product.size ? (
                 <span className="mb-1 text-[0.75rem] tracking-[0.02em] text-[var(--muted)]">
@@ -240,7 +240,7 @@ export function ProductDetail({ product, related, routine }: Props) {
       {/* Sticky purchase — mobile */}
       <div
         className={cn(
-          "fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--ivory)]/92 px-4 py-2.5 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          "fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--bg-glass-strong)] px-4 py-2.5 backdrop-blur-xl transition-all duration-300 lg:hidden",
           "bottom-[calc(4.15rem+env(safe-area-inset-bottom))]",
           showSticky && inStock
             ? "translate-y-0 opacity-100"

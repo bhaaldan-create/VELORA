@@ -78,7 +78,7 @@ export function SearchScreen() {
           aria-label={ar ? "رجوع" : "Back"}
           className={cn(
             "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-            "border border-white/80 bg-white/70 text-[var(--plum)] shadow-[0_8px_22px_-12px_rgba(61,36,63,0.28)]",
+            "border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--plum)] shadow-[var(--shadow-md)]",
             "backdrop-blur-md transition-transform duration-200 hover:scale-[1.03] active:scale-95",
           )}
         >
@@ -113,11 +113,11 @@ export function SearchScreen() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder={ar ? "ابحثي عن براند" : "Search for a brand"}
             className={cn(
-              "w-full rounded-full border border-white/80 bg-white/70 py-3 ps-11 pe-12",
-              "text-[0.92rem] text-[#2a1a2c] shadow-[0_10px_28px_-18px_rgba(61,36,63,0.28)]",
-              "outline-none backdrop-blur-md placeholder:text-[#8a7588]/80",
+              "w-full rounded-full border border-[var(--border-glass)] bg-[var(--bg-input)] py-3 ps-11 pe-12",
+              "text-[0.92rem] text-[var(--ink)] shadow-[var(--shadow-md)]",
+              "outline-none backdrop-blur-md placeholder:text-[var(--muted)]",
               "transition-[box-shadow,border-color] duration-200",
-              "focus:border-[var(--plum)]/20 focus:shadow-[0_0_0_4px_rgba(149,120,168,0.12)]",
+              "focus:border-[var(--plum)]/20 focus:shadow-[var(--ring-focus)]",
             )}
             autoComplete="off"
             inputMode="search"
@@ -126,7 +126,7 @@ export function SearchScreen() {
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute inset-y-0 end-3 my-auto h-7 rounded-full px-2.5 text-[11px] font-medium text-[#8a7588] hover:text-[var(--plum)]"
+              className="absolute inset-y-0 end-3 my-auto h-7 rounded-full px-2.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--plum)]"
             >
               {ar ? "مسح" : "Clear"}
             </button>
@@ -136,10 +136,10 @@ export function SearchScreen() {
 
       {/* Title */}
       <header className="relative z-[1] mt-10 text-center sm:mt-12">
-        <h1 className="font-display text-[clamp(1.85rem,5vw,2.65rem)] font-bold tracking-[-0.02em] text-[#3D243F]">
+        <h1 className="font-display text-[clamp(1.85rem,5vw,2.65rem)] font-bold tracking-[-0.02em] text-[var(--plum)]">
           {ar ? "البراندات" : "Brands"}
         </h1>
-        <p className="mx-auto mt-2.5 max-w-md text-[0.92rem] leading-relaxed text-[#8a7588]">
+        <p className="mx-auto mt-2.5 max-w-md text-[0.92rem] leading-relaxed text-[var(--muted)]">
           {ar
             ? "تسوّقي من أفضل العلامات التجارية العالمية"
             : "Shop the world’s finest beauty houses"}
@@ -164,8 +164,8 @@ export function SearchScreen() {
           className={cn(
             "shrink-0 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium transition-all duration-200",
             country === "all"
-              ? "border-[var(--plum)]/20 bg-[var(--plum)] text-white shadow-[0_8px_20px_-12px_rgba(61,36,63,0.45)]"
-              : "border-white/80 bg-white/55 text-[#5c4560] backdrop-blur-sm hover:bg-white/80",
+              ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)] shadow-[var(--shadow-md)]"
+              : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)] backdrop-blur-sm hover:bg-[var(--bg-glass-strong)]",
           )}
         >
           {ar ? "الكل" : "All"}
@@ -178,8 +178,8 @@ export function SearchScreen() {
             className={cn(
               "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium transition-all duration-200",
               country === c.code
-                ? "border-[var(--plum)]/20 bg-[var(--plum)] text-white shadow-[0_8px_20px_-12px_rgba(61,36,63,0.45)]"
-                : "border-white/80 bg-white/55 text-[#5c4560] backdrop-blur-sm hover:bg-white/80",
+                ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)] shadow-[var(--shadow-md)]"
+                : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)] backdrop-blur-sm hover:bg-[var(--bg-glass-strong)]",
             )}
           >
             <span className="text-[0.85rem] opacity-90" aria-hidden>
@@ -198,11 +198,11 @@ export function SearchScreen() {
           ))}
         </div>
         {brandsVisible.length === 0 ? (
-          <p className="mt-10 text-center text-[0.9rem] text-[#8a7588]">
+          <p className="mt-10 text-center text-[0.9rem] text-[var(--muted)]">
             {ar ? "لا يوجد براند مطابق." : "No matching brands."}
           </p>
         ) : (
-          <p className="mt-6 text-center font-latin text-[0.7rem] tracking-[0.12em] text-[#8a7588]/70 uppercase">
+          <p className="mt-6 text-center font-latin text-[0.7rem] tracking-[0.12em] text-[var(--muted)]/70 uppercase">
             {brandsVisible.length} {ar ? "براند" : "brands"}
           </p>
         )}
@@ -210,7 +210,7 @@ export function SearchScreen() {
 
       {hasQuery ? (
         <section className="relative z-[1] mt-14">
-          <h2 className="font-display text-center text-[1.1rem] font-semibold text-[#3D243F]">
+          <h2 className="font-display text-center text-[1.1rem] font-semibold text-[var(--plum)]">
             {searching
               ? ar
                 ? "جارٍ البحث…"
@@ -224,7 +224,7 @@ export function SearchScreen() {
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-[3/4] animate-pulse rounded-[1.5rem] bg-white/50"
+                  className="aspect-[3/4] animate-pulse rounded-[1.5rem] bg-[var(--bg-elevated)]"
                 />
               ))}
             </div>
@@ -235,7 +235,7 @@ export function SearchScreen() {
               ))}
             </div>
           ) : (
-            <p className="mt-8 text-center text-[0.9rem] text-[#8a7588]">
+            <p className="mt-8 text-center text-[0.9rem] text-[var(--muted)]">
               {ar
                 ? "لا توجد منتجات. جرّبي كلمة أخرى."
                 : "No products found. Try another word."}

@@ -115,7 +115,7 @@ export function Footer() {
             <li>
               {t.deliveryVia}{" "}
               {locale === "en" ? WASEET_CARRIER.nameEn : WASEET_CARRIER.nameAr} —{" "}
-              {formatPrice(DELIVERY_FEE_IQD)}
+              <span className="font-price">{formatPrice(DELIVERY_FEE_IQD)}</span>
             </li>
           </ul>
         </div>

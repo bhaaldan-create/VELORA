@@ -53,7 +53,7 @@ export function ProductRoutine({
                 "w-[9.5rem] rounded-[1.25rem] p-3 sm:w-[11rem]",
                 step.current
                   ? "bg-[var(--plum)]/[0.05] ring-1 ring-[var(--plum)]/12"
-                  : "bg-white/50 ring-1 ring-[var(--plum)]/[0.06]",
+                  : "bg-[var(--bg-glass)] ring-1 ring-[var(--border)]",
               )}
             >
               <p className="text-[0.62rem] font-medium tracking-[0.14em] text-[var(--muted)]">
@@ -71,13 +71,13 @@ export function ProductRoutine({
                 </div>
                 <div className="min-w-0 flex-1">
                   {step.current ? (
-                    <p className="line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)]">
+                    <p className="font-display line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)]">
                       {ar ? step.product.nameAr : step.product.name}
                     </p>
                   ) : (
                     <Link
                       href={`/shop/${step.product.slug}`}
-                      className="line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)] hover:underline"
+                      className="font-display line-clamp-2 text-[0.75rem] font-semibold leading-snug text-[var(--plum)] hover:underline"
                     >
                       {ar ? step.product.nameAr : step.product.name}
                     </Link>
@@ -117,10 +117,10 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
       <WishlistHeartButton
         productId={product.id}
         size="sm"
-        className="absolute end-1.5 top-1.5 z-[1] rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur"
+        className="absolute end-1.5 top-1.5 z-[1] rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-1.5 shadow-[var(--shadow-sm)] backdrop-blur"
       />
       <Link href={`/shop/${product.slug}`} className="group block">
-        <div className="overflow-hidden rounded-[1.1rem] bg-[radial-gradient(90%_70%_at_50%_20%,#faf6f3_0%,#efe7e2_100%)] ring-1 ring-[var(--plum)]/[0.05]">
+        <div className="overflow-hidden rounded-[1.1rem] bg-[radial-gradient(90%_70%_at_50%_20%,var(--mist)_0%,var(--bg-sunken)_100%)] ring-1 ring-[var(--border)]">
           <ProductMedia
             name={product.nameAr}
             imageTone={product.imageTone}
@@ -138,7 +138,7 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
             {product.brandName}
           </p>
         ) : null}
-        <h3 className="mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--plum)]">
+        <h3 className="font-display mt-0.5 line-clamp-2 text-[0.78rem] font-medium leading-snug text-[var(--plum)]">
           {ar ? product.nameAr : product.name}
         </h3>
       </Link>

@@ -86,7 +86,7 @@ export function FloatingContact() {
         aria-hidden={!open}
         className={cn(
           "w-[min(18.5rem,calc(100vw-2rem))] origin-bottom overflow-hidden rounded-[22px]",
-          "border border-[var(--plum)]/12 bg-[var(--ivory)]/95 shadow-[0_18px_50px_rgba(58,24,54,0.12)] backdrop-blur-md",
+          "border border-[var(--border-glass)] bg-[var(--bg-glass)] shadow-[var(--shadow-lg)] backdrop-blur-md",
           "transition-all duration-300 ease-out",
           open
             ? "pointer-events-auto max-h-[28rem] scale-100 opacity-100"
@@ -107,7 +107,7 @@ export function FloatingContact() {
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 rounded-2xl border border-[var(--plum)]/10 bg-white/70 px-3.5 py-3 transition-colors hover:border-[var(--plum)]/25 hover:bg-white"
+                className="group flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3 transition-colors hover:border-[var(--plum)]/25 hover:bg-[var(--bg-glass-strong)]"
                 onClick={() => setOpen(false)}
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--mist)] text-[#3d8b6e]">
@@ -130,7 +130,7 @@ export function FloatingContact() {
               href={igUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-3 rounded-2xl border border-[var(--plum)]/10 bg-white/70 px-3.5 py-3 transition-colors hover:border-[var(--plum)]/25 hover:bg-white"
+              className="group flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-3 transition-colors hover:border-[var(--plum)]/25 hover:bg-[var(--bg-glass-strong)]"
               onClick={() => setOpen(false)}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--mist)] text-[var(--plum)]">
@@ -175,8 +175,8 @@ export function FloatingContact() {
           onClick={() => setOpen((v) => !v)}
           className={cn(
             "group flex h-12 w-12 items-center justify-center rounded-full",
-            "bg-[#3D243F] text-white",
-            "shadow-[0_12px_30px_-8px_rgba(61,36,63,0.45)]",
+            "bg-[var(--btn-bg)] text-[var(--btn-fg)]",
+            "shadow-[var(--shadow-md)]",
             "transition-transform duration-200 ease-out",
             "hover:scale-[1.04] active:scale-[0.95]",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]",
@@ -184,10 +184,10 @@ export function FloatingContact() {
         >
           <IconWhatsApp
             size={18}
-            className="text-white transition-transform duration-200 group-active:scale-90"
+            className="text-[var(--btn-fg)] transition-transform duration-200 group-active:scale-90"
           />
         </button>
-        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[#3D243F]/70">
+        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[var(--plum)]/70">
           {ar ? "تواصلي معنا" : "Contact us"}
         </span>
       </div>

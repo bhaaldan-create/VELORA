@@ -49,7 +49,7 @@ export function NotificationList({
             className={cn(
               "rounded-2xl border px-3.5 py-3 transition-colors",
               item.read
-                ? "border-[var(--plum)]/8 bg-white/60"
+                ? "border-[var(--border)] bg-[var(--bg-glass)]"
                 : "border-[var(--plum)]/15 bg-[var(--mist)]/80",
             )}
           >
@@ -123,17 +123,17 @@ export function NotificationPanel() {
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true">
       <button
         type="button"
-        className="absolute inset-0 bg-[rgba(26,14,32,0.35)] backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[var(--bg-overlay)] backdrop-blur-[2px]"
         aria-label={ar ? "إغلاق" : "Close"}
         onClick={closePanel}
       />
       <aside
         className={cn(
-          "absolute inset-y-0 end-0 flex w-full max-w-[22rem] flex-col bg-[var(--ivory)] shadow-[-12px_0_40px_rgba(50,22,47,0.12)] sm:max-w-[24rem]",
+          "absolute inset-y-0 end-0 flex w-full max-w-[22rem] flex-col bg-[var(--bg-elevated)] shadow-[var(--shadow-md)] sm:max-w-[24rem]",
         )}
         dir={ar ? "rtl" : "ltr"}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--plum)]/10 px-4 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-4">
           <div>
             <h2 className="font-display text-[1.05rem] font-semibold text-[var(--plum)]">
               {ar ? "الإشعارات" : "Notifications"}
@@ -177,11 +177,11 @@ export function NotificationPanel() {
           />
         </div>
 
-        <div className="border-t border-[var(--plum)]/10 p-3">
+        <div className="border-t border-[var(--border)] p-3">
           <Link
             href="/account/notifications"
             onClick={closePanel}
-            className="flex h-10 items-center justify-center rounded-full bg-[var(--plum)] text-[0.82rem] font-medium text-white"
+            className="flex h-10 items-center justify-center rounded-full bg-[var(--btn-bg)] text-[0.82rem] font-medium text-[var(--btn-fg)]"
           >
             {ar ? "عرض كل الإشعارات" : "View all notifications"}
           </Link>

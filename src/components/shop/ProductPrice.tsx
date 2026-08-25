@@ -27,7 +27,7 @@ export function ProductPrice({
     size === "lg" ? "t5" : size === "sm" ? "t3" : "t3";
 
   return (
-    <span className={cn("inline-flex flex-wrap items-baseline gap-2", className)}>
+    <span className={cn("font-price inline-flex flex-wrap items-baseline gap-2", className)}>
       <span className={cn(priceClass, "font-medium text-[var(--ink)]/85")}>
         {formatPrice(price)}
       </span>

@@ -91,7 +91,7 @@ export function CartView() {
       </div>
 
       <div
-        className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--ivory)]/96 shadow-[0_-8px_30px_-12px_rgba(61,38,64,0.15)] backdrop-blur-sm lg:hidden"
+        className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--bg-glass-strong)] shadow-[0_-8px_30px_-12px_rgba(61,38,64,0.15)] backdrop-blur-sm lg:hidden"
         style={{
           bottom: "calc(4.75rem + env(safe-area-inset-bottom))",
         }}
@@ -99,7 +99,7 @@ export function CartView() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div>
             <p className="t2 text-[var(--muted)]">الإجمالي</p>
-            <p className="font-display text-[1.2rem] font-semibold text-[var(--plum)]">
+            <p className="font-price text-[1.2rem] font-semibold text-[var(--plum)]">
               {formatPrice(total)}
             </p>
           </div>

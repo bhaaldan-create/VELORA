@@ -176,8 +176,7 @@ export function PrimaryBottomNav() {
       <ul
         className={cn(
           "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[24px] px-1.5 py-1.5",
-          "border border-white/70 bg-white/80 backdrop-blur-xl",
-          "shadow-[0_10px_32px_-10px_rgba(50,22,47,0.16)]",
+          "surface-glass border border-[var(--border-glass)] backdrop-blur-xl theme-shadow-md",
           "ring-1 ring-[var(--plum)]/[0.06]",
         )}
       >

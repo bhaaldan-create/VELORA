@@ -85,44 +85,44 @@ export function SuperQiPaymentModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto border border-[var(--plum)]/15 bg-[var(--ivory)] shadow-[0_24px_80px_rgba(42,26,36,0.28)] animate-[velora-rise_0.35s_ease-out_both]"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow-lg)] animate-[velora-rise_0.35s_ease-out_both]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative overflow-hidden bg-[var(--plum)] px-5 py-6 text-[var(--ivory)] sm:px-7">
+        <div className="relative overflow-hidden bg-[var(--btn-bg)] px-5 py-6 text-[var(--btn-fg)] sm:px-7">
           <div className="pointer-events-none absolute -end-8 -top-10 h-40 w-40 rounded-full bg-[var(--champagne)]/20" />
           <div className="pointer-events-none absolute -start-6 bottom-0 h-28 w-28 rounded-full bg-[var(--blush)]/25" />
           <div className="relative flex items-start justify-between gap-4">
             <div>
-              <p className="t1 tracking-[0.2em] text-[var(--champagne)]">
+              <p className="t1 tracking-[0.2em] text-[var(--btn-fg)]/70">
                 {SUPER_QI_ACCOUNT.providerEn}
               </p>
               <h2 id={titleId} className="font-display t6 mt-2 font-semibold">
                 تحويل إلى سوبر كي
               </h2>
-              <p className="t3 mt-2 text-[var(--ivory)]/80">
+              <p className="t3 mt-2 text-[var(--btn-fg)]/80">
                 ادفعي عبر {method?.nameAr ?? "البطاقة"} إلى حساب الشركة مباشرة
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="t2 border border-white/25 px-3 py-1.5 text-[var(--ivory)] hover:bg-white/10"
+              className="t2 border border-[var(--btn-fg)]/25 px-3 py-1.5 text-[var(--btn-fg)] hover:bg-[var(--btn-fg)]/10"
               aria-label="إغلاق"
             >
               إغلاق
             </button>
           </div>
           {method ? (
-            <div className="relative mt-5 inline-flex bg-white/95 p-2">
+            <div className="relative mt-5 inline-flex bg-[var(--bg-elevated)] p-2">
               <PaymentLogo method={method} compact />
             </div>
           ) : null}
         </div>
 
         <div className="space-y-5 px-5 py-6 sm:px-7">
-          <div className="border border-[var(--plum)]/12 bg-white p-4">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-4">
             <p className="t2 text-[var(--muted)]">المبلغ المطلوب تحويله</p>
-            <p className="font-display t6 mt-1 font-semibold text-[var(--plum)]">
+            <p className="font-price t6 mt-1 font-semibold text-[var(--plum)]">
               {formatPrice(amountIqd)}
             </p>
             {customerName ? (
@@ -132,7 +132,7 @@ export function SuperQiPaymentModal({
             ) : null}
           </div>
 
-          <div className="border border-[var(--plum)]/12 bg-[var(--mist)] p-4">
+          <div className="border border-[var(--border)] bg-[var(--mist)] p-4">
             <p className="t2 text-[var(--muted)]">رقم حساب الشركة — سوبر كي</p>
             <p
               className="font-display t5 mt-2 font-semibold tracking-[0.08em] text-[var(--plum)]"
@@ -146,7 +146,7 @@ export function SuperQiPaymentModal({
             <button
               type="button"
               onClick={() => void copyAccount()}
-              className="t2 mt-4 border border-[var(--plum)] bg-[var(--plum)] px-4 py-2 text-[var(--ivory)]"
+              className="t2 mt-4 border border-[var(--btn-bg)] bg-[var(--btn-bg)] px-4 py-2 text-[var(--btn-fg)]"
             >
               {copied ? "تم نسخ الرقم ✓" : "نسخ رقم الحساب"}
             </button>
@@ -161,7 +161,7 @@ export function SuperQiPaymentModal({
               "بعد نجاح التحويل، انسخي رقم العملية وأدخليه بالأسفل ثم أكّدي.",
             ].map((step, i) => (
               <li key={step} className="t3 flex gap-3 text-[var(--ink)]/75">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center bg-[var(--plum)] text-[var(--ivory)] t2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center bg-[var(--btn-bg)] text-[var(--btn-fg)] t2">
                   {i + 1}
                 </span>
                 <span>{step}</span>
@@ -179,7 +179,7 @@ export function SuperQiPaymentModal({
               disabled={disabled}
               dir="ltr"
               placeholder="مثال: 84920133"
-              className="t3 mt-2 w-full border border-[var(--plum)]/20 bg-white px-3 py-3 outline-none focus:border-[var(--plum)] disabled:opacity-50"
+              className="t3 mt-2 w-full border border-[var(--border)] bg-[var(--bg-input)] px-3 py-3 text-[var(--ink)] outline-none focus:border-[var(--plum)] disabled:opacity-50"
             />
           </label>
 
@@ -194,7 +194,7 @@ export function SuperQiPaymentModal({
               type="button"
               disabled={disabled}
               onClick={confirm}
-              className="t3 flex-1 border border-[var(--plum)] bg-[var(--plum)] px-4 py-3 text-[var(--ivory)] disabled:opacity-40"
+              className="t3 flex-1 border border-[var(--btn-bg)] bg-[var(--btn-bg)] px-4 py-3 text-[var(--btn-fg)] disabled:opacity-40"
             >
               {disabled ? "جارٍ التأكيد…" : "تم التحويل — أكّدي الطلب"}
             </button>
@@ -202,7 +202,7 @@ export function SuperQiPaymentModal({
               type="button"
               disabled={disabled}
               onClick={onClose}
-              className="t3 border border-[var(--plum)]/20 bg-white px-4 py-3 text-[var(--plum)] disabled:opacity-40"
+              className="t3 border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 text-[var(--plum)] disabled:opacity-40"
             >
               رجوع
             </button>
