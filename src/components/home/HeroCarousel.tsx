@@ -198,23 +198,23 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
               className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-black leading-[1.35] tracking-tight text-white"
               style={{
                 textShadow:
-                  "0 1px 2px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.4)",
+                  "0 1px 0 rgba(0,0,0,0.85), 0 2px 4px rgba(0,0,0,0.65), 0 6px 18px rgba(0,0,0,0.55), 0 0 28px rgba(0,0,0,0.35)",
               }}
             >
               {ar ? slide.headlineAr : slide.headlineEn}
             </h1>
             <p
-              className="mt-3 text-[0.82rem] leading-[1.75] text-white/95 sm:text-[0.9rem]"
+              className="mt-2 text-[0.82rem] leading-[1.7] text-white sm:mt-2.5 sm:text-[0.9rem]"
               style={{
                 textShadow:
-                  "0 1px 2px rgba(0,0,0,0.5), 0 3px 14px rgba(0,0,0,0.32)",
+                  "0 1px 0 rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.6), 0 5px 14px rgba(0,0,0,0.45)",
               }}
             >
               {ar ? slide.bodyAr : slide.bodyEn}
             </p>
             <div
               className={cn(
-                "mt-5 sm:mt-6 transition-all delay-150 duration-700 ease-out",
+                "mt-3 sm:mt-3.5 transition-all delay-100 duration-700 ease-out",
                 entered
                   ? "translate-y-0 opacity-100"
                   : "translate-y-2 opacity-0",
@@ -222,7 +222,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
             >
               <Link
                 href={slide.href || "/shop"}
-                className="inline-flex items-center gap-2.5 rounded-full bg-white px-5 py-2.5 text-[0.8rem] font-medium text-[#32162f] shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[0.8rem] font-medium text-[#32162f] shadow-[0_8px_24px_rgba(0,0,0,0.28)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {ar ? slide.ctaAr : slide.ctaEn}
                 <span aria-hidden className="text-[0.75rem] opacity-90">
