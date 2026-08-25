@@ -14,15 +14,14 @@ import { cn } from "@/lib/utils";
 
 interface ShopCatalogProps {
   categories: Category[];
+  products: Product[];
 }
 
-export function ShopCatalog({ categories }: ShopCatalogProps) {
+export function ShopCatalog({ categories, products }: ShopCatalogProps) {
   const { locale, t } = useLocale();
   const searchParams = useSearchParams();
   const brand = getShopBrand(searchParams.get("brand") ?? undefined);
   const categoryFromUrl = searchParams.get("category") ?? undefined;
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<string | undefined>(() =>
     categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
       ? categoryFromUrl
@@ -36,30 +35,6 @@ export function ShopCatalog({ categories }: ShopCatalogProps) {
         : undefined,
     );
   }, [categoryFromUrl, categories]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    void (async () => {
-      try {
-        const res = await fetch("/api/catalog/products");
-        const data = (await res.json()) as {
-          ok?: boolean;
-          products?: Product[];
-        };
-        if (!cancelled && data.ok && Array.isArray(data.products)) {
-          setProducts(data.products);
-        }
-      } catch {
-        /* keep empty */
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const list = useMemo(() => {
     let result = products;
@@ -118,13 +93,9 @@ export function ShopCatalog({ categories }: ShopCatalogProps) {
             {heading}
           </h1>
           <p className="mt-1 text-[0.85rem] text-[var(--muted)]">
-            {loading
-              ? locale === "en"
-                ? "Loading…"
-                : "جارٍ التحميل…"
-              : locale === "en"
-                ? `${list.length} products · swipe`
-                : `${list.length} منتج · مرّري`}
+            {locale === "en"
+              ? `${list.length} products · swipe`
+              : `${list.length} منتج · مرّري`}
           </p>
         </div>
       </div>
@@ -145,9 +116,7 @@ export function ShopCatalog({ categories }: ShopCatalogProps) {
         ))}
       </div>
 
-      {loading ? (
-        <ShopCatalogSkeleton />
-      ) : rails && !category ? (
+      {rails && !category ? (
         <div className="mt-10 space-y-12">
           {rails.map(({ cat, items }) => (
             <section key={cat.slug}>
@@ -186,19 +155,6 @@ export function ShopCatalog({ categories }: ShopCatalogProps) {
           </Link>
         </div>
       )}
-    </div>
-  );
-}
-
-function ShopCatalogSkeleton() {
-  return (
-    <div className="mt-8 flex gap-3 overflow-hidden">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div
-          key={i}
-          className="aspect-[3/4] w-[42%] shrink-0 animate-pulse rounded-2xl bg-[var(--mist)] sm:w-[30%]"
-        />
-      ))}
     </div>
   );
 }
