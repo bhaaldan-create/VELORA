@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
@@ -13,7 +14,7 @@ import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { brand } from "@/constants/brand";
 import "./globals.css";
 
-/** خط عربي خفيف */
+/** نص الواجهة — قراءة مريحة للأزرار والنماذج */
 const sans = IBM_Plex_Sans_Arabic({
   variable: "--font-body",
   subsets: ["arabic", "latin"],
@@ -22,7 +23,39 @@ const sans = IBM_Plex_Sans_Arabic({
   preload: true,
 });
 
-/** خط لاتيني مودرن لشعارات مثل My VELORA */
+/**
+ * عناوين العرض — Thmanyah Serif Display
+ * Light 300 · Regular 400 · Bold 700 · Black 900
+ */
+const thmanyah = localFont({
+  src: [
+    {
+      path: "../fonts/thmanyah/thmanyah_serif_display_Light.otf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../fonts/thmanyah/thmanyah_serif_display_Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/thmanyah/thmanyah_serif_display_Bold.otf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/thmanyah/thmanyah_serif_display_Black.otf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-thmanyah",
+  display: "swap",
+  preload: true,
+});
+
+/** لاتيني مودرن لشعارات مثل My VELORA */
 const latin = Outfit({
   variable: "--font-latin",
   subsets: ["latin"],
@@ -76,7 +109,7 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${sans.variable} ${latin.variable} h-full`}
+      className={`${sans.variable} ${thmanyah.variable} ${latin.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />

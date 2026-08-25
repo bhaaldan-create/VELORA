@@ -23,7 +23,7 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
           >
             {ar ? "عرض الكل" : "View all"}
           </Link>
-          <h2 className="font-display text-[clamp(1.05rem,3.2vw,1.35rem)] font-bold text-[#32162f]">
+          <h2 className="font-display text-[clamp(1.05rem,3.2vw,1.35rem)] font-black text-[#32162f]">
             {ar ? "تسوق حسب الفئة" : "Shop by category"}
           </h2>
         </div>

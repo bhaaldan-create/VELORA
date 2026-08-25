@@ -133,11 +133,11 @@ export function ProductDetail({ product, related, routine }: Props) {
 
           {/* Editorial product story */}
           <div className="motion-safe:animate-[velora-rise_0.8s_0.06s_ease-out_both]">
-            <h1 className="font-display text-[clamp(1.35rem,3.8vw,1.95rem)] font-semibold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
+            <h1 className="font-display text-[clamp(1.35rem,3.8vw,1.95rem)] font-bold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
               {ar ? product.nameAr : product.name}
             </h1>
             <p
-              className="mt-1.5 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
+              className="font-display mt-1.5 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
               dir={ar ? "ltr" : undefined}
             >
               {ar ? product.name : product.nameAr}

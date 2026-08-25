@@ -85,14 +85,14 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
           ) : null}
           <h1
             className={cn(
-              "mt-2 text-[clamp(1.5rem,3.5vw,2.2rem)] font-semibold text-[var(--plum)]",
+              "mt-2 text-[clamp(1.5rem,3.5vw,2.2rem)] font-black text-[var(--plum)]",
               brand ? "font-latin tracking-tight" : "font-display",
             )}
             dir={brand ? "ltr" : undefined}
           >
             {heading}
           </h1>
-          <p className="mt-1 text-[0.85rem] text-[var(--muted)]">
+          <p className="font-display mt-1 text-[0.85rem] font-light text-[var(--muted)]">
             {locale === "en"
               ? `${list.length} products · swipe`
               : `${list.length} منتج · مرّري`}

@@ -195,7 +195,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
             )}
           >
             <h1
-              className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-bold leading-[1.35] tracking-tight text-white"
+              className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-black leading-[1.35] tracking-tight text-white"
               style={{
                 textShadow:
                   "0 1px 2px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.4)",

@@ -63,10 +63,10 @@ export function PromoBanner({ config }: { config: HomePromoConfig }) {
             className="flex flex-1 flex-col justify-center gap-3 px-4 py-6 sm:px-6 sm:py-8 md:px-8"
             dir={ar ? "rtl" : "ltr"}
           >
-            <h2 className="font-display text-[clamp(1.25rem,4vw,1.75rem)] font-bold leading-tight text-white">
+            <h2 className="font-display text-[clamp(1.25rem,4vw,1.75rem)] font-black leading-tight text-white">
               {ar ? config.headlineAr : config.headlineEn}
             </h2>
-            <p className="max-w-md text-[0.78rem] leading-[1.7] text-white/85 sm:text-[0.85rem]">
+            <p className="font-display max-w-md text-[0.78rem] font-light leading-[1.7] text-white/85 sm:text-[0.85rem]">
               {ar ? config.bodyAr : config.bodyEn}
             </p>
             <div className="mt-1 flex justify-start">

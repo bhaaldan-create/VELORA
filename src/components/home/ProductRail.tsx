@@ -42,7 +42,7 @@ export function ProductRail({
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mb-10 flex items-end justify-between gap-6 sm:mb-12">
           <div className="min-w-0 max-w-xl">
-            <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-tight text-[var(--plum)]">
+            <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-tight text-[var(--plum)]">
               {locale === "en" ? titleEn : title}
             </h2>
             <p className="mt-2 text-[0.95rem] text-[var(--ink)]/60">

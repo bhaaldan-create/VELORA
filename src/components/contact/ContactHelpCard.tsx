@@ -90,7 +90,7 @@ export function ContactHelpCard() {
             <div className="mt-4 flex items-start gap-3">
               <h2
                 id="velora-help-heading"
-                className="font-display text-[clamp(1.75rem,4.2vw,2.55rem)] font-semibold leading-[1.2] tracking-[-0.02em] text-[var(--plum)]"
+                className="font-display text-[clamp(1.75rem,4.2vw,2.55rem)] font-black leading-[1.2] tracking-[-0.02em] text-[var(--plum)]"
               >
                 {copy.title}
               </h2>
@@ -112,7 +112,7 @@ export function ContactHelpCard() {
               </span>
             </div>
 
-            <p className="mt-3 max-w-lg text-[1.02rem] font-light leading-relaxed text-[var(--muted)] sm:text-[1.08rem]">
+            <p className="font-display mt-3 max-w-lg text-[1.02rem] font-light leading-relaxed text-[var(--muted)] sm:text-[1.08rem]">
               {copy.subtitle}
             </p>
           </div>
@@ -251,7 +251,7 @@ function HelpCard({
         <p className="text-[0.72rem] font-medium tracking-[0.14em] text-[var(--muted)] uppercase">
           {eyebrow}
         </p>
-        <p className="font-display mt-1.5 text-[1.15rem] font-semibold leading-snug text-[var(--plum)] sm:text-[1.25rem]">
+        <p className="font-display mt-1.5 text-[1.15rem] font-bold leading-snug text-[var(--plum)] sm:text-[1.25rem]">
           {title}
         </p>
         <p className="mt-1.5 text-[0.88rem] font-light leading-relaxed text-[var(--muted)] sm:text-[0.92rem]">

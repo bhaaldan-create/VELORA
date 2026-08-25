@@ -63,7 +63,7 @@ export function SearchScreen() {
         <p className="font-latin text-[11px] font-medium tracking-[0.28em] text-[var(--muted)] uppercase">
           Search
         </p>
-        <h1 className="font-display mt-3 text-[clamp(1.65rem,4vw,2.35rem)] font-semibold text-[var(--plum)]">
+        <h1 className="font-display mt-3 text-[clamp(1.65rem,4vw,2.35rem)] font-black text-[var(--plum)]">
           {locale === "en" ? "Find your beauty" : "ابحثي عن جمالك"}
         </h1>
       </div>
