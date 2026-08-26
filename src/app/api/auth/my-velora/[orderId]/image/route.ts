@@ -19,7 +19,7 @@ import { recordCardEvent } from "@/lib/my-velora/generate";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 /** Allow enough time for sharp compositing on cold start */
-export const maxDuration = 60;
+export const maxDuration = 15;
 
 type RouteCtx = { params: Promise<{ orderId: string }> };
 
@@ -28,11 +28,12 @@ type RouteCtx = { params: Promise<{ orderId: string }> };
  * GET /api/auth/my-velora/[orderId]/image
  */
 export async function GET(req: Request, ctx: RouteCtx) {
-  const { orderId } = await ctx.params;
+  let orderId = "unknown";
   const url = new URL(req.url);
   const wantsJson = url.searchParams.get("debug") === "1";
 
   try {
+    ({ orderId } = await ctx.params);
     const jar = await cookies();
     const session = await verifyCustomerSessionToken(
       jar.get(CUSTOMER_COOKIE)?.value,
@@ -88,14 +89,15 @@ export async function GET(req: Request, ctx: RouteCtx) {
     if (wantsJson) {
       return Response.json({
         ok: true,
-        bytes: png.length,
+        bytes: png.byteLength,
         products: payload.productCount,
         brands: payload.brandCount,
         points: payload.pointsEarned,
       });
     }
 
-    return new Response(new Uint8Array(png), {
+    // Pass Buffer directly — do NOT copy via new Uint8Array(buf) (doubles memory).
+    return new Response(png, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
@@ -114,6 +116,9 @@ export async function GET(req: Request, ctx: RouteCtx) {
     console.error("[my-velora/image]", orderId, message, error);
     return wantsJson
       ? Response.json({ ok: false, error: message }, { status: 500 })
-      : new Response(`Render failed: ${message}`, { status: 500 });
+      : new Response(`Render failed: ${message}`, {
+          status: 500,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
   }
 }

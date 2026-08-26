@@ -32,6 +32,8 @@ export function buildReferralUrl(token: string, siteUrl?: string) {
 
 export async function fetchProductRows(ids: string[]): Promise<ProductRow[]> {
   if (!ids.length) return [];
+  // Never SELECT imageUrl / brandLogoUrl — they are often multi-MB data: URIs
+  // and will OOM the serverless function before render starts.
   const rows = await prisma.product.findMany({
     where: { id: { in: ids } },
     select: {
@@ -40,11 +42,13 @@ export async function fetchProductRows(ids: string[]): Promise<ProductRow[]> {
       nameAr: true,
       categorySlug: true,
       brandName: true,
-      brandLogoUrl: true,
-      imageUrl: true,
     },
   });
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    brandLogoUrl: null,
+    imageUrl: null,
+  }));
 }
 
 export async function buildCardPayload(input: {

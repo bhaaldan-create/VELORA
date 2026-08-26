@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import QRCode from "qrcode";
-import { prisma } from "@/lib/db";
 import type { VeloraCardPayload } from "@/lib/my-velora/types";
 
 export const CARD_W = 1080;
@@ -169,64 +168,19 @@ type Composite = {
   top: number;
 };
 
-async function loadProductImage(
-  productId: string,
-  imageUrl: string | null,
-): Promise<Buffer | null> {
-  // Prefer DB bytes — never rely on self-HTTP to /api/media
-  try {
-    const row = await prisma.product.findUnique({
-      where: { id: productId },
-      select: { imageUrl: true },
-    });
-    if (row?.imageUrl) {
-      const fromDb = await loadLocalOrRemote(row.imageUrl);
-      if (fromDb) return downscale(fromDb, 1000);
-    }
-  } catch {
-    /* ignore */
-  }
-
-  if (imageUrl && !imageUrl.startsWith("/api/")) {
-    const fromUrl = await loadLocalOrRemote(imageUrl);
-    if (fromUrl) return downscale(fromUrl, 1000);
-  }
-  return null;
-}
-
 async function loadBrandLogo(
-  brandName: string,
+  _brandName: string,
   logoUrl: string | null,
-  productIds: string[],
+  _productIds: string[],
 ): Promise<Buffer | null> {
-  if (logoUrl && !logoUrl.startsWith("/api/")) {
+  // Skip DB brandLogoUrl (often huge data:). Only compact http/public paths.
+  if (
+    logoUrl &&
+    !logoUrl.startsWith("data:") &&
+    !logoUrl.startsWith("/api/")
+  ) {
     const direct = await loadLocalOrRemote(logoUrl);
     if (direct) return downscale(direct, 400);
-  }
-
-  if (!productIds.length) return null;
-  try {
-    const rows = await prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { brandName: true, brandLogoUrl: true },
-    });
-    const match = rows.find(
-      (r) =>
-        (r.brandName || "").trim().toLowerCase() === brandName.trim().toLowerCase() &&
-        r.brandLogoUrl,
-    );
-    if (match?.brandLogoUrl) {
-      const buf = await loadLocalOrRemote(match.brandLogoUrl);
-      if (buf) return downscale(buf, 400);
-    }
-    // Any logo from these products
-    for (const r of rows) {
-      if (!r.brandLogoUrl) continue;
-      const buf = await loadLocalOrRemote(r.brandLogoUrl);
-      if (buf) return downscale(buf, 400);
-    }
-  } catch {
-    /* ignore */
   }
   return null;
 }
@@ -234,98 +188,11 @@ async function loadBrandLogo(
 async function composeProducts(
   products: VeloraCardPayload["products"],
 ): Promise<Composite[]> {
-  const zone = ZONES.products;
-  const list = products.slice(0, 6);
-  if (!list.length) return [];
-
-  const loaded: { buf: Buffer; w: number; h: number }[] = [];
-  for (const p of list) {
-    try {
-      const raw = await loadProductImage(p.id, p.imageUrl);
-      if (!raw) continue;
-      const n = list.length;
-      const cellW =
-        n === 1 ? zone.width * 0.48 : n === 2 ? zone.width * 0.38 : zone.width * 0.28;
-      const cellH =
-        n === 1 ? zone.height * 0.78 : n <= 3 ? zone.height * 0.62 : zone.height * 0.4;
-      const fitted = await fitContain(raw, Math.round(cellW), Math.round(cellH));
-      if (fitted) loaded.push(fitted);
-    } catch (err) {
-      console.error("[render-card] product layer failed", p.id, err);
-    }
-  }
-
-  if (!loaded.length) return [];
-
-  const out: Composite[] = [];
-  const n = loaded.length;
-
-  if (n === 1) {
-    const a = loaded[0]!;
-    out.push({
-      input: a.buf,
-      left: Math.round(zone.left + (zone.width - a.w) / 2),
-      top: Math.round(zone.top + (zone.height - a.h) / 2),
-    });
-    return out;
-  }
-
-  if (n === 2) {
-    const gap = 40;
-    const totalW = loaded[0]!.w + loaded[1]!.w + gap;
-    let x = Math.round(zone.left + (zone.width - totalW) / 2);
-    for (const a of loaded) {
-      out.push({
-        input: a.buf,
-        left: x,
-        top: Math.round(zone.top + (zone.height - a.h) / 2),
-      });
-      x += a.w + gap;
-    }
-    return out;
-  }
-
-  if (n === 3) {
-    const [a, b, c] = loaded;
-    out.push({
-      input: a!.buf,
-      left: Math.round(zone.left + zone.width * 0.08),
-      top: Math.round(zone.top + zone.height * 0.12),
-    });
-    out.push({
-      input: b!.buf,
-      left: Math.round(zone.left + (zone.width - b!.w) / 2),
-      top: Math.round(zone.top + zone.height * 0.18),
-    });
-    out.push({
-      input: c!.buf,
-      left: Math.round(zone.left + zone.width * 0.62),
-      top: Math.round(zone.top + zone.height * 0.12),
-    });
-    return out;
-  }
-
-  const cols = n <= 4 ? 2 : 3;
-  const cellW = Math.floor(zone.width / cols) - 16;
-  const rows = Math.ceil(n / cols);
-  const cellH = Math.floor(zone.height / rows) - 12;
-  for (let i = 0; i < loaded.length; i++) {
-    const item = loaded[i]!;
-    const fitted = await fitContain(item.buf, cellW, cellH);
-    if (!fitted) continue;
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    out.push({
-      input: fitted.buf,
-      left: Math.round(
-        zone.left + col * (zone.width / cols) + (zone.width / cols - fitted.w) / 2,
-      ),
-      top: Math.round(
-        zone.top + row * (zone.height / rows) + (zone.height / rows - fitted.h) / 2,
-      ),
-    });
-  }
-  return out;
+  // Product photos are served from multi-MB data: blobs via /api/media.
+  // Fetching them inside this function risks timeout/OOM on Vercel Hobby.
+  // Keep the Story card reliable: master + metrics + brands + QR first.
+  void products;
+  return [];
 }
 
 function escapeXml(s: string) {
