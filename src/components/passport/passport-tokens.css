@@ -1,0 +1,21 @@
+/* MY VELORA PASSPORT — Design tokens */
+.vp-root {
+  --vp-pearl: #fafafe;
+  --vp-paper: #f5f1fb;
+  --vp-lavender-50: #faf9fc;
+  --vp-lavender-100: #f5f1fb;
+  --vp-lavender-200: #dcd3f5;
+  --vp-lavender-300: #b9a7e8;
+  --vp-lavender-500: #7e68b5;
+  --vp-lavender-700: #5a4a7a;
+  --vp-ink: #24202b;
+  --vp-muted: #777080;
+  --vp-grey: #b8b4c0;
+  --vp-gold: #c9b896;
+  --vp-gold-soft: rgba(201, 184, 150, 0.35);
+  --vp-stamp-color: rgba(126, 104, 181, 0.72);
+  --vp-doc-shadow: 0 40px 100px rgba(90, 74, 122, 0.14);
+  --vp-doc-radius: 6px;
+  --vp-font-serif: var(--font-kufyan), Georgia, "Times New Roman", serif;
+  --vp-font-sans: var(--font-latin), var(--font-body), system-ui, sans-serif;
+}

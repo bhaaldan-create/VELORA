@@ -81,29 +81,39 @@ export function MyVeloraHub() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10" dir={ar ? "rtl" : "ltr"}>
-      <div className="text-center">
-        <p className="font-latin text-[0.65rem] tracking-[0.38em] text-[#8B7A92]">
-          MY VELORA
-        </p>
-        <h1 className="font-display mt-2 text-[1.8rem] font-semibold text-[#3D2640]">
-          {ar ? "لحظات جمالك" : "Your beauty moments"}
-        </h1>
-      </div>
-
       <Link
         href="/account/my-velora/passport"
-        className="mt-8 block overflow-hidden rounded-[28px] border border-[#E5DAEE] bg-gradient-to-br from-[#F5F1FB] via-white to-[#DCD3F5] px-6 py-7 text-center shadow-[0_18px_50px_rgba(126,104,181,0.12)] transition hover:-translate-y-0.5"
+        className="block overflow-hidden rounded-[8px] border border-[#DCD3F5] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-10 text-center shadow-[0_24px_70px_rgba(90,74,122,0.14)] transition hover:-translate-y-0.5"
       >
-        <p className="font-latin text-[0.62rem] tracking-[0.4em] text-[#7E68B5]">
+        <p className="font-latin text-[0.58rem] tracking-[0.42em] text-[#7E68B5]">
           MY VELORA PASSPORT
         </p>
-        <p className="font-display mt-2 text-[1.25rem] text-[#24202B]">
-          {ar ? "جوازكِ الرقمي الفاخر" : "Your luxury beauty passport"}
+        <p className="font-display mt-3 text-[1.5rem] tracking-[0.06em] text-[#24202B]">
+          {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
         </p>
-        <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.68rem] tracking-[0.22em] text-white uppercase">
+        <p className="mx-auto mt-2 max-w-xs text-[0.8rem] leading-relaxed text-[#777080]">
+          {ar
+            ? "هويتكِ داخل عالم VELORA — المستوى، XP، الإنجازات، والتحقق."
+            : "Your identity inside VELORA — level, XP, achievements, and verification."}
+        </p>
+        <span className="mt-6 inline-flex rounded-full bg-[#24202B] px-7 py-2.5 font-latin text-[0.62rem] tracking-[0.28em] text-white uppercase">
           {ar ? "فتح الجواز" : "Open Passport"}
         </span>
       </Link>
+
+      <div className="mt-12 text-center">
+        <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#8B7A92]">
+          MY VELORA CARDS
+        </p>
+        <h1 className="font-display mt-2 text-[1.35rem] font-semibold text-[#3D2640]">
+          {ar ? "بطاقات طلباتك" : "Your order cards"}
+        </h1>
+        <p className="mx-auto mt-2 max-w-sm text-[0.82rem] text-[#8B7A92]">
+          {ar
+            ? "لحظات جمالكِ الجاهزة للمشاركة بعد كل طلب."
+            : "Share-ready beauty moments from your orders."}
+        </p>
+      </div>
 
       {!hasCards ? (
         <div className="mv-fade-in mt-12 rounded-[28px] border border-[#E5DAEE] bg-white/80 px-8 py-16 text-center">

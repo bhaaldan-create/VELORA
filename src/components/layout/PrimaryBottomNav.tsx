@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { bottomNavLinks } from "@/constants/brand";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { useCheckoutUI } from "@/context/CheckoutUIContext";
@@ -148,10 +149,16 @@ export function PrimaryBottomNav() {
   const { customer } = useCustomerAuth();
   const { immersive } = useCheckoutUI();
   const { t } = useLocale();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (pathname.startsWith("/admin")) return null;
   if (isAuthRoute(pathname)) return null;
   if (immersive) return null;
+  if (pathname.startsWith("/account/my-velora/passport")) return null;
 
   const labels = {
     home: t.home,
@@ -183,7 +190,7 @@ export function PrimaryBottomNav() {
         {bottomNavLinks.map((link) => {
           const href =
             link.id === "account"
-              ? customer
+              ? mounted && customer
                 ? "/account"
                 : "/login"
               : link.href;

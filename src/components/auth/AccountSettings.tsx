@@ -515,6 +515,26 @@ export function AccountSettings() {
                 </div>
               </section>
 
+              <Link
+                href="/account/my-velora/passport"
+                className="acc-passport-hero block overflow-hidden rounded-[20px] border border-[var(--account-border)] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-6 shadow-[0_18px_50px_rgba(90,74,122,0.1)] transition hover:-translate-y-0.5"
+              >
+                <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#7E68B5]">
+                  MY VELORA PASSPORT
+                </p>
+                <p className="font-display mt-2 text-[1.2rem] tracking-[0.04em] text-[#24202B]">
+                  {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
+                </p>
+                <p className="mt-2 max-w-md text-[0.82rem] leading-relaxed text-[#777080]">
+                  {ar
+                    ? "هويتكِ داخل VELORA — المستوى، XP، الإنجازات، والتحقق."
+                    : "Your identity inside VELORA — level, XP, achievements, and verification."}
+                </p>
+                <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.6rem] tracking-[0.24em] text-white uppercase">
+                  {ar ? "فتح الجواز" : "Open Passport"}
+                </span>
+              </Link>
+
               {/* Stats */}
               <section className="acc-card mt-5 sm:mt-6">
                 <div className="acc-stats">

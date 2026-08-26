@@ -26,6 +26,7 @@ export type AdminNavId =
   | "homepage"
   | "club"
   | "my-velora"
+  | "passport"
   | "settings";
 
 export type AdminNavItem = {
@@ -65,6 +66,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: "homepage", href: "/admin/homepage", labelAr: "الصفحة الرئيسية", labelEn: "Homepage", icon: "homepage", group: "system" },
   { id: "club", href: "/admin/club", labelAr: "نادي الجمال", labelEn: "Beauty Club", icon: "club", group: "system" },
   { id: "my-velora", href: "/admin/my-velora", labelAr: "MY VELORA Studio", labelEn: "MY VELORA Studio", icon: "my-velora", group: "system" },
+  { id: "passport", href: "/admin/passport", labelAr: "MY VELORA PASSPORT", labelEn: "MY VELORA PASSPORT", icon: "passport", group: "system" },
   { id: "settings", href: "/admin/settings", labelAr: "الإعدادات", labelEn: "Settings", icon: "settings", group: "system" },
 ];
 

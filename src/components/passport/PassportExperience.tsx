@@ -12,37 +12,17 @@ import {
   SKIN_CONCERN_OPTIONS,
   SKIN_TYPE_OPTIONS,
 } from "@/lib/passport/types";
-import { IRAQ_GOVERNORATES } from "@/lib/passport/governorates";
-import "./passport.css";
-
-type PageId =
-  | "identity"
-  | "beauty"
-  | "journey"
-  | "collection"
-  | "achievements"
-  | "level"
-  | "match"
-  | "prive"
-  | "share";
-
-const PAGES: { id: PageId; en: string; ar: string }[] = [
-  { id: "identity", en: "Identity", ar: "الهوية" },
-  { id: "beauty", en: "Beauty", ar: "الجمال" },
-  { id: "journey", en: "Journey", ar: "الرحلة" },
-  { id: "collection", en: "Collection", ar: "المجموعة" },
-  { id: "achievements", en: "Badges", ar: "الإنجازات" },
-  { id: "level", en: "Level", ar: "المستوى" },
-  { id: "match", en: "Match", ar: "التوافق" },
-  { id: "prive", en: "Privé", ar: "بريفيه" },
-  { id: "share", en: "Share", ar: "مشاركة" },
-];
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "V";
-  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "V";
-}
+import { PassportCover } from "./cover/PassportCover";
+import { PassportIdentityPage } from "./identity/PassportIdentityPage";
+import { PassportPageIndex, type PassportPageId } from "./navigation/PassportPageIndex";
+import { PassportDocumentShell } from "./shell/PassportDocumentShell";
+import { PassportEditSheet } from "./edit/PassportEditSheet";
+import {
+  downloadPassportStoryPng,
+  sharePassportStory,
+} from "@/lib/passport/story-image";
+import { labelPassportOption, labelPassportOptions } from "./utils";
+import "./passport-document.css";
 
 function toggleIn(list: string[], id: string) {
   return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
@@ -77,7 +57,6 @@ function compressImage(file: File, maxEdge = 640, quality = 0.72): Promise<strin
   });
 }
 
-/** Rule-based match — no AI claims. Returns null when profile incomplete. */
 function computeMatch(p: PassportPayload): {
   percent: number;
   reasons: { en: string; ar: string }[];
@@ -95,34 +74,18 @@ function computeMatch(p: PassportPayload): {
   if (p.journey.totalOrders > 0) score += 6;
   if (p.wishlistCount > 0) score += 4;
   if (p.achievements.some((a) => a.unlocked)) score += 4;
-  score = Math.min(96, score);
 
   const reasons: { en: string; ar: string }[] = [];
-  if (bp.skinType) {
-    reasons.push({
-      en: "Matches your skin profile",
-      ar: "يتوافق مع ملف بشرتكِ",
-    });
-  }
-  if (bp.preferredFinish) {
-    reasons.push({
-      en: "Matches your preferred finish",
-      ar: "يتوافق مع اللمسة المفضلة لديكِ",
-    });
-  }
-  if (bp.beautyGoals.length) {
-    reasons.push({
-      en: "Matches your beauty goals",
-      ar: "يتوافق مع أهداف جمالكِ",
-    });
-  }
-  if (bp.favoriteCategories.length || p.wishlistCount > 0) {
-    reasons.push({
-      en: "Matches your previous preferences",
-      ar: "يتوافق مع تفضيلاتكِ السابقة",
-    });
-  }
-  return { percent: score, reasons: reasons.slice(0, 4) };
+  if (bp.skinType)
+    reasons.push({ en: "Matches your skin profile", ar: "يتوافق مع ملف بشرتكِ" });
+  if (bp.preferredFinish)
+    reasons.push({ en: "Matches your preferred finish", ar: "يتوافق مع اللمسة المفضلة" });
+  if (bp.beautyGoals.length)
+    reasons.push({ en: "Matches your beauty goals", ar: "يتوافق مع أهداف جمالكِ" });
+  if (bp.favoriteCategories.length || p.wishlistCount > 0)
+    reasons.push({ en: "Matches your preferences", ar: "يتوافق مع تفضيلاتكِ" });
+
+  return { percent: Math.min(96, score), reasons: reasons.slice(0, 4) };
 }
 
 export function PassportExperience() {
@@ -132,8 +95,11 @@ export function PassportExperience() {
   const [error, setError] = useState<string | null>(null);
   const [passport, setPassport] = useState<PassportPayload | null>(null);
   const [opened, setOpened] = useState(false);
-  const [page, setPage] = useState<PageId>("identity");
+  const [coverOpening, setCoverOpening] = useState(false);
+  const [page, setPage] = useState<PassportPageId>("identity");
+  const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingStory, setSavingStory] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -145,6 +111,18 @@ export function PassportExperience() {
   const [makeupStyle, setMakeupStyle] = useState("");
   const [preferredFinish, setPreferredFinish] = useState("");
   const [favoriteCategories, setFavoriteCategories] = useState<string[]>([]);
+
+  const applyPassport = useCallback((p: PassportPayload) => {
+    setPassport(p);
+    setDob(p.dateOfBirth || "");
+    setGovernorate(p.governorate || "");
+    setSkinType(p.beautyProfile.skinType || "");
+    setSkinConcerns(p.beautyProfile.skinConcerns || []);
+    setBeautyGoals(p.beautyProfile.beautyGoals || []);
+    setMakeupStyle(p.beautyProfile.makeupStyle || "");
+    setPreferredFinish(p.beautyProfile.preferredFinish || "");
+    setFavoriteCategories(p.beautyProfile.favoriteCategories || []);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,17 +137,8 @@ export function PassportExperience() {
       if (!res.ok || !data.ok || !data.passport) {
         throw new Error(data.error || "Failed");
       }
-      const p = data.passport;
-      setPassport(p);
-      setOpened(Boolean(p.passportOpenedAt));
-      setDob(p.dateOfBirth || "");
-      setGovernorate(p.governorate || "");
-      setSkinType(p.beautyProfile.skinType || "");
-      setSkinConcerns(p.beautyProfile.skinConcerns || []);
-      setBeautyGoals(p.beautyProfile.beautyGoals || []);
-      setMakeupStyle(p.beautyProfile.makeupStyle || "");
-      setPreferredFinish(p.beautyProfile.preferredFinish || "");
-      setFavoriteCategories(p.beautyProfile.favoriteCategories || []);
+      applyPassport(data.passport);
+      setOpened(Boolean(data.passport.passportOpenedAt));
     } catch (err) {
       setError(
         err instanceof Error
@@ -181,11 +150,15 @@ export function PassportExperience() {
     } finally {
       setLoading(false);
     }
-  }, [ar]);
+  }, [ar, applyPassport]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page, opened]);
 
   const patch = useCallback(
     async (body: Record<string, unknown>) => {
@@ -205,7 +178,7 @@ export function PassportExperience() {
         if (!res.ok || !data.ok || !data.passport) {
           throw new Error(data.error || "Save failed");
         }
-        setPassport(data.passport);
+        applyPassport(data.passport);
         setMessage(ar ? "تم الحفظ ✦" : "Saved ✦");
         return data.passport;
       } catch (err) {
@@ -221,19 +194,21 @@ export function PassportExperience() {
         setSaving(false);
       }
     },
-    [ar],
+    [ar, applyPassport],
   );
 
-  async function onOpen() {
-    setOpened(true);
+  async function onOpenCover() {
+    setCoverOpening(true);
+    window.setTimeout(() => {
+      setOpened(true);
+      setCoverOpening(false);
+    }, 480);
     await patch({ markOpened: true });
   }
 
   async function onSaveIdentity() {
-    await patch({
-      dateOfBirth: dob || null,
-      governorate: governorate || null,
-    });
+    await patch({ dateOfBirth: dob || null, governorate: governorate || null });
+    setEditOpen(false);
   }
 
   async function onSaveBeauty() {
@@ -252,11 +227,70 @@ export function PassportExperience() {
   async function onAvatar(file: File | null) {
     if (!file) return;
     try {
-      const dataUrl = await compressImage(file);
-      await patch({ avatarUrl: dataUrl });
+      await patch({ avatarUrl: await compressImage(file) });
     } catch {
       setMessage(ar ? "تعذّر رفع الصورة." : "Could not upload photo.");
     }
+  }
+
+  async function onShare() {
+    if (!passport?.publicUrl) return;
+    if (!passport.config.publicShareEnabled) {
+      setMessage(ar ? "المشاركة العامة غير مفعّلة." : "Public sharing is disabled.");
+      return;
+    }
+    try {
+      const mode = await sharePassportStory({
+        locale: ar ? "ar" : "en",
+        title: "MY VELORA PASSPORT",
+        text: ar
+          ? `${passport.fullName} · ${ar ? passport.level.nameAr : passport.level.nameEn}`
+          : `${passport.fullName} · ${passport.level.nameEn}`,
+        url: passport.publicUrl,
+        passportNumber: passport.passportNumber,
+      });
+      if (mode === "clipboard") {
+        setMessage(ar ? "تم نسخ الرابط" : "Link copied");
+      } else if (mode === "native-file") {
+        setMessage(ar ? "اختاري Instagram ثم Story ✦" : "Choose Instagram → Story ✦");
+      } else if (mode === "download-instagram") {
+        setMessage(
+          ar
+            ? "تم حفظ الستوري — افتحي Instagram Stories ✦"
+            : "Story saved — open Instagram Stories ✦",
+        );
+      } else if (mode === "download") {
+        setMessage(ar ? "تم حفظ الستوري 1080×1920 ✦" : "Saved Story 1080×1920 ✦");
+      }
+    } catch {
+      /* cancelled */
+    }
+  }
+
+  async function onSaveStory() {
+    setSavingStory(true);
+    setMessage(null);
+    try {
+      await downloadPassportStoryPng(
+        ar ? "ar" : "en",
+        passport?.passportNumber,
+      );
+      setMessage(ar ? "تم حفظ الستوري 1080×1920 ✦" : "Saved Story 1080×1920 ✦");
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : ar
+            ? "تعذّر حفظ الستوري."
+            : "Could not save Story.",
+      );
+    } finally {
+      setSavingStory(false);
+    }
+  }
+
+  function onPrint() {
+    window.print();
   }
 
   const match = useMemo(
@@ -266,22 +300,21 @@ export function PassportExperience() {
 
   const timeline = useMemo(() => {
     if (!passport) return [];
-    const items: { at: string; en: string; ar: string }[] = [];
-    items.push({
-      at: String(passport.memberSinceYear),
-      en: "Joined VELORA",
-      ar: "انضمامكِ إلى VELORA",
-    });
+    const items: { at: string; en: string; ar: string }[] = [
+      {
+        at: String(passport.memberSinceYear),
+        en: "Joined VELORA",
+        ar: "انضمامكِ إلى VELORA",
+      },
+    ];
     for (const a of passport.achievements.filter((x) => x.unlocked)) {
-      const d = a.unlockedAt ? new Date(a.unlockedAt) : null;
-      const label = d
-        ? d.toLocaleDateString(ar ? "ar-IQ" : "en-GB", {
-            month: "short",
-            year: "numeric",
-          })
-        : "";
       items.push({
-        at: label,
+        at: a.unlockedAt
+          ? new Date(a.unlockedAt).toLocaleDateString(ar ? "ar-IQ" : "en-GB", {
+              month: "short",
+              year: "numeric",
+            })
+          : "",
         en: a.nameEn,
         ar: a.nameAr,
       });
@@ -289,8 +322,8 @@ export function PassportExperience() {
     if (passport.journey.totalOrders > 0) {
       items.push({
         at: "",
-        en: `${passport.journey.totalOrders} beauty order${passport.journey.totalOrders === 1 ? "" : "s"}`,
-        ar: `${passport.journey.totalOrders} طلب جمال`,
+        en: `${passport.journey.totalOrders} order(s)`,
+        ar: `${passport.journey.totalOrders} طلب`,
       });
     }
     return items;
@@ -298,13 +331,9 @@ export function PassportExperience() {
 
   if (loading) {
     return (
-      <div className="pp-root" dir={ar ? "rtl" : "ltr"}>
-        <div className="pp-shell">
-          <p className="pp-eyebrow">MY VELORA</p>
-          <h1 className="pp-title">
-            {ar ? "جوازكِ الرقمي" : "Your Beauty Passport"}
-          </h1>
-          <div className="pp-skel" aria-hidden />
+      <div className="vp-root" dir={ar ? "rtl" : "ltr"}>
+        <div className="vp-shell">
+          <div className="vp-skel" aria-hidden />
         </div>
       </div>
     );
@@ -312,641 +341,396 @@ export function PassportExperience() {
 
   if (error || !passport) {
     return (
-      <div className="pp-root" dir={ar ? "rtl" : "ltr"}>
-        <div className="pp-shell">
-          <Link href="/account/my-velora" className="pp-back">
-            ← {ar ? "عودة" : "Back"}
+      <div className="vp-root" dir={ar ? "rtl" : "ltr"}>
+        <div className="vp-shell">
+          <Link href="/account/my-velora" className="vp-back">
+            ← MY VELORA
           </Link>
-          <p className="pp-empty">{error || "—"}</p>
+          <p className="vp-empty">{error || "—"}</p>
         </div>
       </div>
     );
   }
 
   const levelName = ar ? passport.level.nameAr : passport.level.nameEn;
-  const govLabel = ar
-    ? passport.governorateLabelAr
-    : passport.governorateLabelEn;
 
   return (
-    <div className="pp-root" dir={ar ? "rtl" : "ltr"}>
-      <div className="pp-shell">
-        <Link href="/account/my-velora" className="pp-back">
+    <div className="vp-root" dir={ar ? "rtl" : "ltr"}>
+      <div className="vp-shell">
+        <Link href="/account/my-velora" className="vp-back">
           ← MY VELORA
         </Link>
-        <p className="pp-eyebrow">MY VELORA PASSPORT</p>
-        <h1 className="pp-title">
-          {ar ? "هويتكِ داخل عالم VELORA" : "Your identity inside VELORA"}
-        </h1>
-        <p className="pp-subtitle">
-          {ar
-            ? "جواز رقمي فاخر يجمع رحلتكِ، مستواكِ، وإنجازاتكِ."
-            : "A luxury digital passport for your beauty journey."}
-        </p>
 
         {!opened ? (
-          <>
-            <div className="pp-cover">
-              <div className="pp-cover-brand">VELORA</div>
-              <div className="pp-cover-hero">
-                <h2>BEAUTY PASSPORT</h2>
-                <p>Digital Beauty Identity</p>
-              </div>
-              <div className="pp-cover-meta">
-                <span>{passport.passportNumber}</span>
-                <span>
-                  {levelName} {passport.level.mark}
-                </span>
-              </div>
-            </div>
-            <button type="button" className="pp-open-btn" onClick={() => void onOpen()}>
-              {ar ? "فتح الجواز" : "Open Passport"}
-            </button>
-          </>
+          <PassportCover
+            ar={ar}
+            passportNumber={passport.passportNumber}
+            levelName={levelName}
+            opening={coverOpening}
+            onOpen={() => void onOpenCover()}
+          />
         ) : (
-          <div className="pp-book">
-            <div className="pp-tabs" role="tablist">
-              {PAGES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  className="pp-tab"
-                  data-active={page === t.id}
-                  onClick={() => setPage(t.id)}
-                >
-                  {ar ? t.ar : t.en}
-                </button>
-              ))}
-            </div>
-
+          <div className="vp-book-enter">
             {page === "identity" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 01</p>
-                <h3>{ar ? "هويتكِ في VELORA" : "Your VELORA Identity"}</h3>
-
-                <div className="pp-avatar-wrap">
-                  {passport.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={passport.avatarUrl}
-                      alt=""
-                      className="pp-avatar"
-                    />
-                  ) : (
-                    <div className="pp-avatar pp-avatar-fallback">
-                      {initials(passport.fullName)}
-                    </div>
-                  )}
-                  <div className="pp-avatar-actions">
-                    <button
-                      type="button"
-                      className="pp-ghost-btn"
-                      onClick={() => fileRef.current?.click()}
-                    >
-                      {ar ? "تغيير الصورة" : "Change photo"}
-                    </button>
-                    {passport.avatarUrl ? (
-                      <button
-                        type="button"
-                        className="pp-ghost-btn"
-                        onClick={() => void patch({ avatarUrl: null })}
-                      >
-                        {ar ? "حذف" : "Remove"}
-                      </button>
-                    ) : null}
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        void onAvatar(e.target.files?.[0] ?? null)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="pp-fields">
-                  <label className="pp-field">
-                    <span>{ar ? "الاسم" : "Name"}</span>
-                    <strong>{passport.fullName}</strong>
-                  </label>
-                  <label className="pp-field">
-                    <span>{ar ? "تاريخ الميلاد" : "Date of Birth"}</span>
-                    <input
-                      type="date"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                    />
-                  </label>
-                  <label className="pp-field">
-                    <span>{ar ? "المحافظة" : "Governorate"}</span>
-                    <select
-                      value={governorate}
-                      onChange={(e) => setGovernorate(e.target.value)}
-                    >
-                      <option value="">
-                        {ar ? "اختاري المحافظة" : "Select governorate"}
-                      </option>
-                      {IRAQ_GOVERNORATES.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {ar ? g.ar : g.en}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="pp-field">
-                    <span>{ar ? "رقم الجواز" : "Passport No"}</span>
-                    <strong>{passport.passportNumber}</strong>
-                  </div>
-                  <div className="pp-field">
-                    <span>{ar ? "عضوة منذ" : "Member Since"}</span>
-                    <strong>{passport.memberSinceYear}</strong>
-                  </div>
-                  <div className="pp-field">
-                    <span>{ar ? "المستوى" : "Beauty Level"}</span>
-                    <strong>
-                      {levelName} {passport.level.mark}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="pp-status">
-                  <span>✓</span>
-                  {ar ? "عضوة VELORA نشطة" : "Active VELORA Member"}
-                </div>
-
-                <button
-                  type="button"
-                  className="pp-save"
-                  disabled={saving}
-                  onClick={() => void onSaveIdentity()}
-                >
-                  {saving
-                    ? ar
-                      ? "جارٍ الحفظ…"
-                      : "Saving…"
-                    : ar
-                      ? "حفظ الهوية"
-                      : "Save Identity"}
-                </button>
-                {message ? (
-                  <p className="pp-subtitle" style={{ textAlign: "center" }}>
-                    {message}
-                  </p>
-                ) : null}
-              </section>
+              <PassportIdentityPage
+                ar={ar}
+                passport={passport}
+                onEdit={() => setEditOpen(true)}
+                onChangePhoto={() => fileRef.current?.click()}
+                onShare={() => void onShare()}
+                onSave={() => void onSaveStory()}
+                onPrint={onPrint}
+                savingStory={savingStory}
+              />
             ) : null}
 
             {page === "beauty" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 02</p>
-                <h3>{ar ? "ملف جمالكِ" : "My Beauty Profile"}</h3>
-
-                <div className="pp-fields" style={{ marginTop: "1.25rem" }}>
-                  <label className="pp-field">
-                    <span>{ar ? "نوع البشرة" : "Skin Type"}</span>
-                    <select
-                      value={skinType}
-                      onChange={(e) => setSkinType(e.target.value)}
-                    >
-                      <option value="">
-                        {ar ? "اختاري" : "Select"}
+              <PassportDocumentShell
+                pageLabel="02 — Beauty Profile"
+                pageLabelAr="ملف الجمال"
+                passportNumber={passport.passportNumber}
+              >
+                <div className="vp-page-content">
+                  <h4>{ar ? "ملف جمالكِ" : "My Beauty Profile"}</h4>
+                  {(skinType ||
+                    skinConcerns.length ||
+                    beautyGoals.length ||
+                    makeupStyle ||
+                    preferredFinish ||
+                    favoriteCategories.length) ? (
+                    <div className="vp-beauty-summary">
+                      {skinType ? (
+                        <p>
+                          <span>{ar ? "البشرة" : "Skin"}</span>
+                          {labelPassportOption(SKIN_TYPE_OPTIONS, skinType, ar)}
+                        </p>
+                      ) : null}
+                      {skinConcerns.length ? (
+                        <p>
+                          <span>{ar ? "الاهتمامات" : "Concerns"}</span>
+                          {labelPassportOptions(SKIN_CONCERN_OPTIONS, skinConcerns, ar)}
+                        </p>
+                      ) : null}
+                      {beautyGoals.length ? (
+                        <p>
+                          <span>{ar ? "الأهداف" : "Goals"}</span>
+                          {labelPassportOptions(BEAUTY_GOAL_OPTIONS, beautyGoals, ar)}
+                        </p>
+                      ) : null}
+                      {makeupStyle ? (
+                        <p>
+                          <span>{ar ? "المكياج" : "Makeup"}</span>
+                          {labelPassportOption(MAKEUP_STYLE_OPTIONS, makeupStyle, ar)}
+                        </p>
+                      ) : null}
+                      {preferredFinish ? (
+                        <p>
+                          <span>{ar ? "اللمسة" : "Finish"}</span>
+                          {labelPassportOption(FINISH_OPTIONS, preferredFinish, ar)}
+                        </p>
+                      ) : null}
+                      {favoriteCategories.length ? (
+                        <p>
+                          <span>{ar ? "الفئات" : "Categories"}</span>
+                          {labelPassportOptions(CATEGORY_OPTIONS, favoriteCategories, ar)}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <p className="vp-field__label">{ar ? "نوع البشرة" : "Skin Type"}</p>
+                  <select
+                    className="vp-sheet__field"
+                    style={{ width: "100%", marginBottom: "0.75rem" }}
+                    value={skinType}
+                    onChange={(e) => setSkinType(e.target.value)}
+                  >
+                    <option value="">{ar ? "اختاري" : "Select"}</option>
+                    {SKIN_TYPE_OPTIONS.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {ar ? o.ar : o.en}
                       </option>
-                      {SKIN_TYPE_OPTIONS.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {ar ? o.ar : o.en}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="pp-field">
-                    <span>{ar ? "اهتمامات البشرة" : "Skin Concerns"}</span>
-                    <div className="pp-chip-row">
-                      {SKIN_CONCERN_OPTIONS.map((o) => (
-                        <button
-                          key={o.id}
-                          type="button"
-                          className="pp-chip"
-                          data-on={skinConcerns.includes(o.id)}
-                          onClick={() =>
-                            setSkinConcerns(toggleIn(skinConcerns, o.id))
-                          }
-                        >
-                          {ar ? o.ar : o.en}
-                        </button>
-                      ))}
-                    </div>
+                    ))}
+                  </select>
+                  <p className="vp-field__label">{ar ? "اهتمامات البشرة" : "Skin Concerns"}</p>
+                  <div className="vp-chip-select">
+                    {SKIN_CONCERN_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        data-on={skinConcerns.includes(o.id)}
+                        onClick={() => setSkinConcerns(toggleIn(skinConcerns, o.id))}
+                      >
+                        {ar ? o.ar : o.en}
+                      </button>
+                    ))}
                   </div>
-
-                  <div className="pp-field">
-                    <span>{ar ? "أهداف الجمال" : "Beauty Goals"}</span>
-                    <div className="pp-chip-row">
-                      {BEAUTY_GOAL_OPTIONS.map((o) => (
-                        <button
-                          key={o.id}
-                          type="button"
-                          className="pp-chip"
-                          data-on={beautyGoals.includes(o.id)}
-                          onClick={() =>
-                            setBeautyGoals(toggleIn(beautyGoals, o.id))
-                          }
-                        >
-                          {ar ? o.ar : o.en}
-                        </button>
-                      ))}
-                    </div>
+                  <p className="vp-field__label" style={{ marginTop: "0.75rem" }}>
+                    {ar ? "أهداف الجمال" : "Beauty Goals"}
+                  </p>
+                  <div className="vp-chip-select">
+                    {BEAUTY_GOAL_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        data-on={beautyGoals.includes(o.id)}
+                        onClick={() => setBeautyGoals(toggleIn(beautyGoals, o.id))}
+                      >
+                        {ar ? o.ar : o.en}
+                      </button>
+                    ))}
                   </div>
-
-                  <label className="pp-field">
-                    <span>{ar ? "أسلوب المكياج" : "Makeup Style"}</span>
-                    <select
-                      value={makeupStyle}
-                      onChange={(e) => setMakeupStyle(e.target.value)}
-                    >
-                      <option value="">{ar ? "اختاري" : "Select"}</option>
-                      {MAKEUP_STYLE_OPTIONS.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {ar ? o.ar : o.en}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="pp-field">
-                    <span>{ar ? "اللمسة المفضلة" : "Preferred Finish"}</span>
-                    <select
-                      value={preferredFinish}
-                      onChange={(e) => setPreferredFinish(e.target.value)}
-                    >
-                      <option value="">{ar ? "اختاري" : "Select"}</option>
-                      {FINISH_OPTIONS.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {ar ? o.ar : o.en}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="pp-field">
-                    <span>{ar ? "الفئات المفضلة" : "Favorite Categories"}</span>
-                    <div className="pp-chip-row">
-                      {CATEGORY_OPTIONS.map((o) => (
-                        <button
-                          key={o.id}
-                          type="button"
-                          className="pp-chip"
-                          data-on={favoriteCategories.includes(o.id)}
-                          onClick={() =>
-                            setFavoriteCategories(
-                              toggleIn(favoriteCategories, o.id),
-                            )
-                          }
-                        >
-                          {ar ? o.ar : o.en}
-                        </button>
-                      ))}
-                    </div>
+                  <p className="vp-field__label" style={{ marginTop: "0.75rem" }}>
+                    {ar ? "أسلوب المكياج" : "Makeup Style"}
+                  </p>
+                  <select
+                    className="vp-sheet__field"
+                    style={{ width: "100%", marginBottom: "0.75rem" }}
+                    value={makeupStyle}
+                    onChange={(e) => setMakeupStyle(e.target.value)}
+                  >
+                    <option value="">{ar ? "اختاري" : "Select"}</option>
+                    {MAKEUP_STYLE_OPTIONS.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {ar ? o.ar : o.en}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="vp-field__label">{ar ? "اللمسة المفضلة" : "Preferred Finish"}</p>
+                  <select
+                    className="vp-sheet__field"
+                    style={{ width: "100%", marginBottom: "0.75rem" }}
+                    value={preferredFinish}
+                    onChange={(e) => setPreferredFinish(e.target.value)}
+                  >
+                    <option value="">{ar ? "اختاري" : "Select"}</option>
+                    {FINISH_OPTIONS.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {ar ? o.ar : o.en}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="vp-field__label">{ar ? "الفئات المفضلة" : "Favorite Categories"}</p>
+                  <div className="vp-chip-select">
+                    {CATEGORY_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        data-on={favoriteCategories.includes(o.id)}
+                        onClick={() =>
+                          setFavoriteCategories(toggleIn(favoriteCategories, o.id))
+                        }
+                      >
+                        {ar ? o.ar : o.en}
+                      </button>
+                    ))}
                   </div>
+                  <button
+                    type="button"
+                    className="vp-save-inline"
+                    disabled={saving}
+                    onClick={() => void onSaveBeauty()}
+                  >
+                    {saving ? "…" : ar ? "حفظ" : "Save Profile"}
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  className="pp-save"
-                  disabled={saving}
-                  onClick={() => void onSaveBeauty()}
-                >
-                  {saving
-                    ? ar
-                      ? "جارٍ الحفظ…"
-                      : "Saving…"
-                    : ar
-                      ? "حفظ ملف الجمال"
-                      : "Save Beauty Profile"}
-                </button>
-              </section>
+              </PassportDocumentShell>
             ) : null}
 
             {page === "journey" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 03</p>
-                <h3>{ar ? "رحلة جمالكِ" : "My Beauty Journey"}</h3>
+              <PassportDocumentShell
+                pageLabel="03 — Journey"
+                pageLabelAr="الرحلة"
+                passportNumber={passport.passportNumber}
+              >
                 {timeline.length <= 1 && passport.journey.totalOrders === 0 ? (
-                  <div className="pp-empty">
-                    <p>
-                      {ar
-                        ? "رحلتكِ الجمالية بدأت للتو."
-                        : "Your beauty journey is just beginning."}
-                    </p>
-                    <p style={{ marginTop: "0.75rem" }}>
-                      <Link href="/shop" className="pp-link">
-                        {ar ? "استكشفي VELORA" : "Explore VELORA"}
-                      </Link>
-                    </p>
+                  <div className="vp-empty">
+                    <p>{ar ? "رحلتكِ بدأت للتو." : "Your journey is just beginning."}</p>
+                    <Link href="/shop" className="vp-link">
+                      {ar ? "استكشفي VELORA" : "Explore VELORA"}
+                    </Link>
                   </div>
                 ) : (
-                  <div className="pp-timeline">
+                  <div className="vp-timeline">
                     {timeline.map((item, i) => (
-                      <div key={`${item.en}-${i}`} className="pp-tl-item">
+                      <div key={`${item.en}-${i}`} className="vp-tl-item">
                         {item.at ? <time>{item.at}</time> : null}
                         <p>{ar ? item.ar : item.en}</p>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="pp-grid-2">
-                  <div className="pp-stat">
+                <div className="vp-stat-row">
+                  <div className="vp-stat">
                     <b>{passport.journey.totalOrders}</b>
                     <span>{ar ? "طلبات" : "Orders"}</span>
                   </div>
-                  <div className="pp-stat">
+                  <div className="vp-stat">
                     <b>{passport.journey.brandsTried}</b>
                     <span>{ar ? "علامات" : "Brands"}</span>
                   </div>
                 </div>
-              </section>
+              </PassportDocumentShell>
             ) : null}
 
             {page === "collection" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 04</p>
-                <h3>{ar ? "مجموعتكِ" : "My Collection"}</h3>
-                <div className="pp-grid-2">
-                  <Link href="/account?section=wishlist" className="pp-stat">
+              <PassportDocumentShell
+                pageLabel="04 — Collection"
+                pageLabelAr="المجموعة"
+                passportNumber={passport.passportNumber}
+              >
+                <div className="vp-stat-row">
+                  <Link href="/account?section=wishlist" className="vp-stat">
                     <b>{passport.wishlistCount}</b>
                     <span>{ar ? "المفضلة" : "Favorites"}</span>
                   </Link>
-                  <Link href="/account?section=orders" className="pp-stat">
+                  <Link href="/account?section=orders" className="vp-stat">
                     <b>{passport.journey.totalOrders}</b>
                     <span>{ar ? "مشتريات" : "Purchased"}</span>
                   </Link>
                 </div>
-                {passport.wishlistCount === 0 &&
-                passport.journey.totalOrders === 0 ? (
-                  <div className="pp-empty">
-                    <p>
-                      {ar
-                        ? "ابدئي ببناء مجموعتكِ الجمالية."
-                        : "Start building your beauty collection."}
-                    </p>
-                    <p style={{ marginTop: "0.75rem" }}>
-                      <Link href="/shop" className="pp-link">
-                        {ar ? "تسوقي الآن" : "Shop now"}
-                      </Link>
-                    </p>
-                  </div>
-                ) : null}
-              </section>
+              </PassportDocumentShell>
             ) : null}
 
             {page === "achievements" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 05</p>
-                <h3>{ar ? "إنجازات VELORA" : "VELORA Achievements"}</h3>
-                <div className="pp-ach-list">
-                  {passport.achievements.map((a) => (
-                    <div
-                      key={a.key}
-                      className="pp-ach"
-                      data-locked={!a.unlocked}
-                    >
-                      <div className="pp-ach-mark">
-                        {a.unlocked ? "✦" : "○"}
-                      </div>
-                      <div>
-                        <strong style={{ fontSize: "0.92rem" }}>
-                          {ar ? a.nameAr : a.nameEn}
-                        </strong>
-                        <p
-                          style={{
-                            marginTop: 2,
-                            fontSize: "0.72rem",
-                            color: "var(--pp-muted)",
-                          }}
-                        >
-                          {a.unlocked
-                            ? a.unlockedAt
-                              ? new Date(a.unlockedAt).toLocaleDateString(
-                                  ar ? "ar-IQ" : "en-GB",
-                                )
-                              : ar
-                                ? "مفتوح"
-                                : "Unlocked"
-                            : ar
-                              ? "مقفل"
-                              : "Locked"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              <PassportDocumentShell
+                pageLabel="05 — Achievements"
+                pageLabelAr="الإنجازات"
+                passportNumber={passport.passportNumber}
+              >
+                {passport.achievements.map((a) => (
+                  <div key={a.key} className="vp-ach-item" data-locked={!a.unlocked}>
+                    <span className="vp-ach-mark">{a.unlocked ? "✦" : "○"}</span>
+                    <span>{ar ? a.nameAr : a.nameEn}</span>
+                  </div>
+                ))}
+              </PassportDocumentShell>
             ) : null}
 
             {page === "level" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 06</p>
-                <h3>{ar ? "مستوى الجمال" : "Beauty Level"}</h3>
-                <div className="pp-level-pill">
-                  <div className="pp-level-name">
+              <PassportDocumentShell
+                pageLabel="06 — Level & Rewards"
+                pageLabelAr="المستوى"
+                passportNumber={passport.passportNumber}
+              >
+                <div className="vp-level-display">
+                  <div className="vp-level-display__name">
                     {levelName} {passport.level.mark}
                   </div>
-                  <div className="pp-xp">
+                  <div className="vp-level-display__xp">
                     {passport.xp.toLocaleString()} XP
                     {passport.nextLevel
                       ? ` · ${passport.pointsToNext.toLocaleString()} ${ar ? "إلى" : "to"} ${ar ? passport.nextLevel.nameAr : passport.nextLevel.nameEn}`
-                      : ar
-                        ? " · أعلى مستوى"
-                        : " · Top level"}
+                      : ""}
                   </div>
-                  <div className="pp-progress" aria-hidden>
+                  <div className="vp-progress">
                     <i style={{ width: `${Math.round(passport.progressRatio * 100)}%` }} />
                   </div>
                 </div>
-                <p className="pp-subtitle" style={{ marginTop: "1rem" }}>
+                <p className="vp-page-content" style={{ marginTop: "0.85rem", fontSize: "0.72rem" }}>
                   {ar
-                    ? "XP هنا هو نفس نقاط VELORA Beauty Club — بدون نظام منفصل."
-                    : "XP here is your VELORA Beauty Club points — same system, Passport display."}
+                    ? "XP = نقاط Beauty Club — نفس النظام الحالي."
+                    : "XP = Beauty Club points — same underlying system."}
                 </p>
-                <p style={{ marginTop: "0.75rem" }}>
-                  <Link href="/account/club" className="pp-link">
-                    {ar ? "فتح Beauty Club" : "Open Beauty Club"}
-                  </Link>
-                </p>
-              </section>
+                <Link href="/account/club" className="vp-link">
+                  {ar ? "Beauty Club" : "Beauty Club"} →
+                </Link>
+              </PassportDocumentShell>
             ) : null}
 
             {page === "match" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 07</p>
-                <h3>{ar ? "توافقكِ مع VELORA" : "Your VELORA Match"}</h3>
+              <PassportDocumentShell
+                pageLabel="07 — VELORA Match"
+                pageLabelAr="التوافق"
+                passportNumber={passport.passportNumber}
+              >
                 {!match ? (
-                  <div className="pp-empty">
-                    <p>
-                      {ar
-                        ? "أكملي ملف الجمال لرؤية نسبة التوافق."
-                        : "Complete your beauty profile to see your match."}
-                    </p>
-                    <button
-                      type="button"
-                      className="pp-save"
-                      onClick={() => setPage("beauty")}
-                    >
+                  <div className="vp-empty">
+                    <p>{ar ? "أكملي ملف الجمال." : "Complete your beauty profile."}</p>
+                    <button type="button" className="vp-save-inline" onClick={() => setPage("beauty")}>
                       {ar ? "ملف الجمال" : "Beauty Profile"}
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="pp-level-pill">
-                      <div className="pp-level-name">{match.percent}%</div>
-                      <div className="pp-xp">
+                    <div className="vp-level-display">
+                      <div className="vp-level-display__name">{match.percent}%</div>
+                      <div className="vp-level-display__xp">
                         {ar ? "توافق جمالي" : "Beauty Match"}
                       </div>
                     </div>
-                    <div className="pp-ach-list">
-                      {match.reasons.map((r) => (
-                        <div key={r.en} className="pp-ach">
-                          <div className="pp-ach-mark">✓</div>
-                          <strong style={{ fontSize: "0.9rem" }}>
-                            {ar ? r.ar : r.en}
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="pp-subtitle" style={{ marginTop: "1rem" }}>
-                      {ar
-                        ? "محرك قواعد بسيط — جاهز لربطه لاحقًا بمستشار ذكاء اصطناعي."
-                        : "Rule-based for now — architecture ready for AI later."}
-                    </p>
+                    {match.reasons.map((r) => (
+                      <div key={r.en} className="vp-ach-item">
+                        <span className="vp-ach-mark">✓</span>
+                        <span>{ar ? r.ar : r.en}</span>
+                      </div>
+                    ))}
                   </>
                 )}
-              </section>
+              </PassportDocumentShell>
             ) : null}
 
             {page === "prive" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Page 08</p>
-                <h3>VELORA PRIVÉ</h3>
+              <PassportDocumentShell
+                pageLabel="08 — VELORA Privé"
+                pageLabelAr="بريفيه"
+                passportNumber={passport.passportNumber}
+              >
                 {passport.level.id === "prive" ? (
-                  <div className="pp-ach-list">
-                    {[
-                      {
-                        en: "Priority Access",
-                        ar: "أولوية الوصول",
-                      },
-                      {
-                        en: "Exclusive Drops",
-                        ar: "إصدارات حصرية",
-                      },
-                      {
-                        en: "Private Offers",
-                        ar: "عروض خاصة",
-                      },
-                      {
-                        en: "Birthday Rewards",
-                        ar: "مكافآت عيد الميلاد",
-                      },
-                    ].map((b) => (
-                      <div key={b.en} className="pp-ach">
-                        <div className="pp-ach-mark">✦</div>
-                        <strong style={{ fontSize: "0.9rem" }}>
-                          {ar ? b.ar : b.en}
-                        </strong>
+                  ["Priority Access", "Exclusive Drops", "Private Offers", "Birthday Rewards"].map(
+                    (b) => (
+                      <div key={b} className="vp-ach-item">
+                        <span className="vp-ach-mark">✦</span>
+                        <span>{b}</span>
                       </div>
-                    ))}
-                  </div>
+                    ),
+                  )
                 ) : (
-                  <div className="pp-empty">
+                  <div className="vp-empty">
                     <p>
                       {ar
-                        ? `مستواكِ الحالي ${levelName}. واصلي جمع النقاط للوصول إلى PRIVÉ.`
-                        : `You're at ${levelName}. Keep earning points toward PRIVÉ.`}
+                        ? `مستواكِ ${levelName}. واصلي للوصول إلى PRIVÉ.`
+                        : `You're at ${levelName}. Reach PRIVÉ for exclusive benefits.`}
                     </p>
-                    <p style={{ marginTop: "0.75rem" }}>
-                      <Link href="/account/club" className="pp-link">
-                        {ar ? "مزايا النادي" : "Club benefits"}
-                      </Link>
-                    </p>
+                    <Link href="/account/club" className="vp-link">
+                      {ar ? "مزايا النادي" : "Club benefits"}
+                    </Link>
                   </div>
                 )}
                 {passport.isBirthdayToday ? (
-                  <div className="pp-level-pill" style={{ marginTop: "1.25rem" }}>
-                    <div className="pp-level-name">
-                      {ar
-                        ? `عيد ميلاد سعيد، ${passport.fullName.split(" ")[0]} ✦`
-                        : `Happy Birthday, ${passport.fullName.split(" ")[0]} ✦`}
-                    </div>
-                    <div className="pp-xp">
-                      {ar
-                        ? "هدية VELORA بانتظاركِ."
-                        : "Your VELORA gift is waiting."}
+                  <div className="vp-level-display" style={{ marginTop: "1rem" }}>
+                    <div className="vp-level-display__name">
+                      {ar ? "عيد ميلاد سعيد ✦" : "Happy Birthday ✦"}
                     </div>
                   </div>
                 ) : null}
-              </section>
+              </PassportDocumentShell>
             ) : null}
 
-            {page === "share" ? (
-              <section className="pp-page">
-                <p className="pp-page-label">Share</p>
-                <h3>{ar ? "شاركي جوازكِ" : "Share My Passport"}</h3>
-                <p className="pp-subtitle">
-                  {ar
-                    ? "صفحة عامة آمنة — بدون بريد أو هاتف أو طلبات."
-                    : "Public-safe page — no email, phone, or orders."}
-                </p>
-                {passport.config.showQrCode ? (
-                  <div className="pp-qr">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/my-velora/qr?data=${encodeURIComponent(passport.publicUrl)}`}
-                      alt="Passport QR"
-                    />
-                  </div>
-                ) : null}
-                <p
-                  className="pp-subtitle"
-                  style={{ textAlign: "center", marginTop: "0.75rem" }}
-                >
-                  {passport.passportNumber}
-                  {govLabel ? ` · ${govLabel}` : ""}
-                </p>
-                <div className="pp-share-row">
-                  <a
-                    className="pp-share-btn primary"
-                    href={passport.publicUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    {ar ? "فتح الصفحة العامة" : "Open Public Passport"}
-                  </a>
-                  <button
-                    type="button"
-                    className="pp-share-btn"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(passport.publicUrl);
-                        setMessage(ar ? "تم نسخ الرابط" : "Link copied");
-                      } catch {
-                        setMessage(passport.publicUrl);
-                      }
-                    }}
-                  >
-                    {ar ? "نسخ الرابط" : "Copy Link"}
-                  </button>
-                </div>
-                {message ? (
-                  <p className="pp-subtitle" style={{ textAlign: "center" }}>
-                    {message}
-                  </p>
-                ) : null}
-              </section>
-            ) : null}
+            {message ? <p className="vp-toast">{message}</p> : null}
+
+            <PassportPageIndex ar={ar} active={page} onChange={setPage} />
           </div>
         )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => void onAvatar(e.target.files?.[0] ?? null)}
+        />
+
+        <PassportEditSheet
+          ar={ar}
+          open={editOpen}
+          dob={dob}
+          governorate={governorate}
+          saving={saving}
+          onClose={() => setEditOpen(false)}
+          onDobChange={setDob}
+          onGovernorateChange={setGovernorate}
+          onSave={() => void onSaveIdentity()}
+        />
       </div>
     </div>
   );

@@ -108,3 +108,20 @@ export async function ensurePassportSeed() {
     update: {},
   });
 }
+
+export async function savePassportConfig(
+  config: Partial<PassportConfig>,
+): Promise<PassportConfig> {
+  await ensurePassportSeed();
+  const current = await getPassportConfig();
+  const merged: PassportConfig = {
+    ...current,
+    ...config,
+    version: current.version,
+  };
+  await prisma.veloraPassportConfig.update({
+    where: { id: "default" },
+    data: { data: merged },
+  });
+  return merged;
+}
