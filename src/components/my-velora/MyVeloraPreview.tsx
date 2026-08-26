@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { VeloraSignatureCard } from "@/components/my-velora/VeloraSignatureCard";
 import {
@@ -12,7 +12,9 @@ import {
   downloadMyVeloraPng,
   shareMyVeloraCard,
   shareMyVeloraToInstagramStories,
+  urlToDataUrl,
 } from "@/lib/my-velora/card-image";
+import { MY_VELORA_MASTER_BG } from "@/components/my-velora/VeloraSignatureCard";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
 import "./my-velora.css";
@@ -46,17 +48,39 @@ export function MyVeloraPreview({
   const [comment, setComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewDone, setReviewDone] = useState(hasReview);
+  const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
+  const [scale, setScale] = useState(0.32);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const qrDataUrl = useMemo(() => {
     if (!payload.showQrCode) return null;
     return `/api/my-velora/qr?data=${encodeURIComponent(payload.referralUrl)}`;
   }, [payload.referralUrl, payload.showQrCode]);
 
-  const previewScale = useMemo(() => {
-    if (typeof window === "undefined") return 0.35;
-    const maxH = Math.min(window.innerHeight * 0.72, 760);
-    const maxW = window.innerWidth - 32;
-    return Math.min(maxW / 1080, maxH / 1920, 1);
+  // Fit 1080×1920 card into the available preview frame without breaking transforms.
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) setScale(Math.min(1, w / 1080));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  // Preload master template as data URL so preview + export are reliable.
+  useEffect(() => {
+    void urlToDataUrl(MY_VELORA_MASTER_BG).then((url) => {
+      if (url) setBgDataUrl(url);
+    });
   }, []);
 
   const recordEvent = useCallback(
@@ -95,11 +119,7 @@ export function MyVeloraPreview({
     try {
       await downloadMyVeloraPng(orderId);
       await recordEvent("save");
-      setMessage(
-        ar
-          ? "تم حفظ الصورة بجودة 1080×1920 ✦"
-          : "Saved as 1080×1920 PNG ✦",
-      );
+      setMessage(ar ? "تم حفظ الصورة 1080×1920 ✦" : "Saved 1080×1920 PNG ✦");
     } catch (err) {
       setMessage(
         err instanceof Error
@@ -138,7 +158,7 @@ export function MyVeloraPreview({
       } else {
         setMessage(
           ar
-            ? "تم تنزيل الصورة — ارفعيها يدوياً على Instagram Stories"
+            ? "تم تنزيل الصورة — ارفعيها على Instagram Stories"
             : "Image downloaded — upload it to Instagram Stories",
         );
       }
@@ -222,7 +242,7 @@ export function MyVeloraPreview({
   }
 
   return (
-    <div className="mv-preview-shell mx-auto flex min-h-[100dvh] max-w-lg flex-col bg-[#F6F0F8] px-4 pb-8 pt-4">
+    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col bg-[#F6F0F8] px-4 pb-8 pt-4">
       <header className="mb-4 flex items-center justify-between">
         <Link
           href="/account/my-velora"
@@ -235,18 +255,19 @@ export function MyVeloraPreview({
         </p>
       </header>
 
-      <div className="mv-fade-in mx-auto flex flex-1 flex-col items-center">
+      <div className="mx-auto flex w-full flex-1 flex-col items-center">
+        {/* Aspect-ratio frame: scale is applied ONLY via inline style (no animation override). */}
         <div
-          className="mv-preview-frame relative overflow-hidden rounded-[28px] shadow-[0_24px_80px_rgba(61,38,64,0.18)]"
-          style={{ height: 1920 * previewScale }}
+          ref={frameRef}
+          className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] shadow-[0_24px_80px_rgba(61,38,64,0.18)]"
+          style={{ aspectRatio: "1080 / 1920" }}
         >
           <div
-            className="absolute left-1/2 top-0 mv-slide-up"
             style={{
               width: 1080,
               height: 1920,
-              transform: `translateX(-50%) scale(${previewScale})`,
-              transformOrigin: "top center",
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
             }}
           >
             <VeloraSignatureCard
@@ -254,6 +275,7 @@ export function MyVeloraPreview({
               styleKey={styleKey}
               locale={ar ? "ar" : "en"}
               qrDataUrl={qrDataUrl}
+              backgroundDataUrl={bgDataUrl}
             />
           </div>
         </div>
