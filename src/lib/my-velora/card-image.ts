@@ -27,8 +27,15 @@ export async function fetchMyVeloraCardBlob(orderId: string): Promise<Blob> {
     }
     const detail = text
       .replace(/^Render failed:\s*/i, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
       .slice(0, 180)
       .trim();
+    if (detail.startsWith("<!DOCTYPE") || detail.includes("__next_error__")) {
+      throw new Error(
+        `تعذّر تجهيز البطاقة (${res.status}): خطأ داخلي في الخادم. أعيدي المحاولة بعد لحظات.`,
+      );
+    }
     throw new Error(
       detail
         ? `تعذّر تجهيز البطاقة (${res.status}): ${detail}`
