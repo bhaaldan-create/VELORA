@@ -11,13 +11,15 @@ import {
 } from "@/lib/my-velora/eligibility";
 import {
   ensureVeloraCardForOrder,
-  parseCardPayload,
+  buildCardPayload,
 } from "@/lib/my-velora/generate";
 import { renderMyVeloraCardPng } from "@/lib/my-velora/render-card";
 import { recordCardEvent } from "@/lib/my-velora/generate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** Allow enough time for sharp compositing on cold start */
+export const maxDuration = 60;
 
 type RouteCtx = { params: Promise<{ orderId: string }> };
 
@@ -27,13 +29,18 @@ type RouteCtx = { params: Promise<{ orderId: string }> };
  */
 export async function GET(req: Request, ctx: RouteCtx) {
   const { orderId } = await ctx.params;
+  const url = new URL(req.url);
+  const wantsJson = url.searchParams.get("debug") === "1";
+
   try {
     const jar = await cookies();
     const session = await verifyCustomerSessionToken(
       jar.get(CUSTOMER_COOKIE)?.value,
     );
     if (!session) {
-      return new Response("Unauthorized", { status: 401 });
+      return wantsJson
+        ? Response.json({ ok: false, error: "Unauthorized" }, { status: 401 })
+        : new Response("Unauthorized", { status: 401 });
     }
 
     const customer = await prisma.customer.findUnique({
@@ -62,50 +69,37 @@ export async function GET(req: Request, ctx: RouteCtx) {
       return new Response("Card error", { status: 500 });
     }
 
-    const row = await prisma.veloraCard.findUnique({
-      where: { id: cardRef.id },
-      select: { payloadJson: true, id: true },
-    });
-    if (!row) {
-      return new Response("Not found", { status: 404 });
-    }
-
-    let payload = parseCardPayload(row.payloadJson);
-    if (!payload) {
-      return new Response("Invalid payload", { status: 500 });
-    }
-
-    // Refresh product/brand assets from live DB so images are never stale/empty.
-    const { buildCardPayload } = await import("@/lib/my-velora/generate");
-    payload = await buildCardPayload({
+    // Fresh compact payload (no huge data: URLs) — do NOT write megabyte JSON back.
+    const payload = await buildCardPayload({
       entry,
       customerId: customer.id,
       referralToken: cardRef.referralToken,
     });
 
-    await prisma.veloraCard.update({
-      where: { id: row.id },
-      data: {
-        payloadJson: payload as unknown as import("@/generated/prisma/client").Prisma.InputJsonValue,
-      },
-    });
-
-    const url = new URL(req.url);
     const locale = url.searchParams.get("locale") === "ar" ? "ar" : "en";
     const download = url.searchParams.get("download") === "1";
 
     const png = await renderMyVeloraCardPng({ payload, locale });
 
-    void recordCardEvent(row.id, download ? "save" : "view", {
+    void recordCardEvent(cardRef.id, download ? "save" : "view", {
       source: "server-image",
-    });
+    }).catch(() => undefined);
+
+    if (wantsJson) {
+      return Response.json({
+        ok: true,
+        bytes: png.length,
+        products: payload.productCount,
+        brands: payload.brandCount,
+        points: payload.pointsEarned,
+      });
+    }
 
     return new Response(new Uint8Array(png), {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Content-Length": String(png.length),
-        "Cache-Control": "private, no-store",
+        "Cache-Control": "private, max-age=60",
         ...(download
           ? {
               "Content-Disposition": `attachment; filename="MY-VELORA-${orderId}.png"`,
@@ -116,7 +110,10 @@ export async function GET(req: Request, ctx: RouteCtx) {
       },
     });
   } catch (error) {
-    console.error("[my-velora/image]", error);
-    return new Response("Render failed", { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[my-velora/image]", orderId, message, error);
+    return wantsJson
+      ? Response.json({ ok: false, error: message }, { status: 500 })
+      : new Response(`Render failed: ${message}`, { status: 500 });
   }
 }

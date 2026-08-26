@@ -2,7 +2,6 @@
 
 /**
  * Client helpers for the SERVER-rendered MY VELORA Story PNG.
- * Preview / Save / Share all use /api/auth/my-velora/[orderId]/image
  */
 
 function imageUrl(orderId: string, opts?: { download?: boolean; bust?: number }) {
@@ -13,17 +12,29 @@ function imageUrl(orderId: string, opts?: { download?: boolean; bust?: number })
   return `/api/auth/my-velora/${encodeURIComponent(orderId)}/image?${q.toString()}`;
 }
 
-async function fetchCardBlob(orderId: string): Promise<Blob> {
+export async function fetchMyVeloraCardBlob(orderId: string): Promise<Blob> {
   const res = await fetch(imageUrl(orderId, { bust: Date.now() }), {
     credentials: "same-origin",
     cache: "no-store",
   });
   if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    if (res.status === 401) {
+      throw new Error("يجب تسجيل الدخول أولاً.");
+    }
+    if (res.status === 404) {
+      throw new Error("الطلب غير مؤهل لبطاقة MY VELORA.");
+    }
     throw new Error(
-      res.status === 401
-        ? "يجب تسجيل الدخول أولاً."
-        : "تعذّر تجهيز بطاقة MY VELORA من الخادم.",
+      text?.startsWith("Render failed")
+        ? text
+        : `تعذّر تجهيز البطاقة من الخادم (${res.status}).`,
     );
+  }
+  const type = res.headers.get("content-type") || "";
+  if (!type.includes("image/")) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || "استجابة غير صالحة من الخادم.");
   }
   return res.blob();
 }
@@ -33,7 +44,7 @@ export function getMyVeloraImageSrc(orderId: string, bust?: number) {
 }
 
 export async function downloadMyVeloraPng(orderId: string) {
-  const blob = await fetchCardBlob(orderId);
+  const blob = await fetchMyVeloraCardBlob(orderId);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -50,7 +61,7 @@ export async function shareMyVeloraToInstagramStories(input: {
   title: string;
   text: string;
 }): Promise<"native-file" | "download-instagram" | "download"> {
-  const blob = await fetchCardBlob(input.orderId);
+  const blob = await fetchMyVeloraCardBlob(input.orderId);
   const file = new File([blob], `MY-VELORA-${input.orderId}.png`, {
     type: "image/png",
   });

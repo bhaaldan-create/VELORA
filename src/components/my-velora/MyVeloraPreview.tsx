@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CARD_STYLE_OPTIONS,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/my-velora/types";
 import {
   downloadMyVeloraPng,
-  getMyVeloraImageSrc,
+  fetchMyVeloraCardBlob,
   shareMyVeloraCard,
   shareMyVeloraToInstagramStories,
 } from "@/lib/my-velora/card-image";
@@ -46,11 +46,49 @@ export function MyVeloraPreview({
   const [comment, setComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewDone, setReviewDone] = useState(hasReview);
-  const [bust, setBust] = useState(() => Date.now());
+  const [bust, setBust] = useState(0);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState<string | null>(null);
+  const [loadingCard, setLoadingCard] = useState(true);
+  const imgUrlRef = useRef<string | null>(null);
 
-  const src = getMyVeloraImageSrc(orderId, bust);
+  const loadCard = useCallback(async () => {
+    setLoadingCard(true);
+    setImgLoaded(false);
+    setImgError(null);
+    try {
+      const blob = await fetchMyVeloraCardBlob(orderId);
+      const url = URL.createObjectURL(blob);
+      if (imgUrlRef.current) URL.revokeObjectURL(imgUrlRef.current);
+      imgUrlRef.current = url;
+      setImgUrl(url);
+      setImgLoaded(true);
+    } catch (err) {
+      setImgError(
+        err instanceof Error
+          ? err.message
+          : ar
+            ? "تعذّر تحميل البطاقة من الخادم."
+            : "Could not load card from server.",
+      );
+    } finally {
+      setLoadingCard(false);
+    }
+  }, [orderId, ar]);
+
+  useEffect(() => {
+    void loadCard();
+  }, [loadCard, bust]);
+
+  useEffect(() => {
+    return () => {
+      if (imgUrlRef.current) {
+        URL.revokeObjectURL(imgUrlRef.current);
+        imgUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const recordEvent = useCallback(
     async (eventType: string, meta?: Record<string, unknown>) => {
@@ -80,8 +118,7 @@ export function MyVeloraPreview({
       body: JSON.stringify({ styleKey: next }),
     });
     await recordEvent("style_change", { styleKey: next });
-    setImgLoaded(false);
-    setBust(Date.now());
+    setBust((n) => n + 1);
   }
 
   async function onSave() {
@@ -207,7 +244,7 @@ export function MyVeloraPreview({
       <div className="mx-auto flex w-full flex-1 flex-col items-center">
         <div className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] bg-[#E8DDF0] shadow-[0_24px_80px_rgba(61,38,64,0.18)]">
           <div className="relative w-full" style={{ aspectRatio: "1080 / 1920" }}>
-            {!imgLoaded && !imgError ? (
+            {loadingCard ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#3D2640]/20 border-t-[#3D2640]" />
                 <p className="text-[0.82rem] text-[#7A6880]">
@@ -218,32 +255,28 @@ export function MyVeloraPreview({
               </div>
             ) : null}
             {imgError ? (
-              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-[0.85rem] text-red-700">
-                {imgError}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <p className="text-[0.85rem] text-red-700">{imgError}</p>
+                <button
+                  type="button"
+                  onClick={() => setBust((n) => n + 1)}
+                  className="rounded-full bg-[#3D2640] px-4 py-2 text-[0.8rem] text-white"
+                >
+                  {ar ? "إعادة المحاولة" : "Retry"}
+                </button>
               </div>
             ) : null}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              key={src}
-              src={src}
-              alt="MY VELORA Card"
-              className={cn(
-                "h-full w-full object-contain transition-opacity duration-300",
-                imgLoaded ? "opacity-100" : "opacity-0",
-              )}
-              onLoad={() => {
-                setImgLoaded(true);
-                setImgError(null);
-              }}
-              onError={() => {
-                setImgError(
-                  ar
-                    ? "تعذّر تحميل البطاقة من الخادم."
-                    : "Could not load card from server.",
-                );
-                setImgLoaded(false);
-              }}
-            />
+            {imgUrl && !imgError ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imgUrl}
+                alt="MY VELORA Card"
+                className={cn(
+                  "h-full w-full object-contain transition-opacity duration-300",
+                  imgLoaded ? "opacity-100" : "opacity-0",
+                )}
+              />
+            ) : null}
           </div>
         </div>
 
@@ -257,7 +290,7 @@ export function MyVeloraPreview({
           <button
             type="button"
             onClick={onInstagramStories}
-            disabled={sharingIg || saving || !imgLoaded}
+            disabled={sharingIg || saving || !imgLoaded || loadingCard}
             className="w-full rounded-full bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-5 py-3 text-[0.9rem] font-medium text-white shadow-[0_10px_28px_-12px_rgba(221,42,123,0.55)] disabled:opacity-60"
           >
             {sharingIg
@@ -280,7 +313,7 @@ export function MyVeloraPreview({
             <button
               type="button"
               onClick={onSave}
-              disabled={saving || sharingIg || !imgLoaded}
+              disabled={saving || sharingIg || !imgLoaded || loadingCard}
               className="rounded-full bg-[#3D2640] px-5 py-2 text-[0.82rem] text-white disabled:opacity-60"
             >
               {saving ? "…" : ar ? "حفظ في الصور" : "Save to Photos"}
@@ -288,7 +321,7 @@ export function MyVeloraPreview({
             <button
               type="button"
               onClick={onShare}
-              disabled={sharing || sharingIg || !imgLoaded}
+              disabled={sharing || sharingIg || !imgLoaded || loadingCard}
               className="rounded-full border border-[#3D2640] bg-white/80 px-5 py-2 text-[0.82rem] text-[#3D2640]"
             >
               {sharing ? "…" : ar ? "مشاركة" : "Share"}

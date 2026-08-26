@@ -29,15 +29,22 @@ function normalizeBrand(name: string) {
   return name.trim().toLowerCase();
 }
 
+/**
+ * Keep payload JSON small — never embed data: URLs.
+ * The server renderer loads real image bytes from the Product table.
+ */
 function productImageUrl(productId: string, imageUrl: string | null | undefined) {
-  if (
-    imageUrl?.startsWith("http") ||
-    imageUrl?.startsWith("/") ||
-    imageUrl?.startsWith("data:")
-  ) {
+  if (imageUrl?.startsWith("http") || imageUrl?.startsWith("/uploads/") || imageUrl?.startsWith("/products/")) {
     return imageUrl;
   }
   return `/api/media/product/${encodeURIComponent(productId)}`;
+}
+
+function compactLogoUrl(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl) return null;
+  if (logoUrl.startsWith("data:")) return null; // loaded from DB at render time
+  if (logoUrl.startsWith("http") || logoUrl.startsWith("/")) return logoUrl;
+  return null;
 }
 
 export type ProductRow = {
@@ -68,7 +75,7 @@ export function buildCardProducts(
       quantity: item.quantity,
       imageUrl: productImageUrl(item.id, row?.imageUrl),
       brandName,
-      brandLogoUrl: row?.brandLogoUrl ?? null,
+      brandLogoUrl: compactLogoUrl(row?.brandLogoUrl),
       categorySlug: row?.categorySlug ?? "skincare",
     };
   });

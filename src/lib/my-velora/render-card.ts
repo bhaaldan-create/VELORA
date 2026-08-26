@@ -8,20 +8,16 @@ import type { VeloraCardPayload } from "@/lib/my-velora/types";
 export const CARD_W = 1080;
 export const CARD_H = 1920;
 
-/** Fixed zones matching the official VELORA master template (1080×1920). */
+/** Max decoded input image before we refuse / downscale (Vercel memory safety). */
+const MAX_INPUT_BYTES = 2_500_000;
+
 const ZONES = {
-  /** Covers the template subtitle line under MY VELORA */
   subtitle: { cx: 540, y: 292 },
-  /** Large frosted product showcase */
   products: { left: 110, top: 370, width: 860, height: 500 },
-  /** Number inside Beauty Club Points card (above the label) */
   points: { cx: 800, y: 1005 },
-  /** Left / right numbers inside PRODUCTS | BRANDS card */
   productCount: { cx: 700, y: 1210 },
   brandCount: { cx: 905, y: 1210 },
-  /** Inside the dashed "Brands in my order" box */
   brands: { left: 640, top: 1365, width: 360, height: 130 },
-  /** Near Discover VELORA */
   qr: { left: 910, top: 1585, size: 90 },
 } as const;
 
@@ -29,7 +25,12 @@ function parseDataUrl(url: string): Buffer | null {
   const match = url.match(/^data:[^;,]+(?:;base64)?,([\s\S]+)$/);
   if (!match?.[1]) return null;
   try {
-    return Buffer.from(match[1], "base64");
+    const buf = Buffer.from(match[1], "base64");
+    if (buf.length > MAX_INPUT_BYTES) {
+      // Still return — sharp will downscale; avoid OOM on absurd payloads
+      return buf.subarray(0, buf.length); // keep full but we'll resize immediately
+    }
+    return buf;
   } catch {
     return null;
   }
@@ -43,31 +44,55 @@ async function loadLocalOrRemote(src: string): Promise<Buffer | null> {
     return parseDataUrl(trimmed);
   }
 
-  if (trimmed.startsWith("/")) {
+  if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/products/") || trimmed.startsWith("/my-velora/")) {
     try {
       return await readFile(
         path.join(process.cwd(), "public", trimmed.replace(/^\//, "")),
       );
     } catch {
-      /* fall through to fetch */
+      return null;
     }
   }
 
-  try {
-    const absolute = trimmed.startsWith("http")
-      ? trimmed
-      : new URL(
-          trimmed,
-          process.env.NEXT_PUBLIC_SITE_URL ||
-            (process.env.VERCEL_URL
-              ? `https://${process.env.VERCEL_URL}`
-              : "http://localhost:3000"),
-        ).toString();
-    const res = await fetch(absolute, { cache: "force-cache" });
-    if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
-  } catch {
+  // Never fetch /api/* from the server to itself (cold-start / cookie loops).
+  if (trimmed.startsWith("/api/")) {
     return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const res = await fetch(trimmed, { cache: "force-cache" });
+      if (!res.ok) return null;
+      const buf = Buffer.from(await res.arrayBuffer());
+      return buf.length > 8_000_000 ? null : buf;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+async function downscale(input: Buffer, maxEdge = 1200): Promise<Buffer> {
+  try {
+    const meta = await sharp(input, { failOn: "none" }).metadata();
+    const w = meta.width || maxEdge;
+    const h = meta.height || maxEdge;
+    if (w <= maxEdge && h <= maxEdge && input.length < MAX_INPUT_BYTES) {
+      return input;
+    }
+    return await sharp(input, { failOn: "none" })
+      .rotate()
+      .resize({
+        width: maxEdge,
+        height: maxEdge,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .png()
+      .toBuffer();
+  } catch {
+    return input;
   }
 }
 
@@ -80,7 +105,7 @@ async function loadMasterTemplate(): Promise<Buffer> {
     "velora-signature-master.png",
   );
   const buf = await readFile(file);
-  return sharp(buf)
+  return sharp(buf, { failOn: "none" })
     .resize(CARD_W, CARD_H, { fit: "fill" })
     .png()
     .toBuffer();
@@ -92,14 +117,15 @@ async function fitContain(
   maxH: number,
 ): Promise<{ buf: Buffer; w: number; h: number } | null> {
   try {
-    const meta = await sharp(input).metadata();
+    const scaled = await downscale(input, Math.max(maxW, maxH) * 2);
+    const meta = await sharp(scaled, { failOn: "none" }).metadata();
     const iw = meta.width || maxW;
     const ih = meta.height || maxH;
     const scale = Math.min(maxW / iw, maxH / ih, 1);
     const w = Math.max(1, Math.round(iw * scale));
     const h = Math.max(1, Math.round(ih * scale));
-    const buf = await sharp(input)
-      .resize(w, h, { fit: "inside", withoutEnlargement: false })
+    const buf = await sharp(scaled, { failOn: "none" })
+      .resize(w, h, { fit: "inside" })
       .png()
       .toBuffer();
     return { buf, w, h };
@@ -118,17 +144,57 @@ async function loadProductImage(
   productId: string,
   imageUrl: string | null,
 ): Promise<Buffer | null> {
-  if (imageUrl) {
-    const fromUrl = await loadLocalOrRemote(imageUrl);
-    if (fromUrl) return fromUrl;
-  }
+  // Prefer DB bytes — never rely on self-HTTP to /api/media
   try {
     const row = await prisma.product.findUnique({
       where: { id: productId },
       select: { imageUrl: true },
     });
     if (row?.imageUrl) {
-      return loadLocalOrRemote(row.imageUrl);
+      const fromDb = await loadLocalOrRemote(row.imageUrl);
+      if (fromDb) return downscale(fromDb, 1000);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  if (imageUrl && !imageUrl.startsWith("/api/")) {
+    const fromUrl = await loadLocalOrRemote(imageUrl);
+    if (fromUrl) return downscale(fromUrl, 1000);
+  }
+  return null;
+}
+
+async function loadBrandLogo(
+  brandName: string,
+  logoUrl: string | null,
+  productIds: string[],
+): Promise<Buffer | null> {
+  if (logoUrl && !logoUrl.startsWith("/api/")) {
+    const direct = await loadLocalOrRemote(logoUrl);
+    if (direct) return downscale(direct, 400);
+  }
+
+  if (!productIds.length) return null;
+  try {
+    const rows = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { brandName: true, brandLogoUrl: true },
+    });
+    const match = rows.find(
+      (r) =>
+        (r.brandName || "").trim().toLowerCase() === brandName.trim().toLowerCase() &&
+        r.brandLogoUrl,
+    );
+    if (match?.brandLogoUrl) {
+      const buf = await loadLocalOrRemote(match.brandLogoUrl);
+      if (buf) return downscale(buf, 400);
+    }
+    // Any logo from these products
+    for (const r of rows) {
+      if (!r.brandLogoUrl) continue;
+      const buf = await loadLocalOrRemote(r.brandLogoUrl);
+      if (buf) return downscale(buf, 400);
     }
   } catch {
     /* ignore */
@@ -145,15 +211,19 @@ async function composeProducts(
 
   const loaded: { buf: Buffer; w: number; h: number }[] = [];
   for (const p of list) {
-    const raw = await loadProductImage(p.id, p.imageUrl);
-    if (!raw) continue;
-    const n = list.length;
-    const cellW =
-      n === 1 ? zone.width * 0.48 : n === 2 ? zone.width * 0.38 : zone.width * 0.28;
-    const cellH =
-      n === 1 ? zone.height * 0.78 : n <= 3 ? zone.height * 0.62 : zone.height * 0.4;
-    const fitted = await fitContain(raw, Math.round(cellW), Math.round(cellH));
-    if (fitted) loaded.push(fitted);
+    try {
+      const raw = await loadProductImage(p.id, p.imageUrl);
+      if (!raw) continue;
+      const n = list.length;
+      const cellW =
+        n === 1 ? zone.width * 0.48 : n === 2 ? zone.width * 0.38 : zone.width * 0.28;
+      const cellH =
+        n === 1 ? zone.height * 0.78 : n <= 3 ? zone.height * 0.62 : zone.height * 0.4;
+      const fitted = await fitContain(raw, Math.round(cellW), Math.round(cellH));
+      if (fitted) loaded.push(fitted);
+    } catch (err) {
+      console.error("[render-card] product layer failed", p.id, err);
+    }
   }
 
   if (!loaded.length) return [];
@@ -206,7 +276,6 @@ async function composeProducts(
     return out;
   }
 
-  // 4–6 grid
   const cols = n <= 4 ? 2 : 3;
   const cellW = Math.floor(zone.width / cols) - 16;
   const rows = Math.ceil(n / cols);
@@ -230,22 +299,40 @@ async function composeProducts(
   return out;
 }
 
+function escapeXml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function brandTextBadge(name: string): Buffer {
+  const label = escapeXml((name || "VELORA").slice(0, 16).toUpperCase());
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="130" height="40">
+      <rect width="130" height="40" rx="10" fill="rgba(255,255,255,0.85)"/>
+      <text x="65" y="26" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
+        font-size="12" font-weight="700" fill="#4A384F" letter-spacing="1">${label}</text>
+    </svg>`,
+  );
+}
+
 async function composeBrands(
   brands: VeloraCardPayload["brands"],
+  productIds: string[],
 ): Promise<Composite[]> {
   const zone = ZONES.brands;
   const list = brands.slice(0, 6);
   if (!list.length) return [];
 
-  const logos: { buf: Buffer; w: number; h: number; name: string }[] = [];
+  const logos: { buf: Buffer; w: number; h: number }[] = [];
   for (const b of list) {
-    let placed = false;
-    if (b.logoUrl) {
-      const raw = await loadLocalOrRemote(b.logoUrl);
+    try {
+      const raw = await loadBrandLogo(b.name, b.logoUrl, productIds);
       if (raw) {
         const fitted = await fitContain(raw, 100, 44);
         if (fitted) {
-          // White plate so logos stay legible inside the dashed brands box
           const plateW = fitted.w + 20;
           const plateH = fitted.h + 14;
           const plate = await sharp({
@@ -268,28 +355,21 @@ async function composeBrands(
             ])
             .png()
             .toBuffer();
-          logos.push({ buf: stacked, w: plateW, h: plateH, name: b.name });
-          placed = true;
+          logos.push({ buf: stacked, w: plateW, h: plateH });
+          continue;
         }
       }
+    } catch (err) {
+      console.error("[render-card] brand layer failed", b.name, err);
     }
-    if (!placed) {
-      const label = escapeXml((b.name || "VELORA").slice(0, 16).toUpperCase());
-      const svg = Buffer.from(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="130" height="40">
-          <rect width="130" height="40" rx="10" fill="rgba(255,255,255,0.85)"/>
-          <text x="65" y="26" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
-            font-size="12" font-weight="700" fill="#4A384F" letter-spacing="1">${label}</text>
-        </svg>`,
-      );
-      logos.push({ buf: svg, w: 130, h: 40, name: b.name });
-    }
+    logos.push({ buf: brandTextBadge(b.name), w: 130, h: 40 });
   }
 
   const gap = 12;
-  const totalW = logos.reduce((s, l) => s + l.w, 0) + gap * Math.max(0, logos.length - 1);
-  // Wrap into 2 rows if needed
   const out: Composite[] = [];
+  const totalW =
+    logos.reduce((s, l) => s + l.w, 0) + gap * Math.max(0, logos.length - 1);
+
   if (totalW <= zone.width) {
     let x = Math.round(zone.left + (zone.width - totalW) / 2);
     const y = Math.round(zone.top + (zone.height - 48) / 2);
@@ -303,9 +383,10 @@ async function composeBrands(
   const mid = Math.ceil(logos.length / 2);
   const rows = [logos.slice(0, mid), logos.slice(mid)];
   rows.forEach((row, ri) => {
-    const rowW = row.reduce((s, l) => s + l.w, 0) + gap * Math.max(0, row.length - 1);
+    const rowW =
+      row.reduce((s, l) => s + l.w, 0) + gap * Math.max(0, row.length - 1);
     let x = Math.round(zone.left + (zone.width - rowW) / 2);
-    const y = Math.round(zone.top + 20 + ri * 70);
+    const y = Math.round(zone.top + 16 + ri * 58);
     for (const l of row) {
       out.push({ input: l.buf, left: x, top: y });
       x += l.w + gap;
@@ -314,20 +395,9 @@ async function composeBrands(
   return out;
 }
 
-function escapeXml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function buildTextOverlay(payload: VeloraCardPayload, locale: "ar" | "en") {
-  const subtitle =
-    locale === "ar" ? payload.subtitleAr : payload.subtitleEn;
-  // Prefer English for Story to match master template typography.
+function buildTextOverlay(payload: VeloraCardPayload) {
   const subtitleSafe = escapeXml(
-    (payload.subtitleEn || subtitle || "MY BEAUTY MOMENT").toUpperCase(),
+    (payload.subtitleEn || "MY BEAUTY MOMENT").toUpperCase(),
   );
   const points = String(payload.pointsEarned);
   const products = String(payload.productCount);
@@ -350,22 +420,28 @@ function buildTextOverlay(payload: VeloraCardPayload, locale: "ar" | "en") {
 
 /**
  * Server-side Story card renderer.
- * MASTER TEMPLATE (visual) + ORDER PAYLOAD (data) → 1080×1920 PNG.
+ * MASTER TEMPLATE + ORDER PAYLOAD → 1080×1920 PNG.
  */
 export async function renderMyVeloraCardPng(input: {
   payload: VeloraCardPayload;
   locale?: "ar" | "en";
 }): Promise<Buffer> {
-  const { payload, locale = "en" } = input;
+  const { payload } = input;
   const master = await loadMasterTemplate();
-
   const composites: Composite[] = [];
+  const productIds = payload.products.map((p) => p.id);
 
-  const [productLayers, brandLayers] = await Promise.all([
-    composeProducts(payload.products),
-    composeBrands(payload.brands),
-  ]);
-  composites.push(...productLayers, ...brandLayers);
+  try {
+    composites.push(...(await composeProducts(payload.products)));
+  } catch (err) {
+    console.error("[render-card] products failed", err);
+  }
+
+  try {
+    composites.push(...(await composeBrands(payload.brands, productIds)));
+  } catch (err) {
+    console.error("[render-card] brands failed", err);
+  }
 
   if (payload.showQrCode && payload.referralUrl) {
     try {
@@ -384,19 +460,19 @@ export async function renderMyVeloraCardPng(input: {
         left: ZONES.qr.left,
         top: ZONES.qr.top,
       });
-    } catch {
-      /* optional */
+    } catch (err) {
+      console.error("[render-card] qr failed", err);
     }
   }
 
   composites.push({
-    input: buildTextOverlay(payload, locale),
+    input: buildTextOverlay(payload),
     left: 0,
     top: 0,
   });
 
-  return sharp(master)
+  return sharp(master, { failOn: "none" })
     .composite(composites)
-    .png({ quality: 100, compressionLevel: 8 })
+    .png({ compressionLevel: 8 })
     .toBuffer();
 }
