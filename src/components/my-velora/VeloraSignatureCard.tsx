@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 export const MY_VELORA_CARD_WIDTH = 1080;
 export const MY_VELORA_CARD_HEIGHT = 1920;
+export const MY_VELORA_MASTER_BG =
+  "/my-velora/templates/velora-signature-master.png";
 
 type Props = {
   payload: VeloraCardPayload;
@@ -15,6 +17,8 @@ type Props = {
   qrDataUrl?: string | null;
   id?: string;
   className?: string;
+  /** Optional pre-inlined master background (data URL) for reliable export */
+  backgroundDataUrl?: string | null;
 };
 
 export function VeloraSignatureCard({
@@ -24,41 +28,54 @@ export function VeloraSignatureCard({
   qrDataUrl,
   id = "velora-my-card",
   className,
+  backgroundDataUrl,
 }: Props) {
   const ar = locale === "ar";
   const style =
     CARD_STYLE_OPTIONS.find((s) => s.key === styleKey) ?? CARD_STYLE_OPTIONS[0]!;
+  const bg = backgroundDataUrl || style.backgroundUrl || MY_VELORA_MASTER_BG;
 
   return (
     <div
       id={id}
-      className={cn("relative overflow-hidden bg-[#E8DDF0]", className)}
+      className={cn("relative overflow-hidden", className)}
       style={{
         width: MY_VELORA_CARD_WIDTH,
         height: MY_VELORA_CARD_HEIGHT,
+        backgroundColor: "#E8DDF0",
+        backgroundImage: `url("${bg}")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center center",
+        backgroundSize: "100% 100%",
       }}
+      data-mv-card="true"
     >
-      {/* Master background — fixed composition */}
+      {/* Keep an img fallback for browsers that struggle with CSS bg in capture */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={style.backgroundUrl}
+        src={bg}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 h-full w-full object-fill"
         draggable={false}
+        data-mv-bg="true"
       />
 
       {style.overlayClass ? (
-        <div className={cn("pointer-events-none absolute inset-0", style.overlayClass)} />
+        <div
+          className={cn("pointer-events-none absolute inset-0", style.overlayClass)}
+          aria-hidden
+        />
       ) : null}
 
-      {/* Zone B — dynamic subtitle (covers template default when theme differs) */}
+      {/* Zone B — dynamic subtitle */}
       <div
-        className="pointer-events-none absolute left-0 right-0 flex justify-center"
-        style={{ top: "13.8%", height: "3.2%" }}
+        className="pointer-events-none absolute left-0 right-0 z-10 flex items-center justify-center"
+        style={{ top: "13.6%", height: "3.4%" }}
       >
         <p
-          className="font-latin text-center text-[22px] font-medium tracking-[0.34em] text-[#5E4A66]"
+          className="font-latin text-center text-[22px] font-medium tracking-[0.28em] text-[#5E4A66]"
           dir="ltr"
+          style={{ textShadow: "0 1px 0 rgba(255,255,255,0.35)" }}
         >
           ✦ {ar ? payload.subtitleAr : payload.subtitleEn} ✦
         </p>
@@ -66,7 +83,7 @@ export function VeloraSignatureCard({
 
       {/* Zone C — product showcase */}
       <div
-        className="absolute overflow-hidden"
+        className="absolute z-10 overflow-hidden"
         style={{
           top: "18.2%",
           left: "7.4%",
@@ -77,42 +94,49 @@ export function VeloraSignatureCard({
         <ProductComposition products={payload.products} className="h-full w-full" />
       </div>
 
-      {/* Zone E — Beauty Club points */}
+      {/* Zone E — Beauty Club points number */}
       <div
-        className="absolute flex flex-col items-center justify-end text-center"
+        className="absolute z-10 flex flex-col items-center justify-center text-center"
         style={{
-          top: "49.8%",
+          top: "49.2%",
           right: "5.8%",
           width: "41%",
-          height: "8.8%",
+          height: "9.2%",
         }}
       >
         <p
-          className="font-latin text-[92px] font-light leading-none tracking-tight text-[#3D2640]"
+          className="font-latin font-light leading-none tracking-tight text-[#3D2640]"
           dir="ltr"
+          style={{ fontSize: 84 }}
         >
           +{payload.pointsEarned}
         </p>
       </div>
 
-      {/* Zone F — products / brands stats */}
+      {/* Zone F — products / brands counts */}
       <div
-        className="absolute flex items-center justify-center"
+        className="absolute z-10 flex items-center justify-center"
         style={{
-          top: "60.1%",
+          top: "59.6%",
           right: "5.8%",
           width: "41%",
-          height: "5.8%",
+          height: "6%",
         }}
       >
-        <div className="grid w-full grid-cols-2">
+        <div className="grid w-full grid-cols-2 gap-1">
           <div className="text-center">
-            <p className="font-latin text-[34px] font-semibold leading-none text-[#3D2640]">
+            <p
+              className="font-latin font-semibold leading-none text-[#3D2640]"
+              style={{ fontSize: 32 }}
+            >
               {payload.productCount}
             </p>
           </div>
           <div className="text-center">
-            <p className="font-latin text-[34px] font-semibold leading-none text-[#3D2640]">
+            <p
+              className="font-latin font-semibold leading-none text-[#3D2640]"
+              style={{ fontSize: 32 }}
+            >
               {payload.brandCount}
             </p>
           </div>
@@ -121,12 +145,12 @@ export function VeloraSignatureCard({
 
       {/* Zone G — brand logos */}
       <div
-        className="absolute flex flex-wrap items-center justify-center gap-x-[5%] gap-y-[3%] px-[4%]"
+        className="absolute z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-4"
         style={{
-          top: "67.8%",
+          top: "67.5%",
           right: "5.8%",
           width: "41%",
-          height: "9.5%",
+          height: "9.8%",
         }}
       >
         {payload.brands.slice(0, 6).map((brand) =>
@@ -136,13 +160,13 @@ export function VeloraSignatureCard({
               key={brand.name}
               src={brand.logoUrl}
               alt={brand.name}
-              className="max-h-[42px] max-w-[28%] object-contain opacity-90"
+              className="max-h-[40px] max-w-[28%] object-contain"
               draggable={false}
             />
           ) : (
             <span
               key={brand.name}
-              className="font-latin text-[13px] font-semibold uppercase tracking-[0.18em] text-[#4A384F]"
+              className="font-latin text-[12px] font-semibold uppercase tracking-[0.16em] text-[#4A384F]"
             >
               {brand.name}
             </span>
@@ -150,12 +174,12 @@ export function VeloraSignatureCard({
         )}
       </div>
 
-      {/* Zone H — optional QR near Discover VELORA */}
+      {/* Zone H — optional QR */}
       {payload.showQrCode && qrDataUrl ? (
         <div
-          className="absolute flex flex-col items-center"
+          className="absolute z-10 flex flex-col items-center"
           style={{
-            bottom: "11.8%",
+            bottom: "11.5%",
             right: "8%",
             width: "14%",
           }}
@@ -164,7 +188,7 @@ export function VeloraSignatureCard({
           <img
             src={qrDataUrl}
             alt="QR"
-            className="h-[88px] w-[88px] rounded-md bg-white/80 p-1"
+            className="h-[88px] w-[88px] rounded-md bg-white p-1"
             draggable={false}
           />
         </div>
