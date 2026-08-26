@@ -96,8 +96,8 @@ export async function GET(req: Request, ctx: RouteCtx) {
       });
     }
 
-    // Uint8Array view over the Buffer (no full copy). Buffer itself is not BodyInit in TS DOM libs.
-    const body = new Uint8Array(png.buffer, png.byteOffset, png.byteLength);
+    // Copy into a plain ArrayBuffer-backed Uint8Array (BodyInit-safe for TS + DOM libs).
+    const body = Uint8Array.from(png);
     return new Response(body, {
       status: 200,
       headers: {
