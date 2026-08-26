@@ -30,7 +30,13 @@ function normalizeBrand(name: string) {
 }
 
 function productImageUrl(productId: string, imageUrl: string | null | undefined) {
-  if (imageUrl?.startsWith("http") || imageUrl?.startsWith("/")) return imageUrl;
+  if (
+    imageUrl?.startsWith("http") ||
+    imageUrl?.startsWith("/") ||
+    imageUrl?.startsWith("data:")
+  ) {
+    return imageUrl;
+  }
   return `/api/media/product/${encodeURIComponent(productId)}`;
 }
 

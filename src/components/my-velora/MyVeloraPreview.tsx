@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { VeloraSignatureCard } from "@/components/my-velora/VeloraSignatureCard";
 import {
   CARD_STYLE_OPTIONS,
   type VeloraCardPayload,
@@ -10,11 +9,10 @@ import {
 } from "@/lib/my-velora/types";
 import {
   downloadMyVeloraPng,
+  getMyVeloraImageSrc,
   shareMyVeloraCard,
   shareMyVeloraToInstagramStories,
-  urlToDataUrl,
 } from "@/lib/my-velora/card-image";
-import { MY_VELORA_MASTER_BG } from "@/components/my-velora/VeloraSignatureCard";
 import { useLocale } from "@/context/LocaleContext";
 import { cn } from "@/lib/utils";
 import "./my-velora.css";
@@ -48,40 +46,11 @@ export function MyVeloraPreview({
   const [comment, setComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewDone, setReviewDone] = useState(hasReview);
-  const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
-  const [scale, setScale] = useState(0.32);
-  const frameRef = useRef<HTMLDivElement>(null);
+  const [bust, setBust] = useState(() => Date.now());
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState<string | null>(null);
 
-  const qrDataUrl = useMemo(() => {
-    if (!payload.showQrCode) return null;
-    return `/api/my-velora/qr?data=${encodeURIComponent(payload.referralUrl)}`;
-  }, [payload.referralUrl, payload.showQrCode]);
-
-  // Fit 1080×1920 card into the available preview frame without breaking transforms.
-  useEffect(() => {
-    const el = frameRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const w = el.clientWidth;
-      if (w > 0) setScale(Math.min(1, w / 1080));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, []);
-
-  // Preload master template as data URL so preview + export are reliable.
-  useEffect(() => {
-    void urlToDataUrl(MY_VELORA_MASTER_BG).then((url) => {
-      if (url) setBgDataUrl(url);
-    });
-  }, []);
+  const src = getMyVeloraImageSrc(orderId, bust);
 
   const recordEvent = useCallback(
     async (eventType: string, meta?: Record<string, unknown>) => {
@@ -111,6 +80,8 @@ export function MyVeloraPreview({
       body: JSON.stringify({ styleKey: next }),
     });
     await recordEvent("style_change", { styleKey: next });
+    setImgLoaded(false);
+    setBust(Date.now());
   }
 
   async function onSave() {
@@ -118,16 +89,10 @@ export function MyVeloraPreview({
     setMessage(null);
     try {
       await downloadMyVeloraPng(orderId);
-      await recordEvent("save");
-      setMessage(ar ? "تم حفظ الصورة 1080×1920 ✦" : "Saved 1080×1920 PNG ✦");
+      await recordEvent("save", { source: "server" });
+      setMessage(ar ? "تم حفظ الستوري 1080×1920 ✦" : "Saved Story 1080×1920 ✦");
     } catch (err) {
-      setMessage(
-        err instanceof Error
-          ? err.message
-          : ar
-            ? "تعذّر حفظ الصورة"
-            : "Could not save image",
-      );
+      setMessage(err instanceof Error ? err.message : "Error");
     } finally {
       setSaving(false);
     }
@@ -142,34 +107,18 @@ export function MyVeloraPreview({
         title: "MY VELORA ✦",
         text: ar ? payload.pointsLabelAr : payload.pointsLabelEn,
       });
-      await recordEvent("instagram_share", { mode });
-      if (mode === "native-file") {
-        setMessage(
-          ar
-            ? "اختاري Instagram ثم Story من قائمة المشاركة ✦"
-            : "Choose Instagram → Story in the share sheet ✦",
-        );
-      } else if (mode === "download-instagram") {
-        setMessage(
-          ar
-            ? "تم حفظ الصورة. افتحي Instagram Stories وأضيفيها من المعرض ✦"
-            : "Image saved. Open Instagram Stories and add it from your gallery ✦",
-        );
-      } else {
-        setMessage(
-          ar
-            ? "تم تنزيل الصورة — ارفعيها على Instagram Stories"
-            : "Image downloaded — upload it to Instagram Stories",
-        );
-      }
-    } catch (err) {
+      await recordEvent("instagram_share", { mode, source: "server" });
       setMessage(
-        err instanceof Error
-          ? err.message
+        mode === "native-file"
+          ? ar
+            ? "اختاري Instagram ثم Story ✦"
+            : "Choose Instagram → Story ✦"
           : ar
-            ? "تعذّرت المشاركة على Instagram"
-            : "Instagram share failed",
+            ? "تم حفظ الصورة — افتحي Instagram Stories من المعرض ✦"
+            : "Saved — open Instagram Stories from your gallery ✦",
       );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Share failed");
     } finally {
       setSharingIg(false);
     }
@@ -256,35 +205,59 @@ export function MyVeloraPreview({
       </header>
 
       <div className="mx-auto flex w-full flex-1 flex-col items-center">
-        {/* Aspect-ratio frame: scale is applied ONLY via inline style (no animation override). */}
-        <div
-          ref={frameRef}
-          className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] shadow-[0_24px_80px_rgba(61,38,64,0.18)]"
-          style={{ aspectRatio: "1080 / 1920" }}
-        >
-          <div
-            style={{
-              width: 1080,
-              height: 1920,
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
-          >
-            <VeloraSignatureCard
-              payload={payload}
-              styleKey={styleKey}
-              locale={ar ? "ar" : "en"}
-              qrDataUrl={qrDataUrl}
-              backgroundDataUrl={bgDataUrl}
+        <div className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] bg-[#E8DDF0] shadow-[0_24px_80px_rgba(61,38,64,0.18)]">
+          <div className="relative w-full" style={{ aspectRatio: "1080 / 1920" }}>
+            {!imgLoaded && !imgError ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#3D2640]/20 border-t-[#3D2640]" />
+                <p className="text-[0.82rem] text-[#7A6880]">
+                  {ar
+                    ? "الخادم يجهّز بطاقتكِ الآن…"
+                    : "Preparing your card on the server…"}
+                </p>
+              </div>
+            ) : null}
+            {imgError ? (
+              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-[0.85rem] text-red-700">
+                {imgError}
+              </div>
+            ) : null}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={src}
+              src={src}
+              alt="MY VELORA Card"
+              className={cn(
+                "h-full w-full object-contain transition-opacity duration-300",
+                imgLoaded ? "opacity-100" : "opacity-0",
+              )}
+              onLoad={() => {
+                setImgLoaded(true);
+                setImgError(null);
+              }}
+              onError={() => {
+                setImgError(
+                  ar
+                    ? "تعذّر تحميل البطاقة من الخادم."
+                    : "Could not load card from server.",
+                );
+                setImgLoaded(false);
+              }}
             />
           </div>
         </div>
+
+        <p className="mt-3 text-center text-[0.75rem] text-[#8B7A92]">
+          {payload.productCount} {ar ? "منتج" : "products"} · {payload.brandCount}{" "}
+          {ar ? "علامة" : "brands"} · +{payload.pointsEarned}{" "}
+          {ar ? "نقطة" : "pts"}
+        </p>
 
         <div className="mt-5 flex w-full flex-col gap-2">
           <button
             type="button"
             onClick={onInstagramStories}
-            disabled={sharingIg || saving}
+            disabled={sharingIg || saving || !imgLoaded}
             className="w-full rounded-full bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-5 py-3 text-[0.9rem] font-medium text-white shadow-[0_10px_28px_-12px_rgba(221,42,123,0.55)] disabled:opacity-60"
           >
             {sharingIg
@@ -307,7 +280,7 @@ export function MyVeloraPreview({
             <button
               type="button"
               onClick={onSave}
-              disabled={saving || sharingIg}
+              disabled={saving || sharingIg || !imgLoaded}
               className="rounded-full bg-[#3D2640] px-5 py-2 text-[0.82rem] text-white disabled:opacity-60"
             >
               {saving ? "…" : ar ? "حفظ في الصور" : "Save to Photos"}
@@ -315,7 +288,7 @@ export function MyVeloraPreview({
             <button
               type="button"
               onClick={onShare}
-              disabled={sharing || sharingIg}
+              disabled={sharing || sharingIg || !imgLoaded}
               className="rounded-full border border-[#3D2640] bg-white/80 px-5 py-2 text-[0.82rem] text-[#3D2640]"
             >
               {sharing ? "…" : ar ? "مشاركة" : "Share"}
