@@ -96,8 +96,9 @@ export async function GET(req: Request, ctx: RouteCtx) {
       });
     }
 
-    // Pass Buffer directly — do NOT copy via new Uint8Array(buf) (doubles memory).
-    return new Response(png, {
+    // Uint8Array view over the Buffer (no full copy). Buffer itself is not BodyInit in TS DOM libs.
+    const body = new Uint8Array(png.buffer, png.byteOffset, png.byteLength);
+    return new Response(body, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
