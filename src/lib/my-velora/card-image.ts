@@ -18,16 +18,20 @@ export async function fetchMyVeloraCardBlob(orderId: string): Promise<Blob> {
     cache: "no-store",
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
+    const text = (await res.text().catch(() => "")).trim();
     if (res.status === 401) {
       throw new Error("يجب تسجيل الدخول أولاً.");
     }
     if (res.status === 404) {
       throw new Error("الطلب غير مؤهل لبطاقة MY VELORA.");
     }
+    const detail = text
+      .replace(/^Render failed:\s*/i, "")
+      .slice(0, 180)
+      .trim();
     throw new Error(
-      text?.startsWith("Render failed")
-        ? text
+      detail
+        ? `تعذّر تجهيز البطاقة (${res.status}): ${detail}`
         : `تعذّر تجهيز البطاقة من الخادم (${res.status}).`,
     );
   }

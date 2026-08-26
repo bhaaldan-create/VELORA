@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "20mb",
     },
   },
+  // Ensure MY VELORA master template ships inside the image API serverless bundle.
+  outputFileTracingIncludes: {
+    "/api/auth/my-velora/*/image": [
+      "./public/my-velora/templates/velora-signature-master.png",
+    ],
+  },
   async headers() {
     return [
       {

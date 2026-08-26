@@ -8,8 +8,9 @@ import type { VeloraCardPayload } from "@/lib/my-velora/types";
 export const CARD_W = 1080;
 export const CARD_H = 1920;
 
-/** Max decoded input image before we refuse / downscale (Vercel memory safety). */
-const MAX_INPUT_BYTES = 2_500_000;
+/** Max decoded input image before we refuse (Vercel memory safety). */
+const MAX_INPUT_BYTES = 800_000;
+const MASTER_PUBLIC_PATH = "/my-velora/templates/velora-signature-master.png";
 
 const ZONES = {
   subtitle: { cx: 540, y: 292 },
@@ -24,16 +25,29 @@ const ZONES = {
 function parseDataUrl(url: string): Buffer | null {
   const match = url.match(/^data:[^;,]+(?:;base64)?,([\s\S]+)$/);
   if (!match?.[1]) return null;
+  // Reject huge embeds before allocating (base64 ≈ 4/3 of raw size).
+  if (match[1].length > MAX_INPUT_BYTES * 1.4) return null;
   try {
     const buf = Buffer.from(match[1], "base64");
-    if (buf.length > MAX_INPUT_BYTES) {
-      // Still return — sharp will downscale; avoid OOM on absurd payloads
-      return buf.subarray(0, buf.length); // keep full but we'll resize immediately
-    }
+    if (buf.length > MAX_INPUT_BYTES) return null;
     return buf;
   } catch {
     return null;
   }
+}
+
+function siteOrigin(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (productionHost) {
+    return `https://${productionHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) {
+    return `https://${vercelHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+  return "https://velorabeautyiq.me";
 }
 
 async function loadLocalOrRemote(src: string): Promise<Buffer | null> {
@@ -96,16 +110,31 @@ async function downscale(input: Buffer, maxEdge = 1200): Promise<Buffer> {
   }
 }
 
-async function loadMasterTemplate(): Promise<Buffer> {
-  const file = path.join(
+async function loadMasterTemplateBytes(): Promise<Buffer> {
+  const local = path.join(
     process.cwd(),
     "public",
     "my-velora",
     "templates",
     "velora-signature-master.png",
   );
-  const buf = await readFile(file);
-  return sharp(buf, { failOn: "none" })
+  try {
+    return await readFile(local);
+  } catch {
+    /* Serverless bundles often omit public/ — fall back to the CDN asset. */
+  }
+
+  const url = `${siteOrigin()}${MASTER_PUBLIC_PATH}`;
+  const res = await fetch(url, { cache: "force-cache" });
+  if (!res.ok) {
+    throw new Error(`Master template missing (local + ${res.status} ${url})`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function loadMasterTemplate(): Promise<Buffer> {
+  const buf = await loadMasterTemplateBytes();
+  return sharp(buf, { failOn: "none", limitInputPixels: 4096 * 4096 })
     .resize(CARD_W, CARD_H, { fit: "fill" })
     .png()
     .toBuffer();
@@ -471,8 +500,22 @@ export async function renderMyVeloraCardPng(input: {
     top: 0,
   });
 
-  return sharp(master, { failOn: "none" })
-    .composite(composites)
-    .png({ compressionLevel: 8 })
-    .toBuffer();
+  try {
+    return await sharp(master, { failOn: "none" })
+      .composite(composites)
+      .png({ compressionLevel: 8 })
+      .toBuffer();
+  } catch (err) {
+    console.error("[render-card] composite failed, falling back to master+text", err);
+    return sharp(master, { failOn: "none" })
+      .composite([
+        {
+          input: buildTextOverlay(payload),
+          left: 0,
+          top: 0,
+        },
+      ])
+      .png({ compressionLevel: 8 })
+      .toBuffer();
+  }
 }
