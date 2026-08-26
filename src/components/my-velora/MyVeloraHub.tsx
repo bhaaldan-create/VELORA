@@ -90,6 +90,21 @@ export function MyVeloraHub() {
         </h1>
       </div>
 
+      <Link
+        href="/account/my-velora/passport"
+        className="mt-8 block overflow-hidden rounded-[28px] border border-[#E5DAEE] bg-gradient-to-br from-[#F5F1FB] via-white to-[#DCD3F5] px-6 py-7 text-center shadow-[0_18px_50px_rgba(126,104,181,0.12)] transition hover:-translate-y-0.5"
+      >
+        <p className="font-latin text-[0.62rem] tracking-[0.4em] text-[#7E68B5]">
+          MY VELORA PASSPORT
+        </p>
+        <p className="font-display mt-2 text-[1.25rem] text-[#24202B]">
+          {ar ? "جوازكِ الرقمي الفاخر" : "Your luxury beauty passport"}
+        </p>
+        <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.68rem] tracking-[0.22em] text-white uppercase">
+          {ar ? "فتح الجواز" : "Open Passport"}
+        </span>
+      </Link>
+
       {!hasCards ? (
         <div className="mv-fade-in mt-12 rounded-[28px] border border-[#E5DAEE] bg-white/80 px-8 py-16 text-center">
           <p className="text-[1.4rem] text-[#C4A8D8]">✦</p>

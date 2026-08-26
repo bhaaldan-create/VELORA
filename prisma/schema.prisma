@@ -187,6 +187,15 @@ model Customer {
   appleId       String?                @unique
   /// password | google | apple | linked
   authProvider  String                 @default("password")
+  /// MY VELORA PASSPORT — رقم عام ثابت VL-2026-XXXXXX
+  passportNumber   String?                @unique
+  /// توكن مشاركة عامة آمن (لا يُستخدم كـ DB id)
+  passportToken    String?                @unique
+  dateOfBirth      DateTime?
+  /// محافظة عراقية (مفتاح منظم من قائمة ثابتة)
+  governorate      String?
+  avatarUrl        String?
+  passportOpenedAt DateTime?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]
@@ -194,6 +203,7 @@ model Customer {
   veloraCards   VeloraCard[]
   achievements  VeloraAchievement[]
   referralLinks VeloraReferralLink[]
+  beautyProfile VeloraBeautyProfile?
 }
 
 /// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
@@ -664,4 +674,30 @@ model VeloraAchievement {
 
   @@unique([customerId, achievementKey])
   @@index([customerId])
+}
+
+/// —— MY VELORA PASSPORT ——
+
+/// إعدادات الجواز الرقمي (JSON من الأدمن)
+model VeloraPassportConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+/// ملف الجمال الشخصي للزبونة (1:1)
+model VeloraBeautyProfile {
+  id                     String   @id @default(cuid())
+  customerId             String   @unique
+  customer               Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  skinType               String   @default("")
+  skinConcernsJson       Json     @default("[]")
+  beautyGoalsJson        Json     @default("[]")
+  makeupStyle            String   @default("")
+  preferredFinish        String   @default("")
+  favoriteCategoriesJson Json     @default("[]")
+  preferredBrandsJson    Json     @default("[]")
+  updatedAt              DateTime @updatedAt
+  createdAt              DateTime @default(now())
 }

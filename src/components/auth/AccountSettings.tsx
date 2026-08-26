@@ -415,6 +415,15 @@ export function AccountSettings() {
                 </span>
               </Link>
               <Link
+                href="/account/my-velora/passport"
+                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+              >
+                <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                  <span aria-hidden>◇</span>
+                  <span>{ar ? "جواز VELORA" : "My Passport"}</span>
+                </span>
+              </Link>
+              <Link
                 href="/account/club"
                 className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
               >
