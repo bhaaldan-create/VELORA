@@ -149,6 +149,13 @@ export async function POST(req: Request) {
       // منع التكرار عند ضغط مزدوج سريع
     }
 
+    try {
+      const { awardFavoritePoints } = await import("@/lib/loyalty/award");
+      await awardFavoritePoints(auth.customerId, product.id);
+    } catch (err) {
+      console.error("[auth/wishlist] loyalty", err);
+    }
+
     return Response.json({
       ok: true,
       wished: true,

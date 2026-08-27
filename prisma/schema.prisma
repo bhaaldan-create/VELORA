@@ -205,6 +205,12 @@ model Customer {
   governorate      String?
   avatarUrl        String?
   passportOpenedAt DateTime?
+  /// كود إحالة عام آمن (ليس معرّف قاعدة البيانات)
+  referralCode          String?                @unique
+  /// الزبون الذي أحال هذا الحساب (مرجع واحد فقط)
+  referredByCustomerId  String?
+  referredBy            Customer?              @relation("CustomerReferrals", fields: [referredByCustomerId], references: [id], onDelete: SetNull)
+  referrals             Customer[]             @relation("CustomerReferrals")
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]
@@ -213,6 +219,11 @@ model Customer {
   achievements  VeloraAchievement[]
   referralLinks VeloraReferralLink[]
   beautyProfile VeloraBeautyProfile?
+  loyaltyBalance CustomerLoyaltyBalance?
+  loyaltyEntries LoyaltyLedgerEntry[]
+  qrClaims       LoyaltyQrClaim[]
+
+  @@index([referredByCustomerId])
 }
 
 /// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
@@ -709,4 +720,99 @@ model VeloraBeautyProfile {
   preferredBrandsJson    Json     @default("[]")
   updatedAt              DateTime @updatedAt
   createdAt              DateTime @default(now())
+}
+
+/// —— VELORA LOYALTY / REWARDS ——
+
+/// رصيد نقاط الزبون (مشتق من الدفتر، محدّث داخل نفس المعاملة)
+model CustomerLoyaltyBalance {
+  customerId       String   @id
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  available        Int      @default(0)
+  lifetimeEarned   Int      @default(0)
+  lifetimeRedeemed Int      @default(0)
+  pending          Int      @default(0)
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+}
+
+/// دفتر نقاط — مصدر الحقيقة لكل عملية كسب/عكس/تعديل
+model LoyaltyLedgerEntry {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// ACCOUNT_CREATED | PROFILE_COMPLETED | PURCHASE | FIRST_PURCHASE | …
+  eventType     String
+  points        Int
+  /// EARN | REDEEM | REVERSAL | ADJUSTMENT
+  direction     String
+  /// posted | pending | voided
+  status        String   @default("posted")
+  /// مفتاح منع التكرار (مثلاً orderId أو productId)
+  referenceId   String
+  orderId       String?
+  productId     String?
+  qrCampaignId  String?
+  descriptionAr String   @default("")
+  descriptionEn String   @default("")
+  metaJson      Json     @default("{}")
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([customerId, eventType, referenceId])
+  @@index([customerId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([orderId])
+  @@index([qrCampaignId])
+}
+
+/// حملات QR / باركود قابلة للتهيئة من الأدمن
+model LoyaltyQrCampaign {
+  id                   String   @id @default(cuid())
+  campaignKey          String   @unique
+  secureToken          String   @unique
+  titleAr              String   @default("")
+  titleEn              String   @default("")
+  points               Int
+  startsAt             DateTime
+  endsAt               DateTime
+  active               Boolean  @default(true)
+  maxClaims            Int?
+  maxClaimsPerCustomer Int      @default(1)
+  metaJson             Json     @default("{}")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  claims               LoyaltyQrClaim[]
+
+  @@index([active, startsAt, endsAt])
+}
+
+model LoyaltyQrClaim {
+  id         String            @id @default(cuid())
+  campaignId String
+  campaign   LoyaltyQrCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ledgerId   String?
+  createdAt  DateTime          @default(now())
+
+  @@unique([campaignId, customerId])
+  @@index([customerId, createdAt])
+}
+
+/// حملات ترويجية عامة (مضاعف شراء، إلخ)
+model LoyaltyPromoCampaign {
+  id         String   @id @default(cuid())
+  campaignId String   @unique
+  /// purchase_multiplier | …
+  type       String
+  multiplier Float    @default(1)
+  startsAt   DateTime
+  endsAt     DateTime
+  active     Boolean  @default(true)
+  metaJson   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, type, startsAt, endsAt])
 }

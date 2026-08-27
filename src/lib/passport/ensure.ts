@@ -164,6 +164,22 @@ export async function getPassportForCustomer(
     })),
   });
 
+  try {
+    const { getLoyaltyBalance } = await import("@/lib/loyalty/award");
+    const { resolveTier, nextTier } = await import("@/lib/club/compute");
+    const balance = await getLoyaltyBalance(customerId);
+    const points = balance.lifetimeEarned;
+    const tier = resolveTier(points, clubConfig.tiers);
+    const nxt = nextTier(points, clubConfig.tiers);
+    member.points = points;
+    member.tierId = tier.id;
+    member.nextTierId = nxt.tier?.id ?? null;
+    member.pointsToNext = nxt.pointsToNext;
+    member.progressRatio = nxt.ratio;
+  } catch {
+    // keep computed fallback
+  }
+
   const level = clubTierToPassportLevel(member.tierId);
   const nextLevel = member.nextTierId
     ? clubTierToPassportLevel(member.nextTierId)

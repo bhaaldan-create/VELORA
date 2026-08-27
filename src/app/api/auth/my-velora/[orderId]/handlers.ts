@@ -192,8 +192,8 @@ export async function POST_REVIEW(req: Request, ctx: RouteCtx) {
       return Response.json({ ok: false, error: "Not found" }, { status: 404 });
     }
 
-    const config = await getVeloraCardConfig();
-    const pointsAwarded = config.reviewRewardPoints > 0 ? config.reviewRewardPoints : 0;
+    const { awardVerifiedReview } = await import("@/lib/loyalty/award");
+    const { LOYALTY_CONFIG } = await import("@/lib/loyalty/config");
 
     await prisma.veloraOrderReview.upsert({
       where: {
@@ -208,7 +208,7 @@ export async function POST_REVIEW(req: Request, ctx: RouteCtx) {
         cardId: card.id,
         rating,
         comment: (body.comment || "").trim(),
-        pointsAwarded,
+        pointsAwarded: LOYALTY_CONFIG.review.points,
       },
       update: {
         rating,
@@ -216,7 +216,15 @@ export async function POST_REVIEW(req: Request, ctx: RouteCtx) {
       },
     });
 
-    return Response.json({ ok: true, pointsAwarded });
+    const award = await awardVerifiedReview({
+      customerId: session.customerId,
+      orderId,
+    });
+
+    return Response.json({
+      ok: true,
+      pointsAwarded: award.ok && !award.duplicate ? award.awarded : 0,
+    });
   } catch (error) {
     console.error("[auth/my-velora/review]", error);
     return Response.json({ ok: false, error: "Server error" }, { status: 500 });

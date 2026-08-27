@@ -10,6 +10,8 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ClubLogo } from "@/components/club/ClubLogo";
+import { LoyaltyMembershipCard } from "@/components/loyalty/LoyaltyMembershipCard";
+import "@/components/loyalty/loyalty.css";
 import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
@@ -139,6 +141,7 @@ export function AccountSettings() {
 
   const [wishProducts, setWishProducts] = useState<WishProduct[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [loyaltyAvailable, setLoyaltyAvailable] = useState(0);
 
   useEffect(() => {
     if (!customer) return;
@@ -201,6 +204,28 @@ export function AccountSettings() {
         }
       } finally {
         if (!cancelled) setOrdersLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [customer]);
+
+  useEffect(() => {
+    if (!customer) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/auth/loyalty", { cache: "no-store" });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          balance?: { available?: number };
+        };
+        if (!cancelled && res.ok && data.ok) {
+          setLoyaltyAvailable(data.balance?.available ?? 0);
+        }
+      } catch {
+        // keep 0
       }
     })();
     return () => {
@@ -320,7 +345,7 @@ export function AccountSettings() {
   }
 
   const name = firstName(customer.fullName, ar);
-  const pointsValue = myOrders.length * 120 + wishCount * 10;
+  const pointsValue = loyaltyAvailable;
   const orderStages = {
     placed: myOrders.filter((o) => progressIndex(o.status) === 0).length,
     preparing: myOrders.filter((o) => progressIndex(o.status) === 1).length,
@@ -574,11 +599,7 @@ export function AccountSettings() {
                   <button
                     type="button"
                     className="acc-stat"
-                    onClick={() => {
-                      if (isCustomerFeatureEnabled("club")) {
-                        router.push("/account/club");
-                      }
-                    }}
+                    onClick={() => router.push("/account/rewards")}
                   >
                     <span className="ico">
                       <AccIcon name="points" size={16} />
@@ -773,36 +794,9 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              {/* Loyalty / points — points keep accruing; club UI gated separately */}
-              <section className="acc-loyalty mt-5 sm:mt-6 text-center">
-                {isCustomerFeatureEnabled("club") ? (
-                  <div className="flex justify-center">
-                    <ClubLogo height={40} />
-                  </div>
-                ) : null}
-                <p className="mt-4 text-[0.65rem] tracking-[0.2em] uppercase opacity-75">
-                  VELORA POINTS
-                </p>
-                <h2 className="mt-2 text-[1.15rem] font-semibold">
-                  {ar ? "برنامج نقاط VELORA" : "VELORA Points Program"}
-                </h2>
-                <p className="mx-auto mt-2 max-w-sm text-[0.84rem] leading-relaxed opacity-80">
-                  {ar
-                    ? "تجميعك لنقاطك مستمر — نظام المكافآت قريباً."
-                    : "Your points keep growing — rewards system coming soon."}
-                </p>
-                <div className="acc-loyalty-ring">
-                  <p className="num">
-                    {pointsValue.toLocaleString(ar ? "ar-IQ" : "en-US")}
-                  </p>
-                  <p className="unit">{ar ? "نقطة" : "points"}</p>
-                </div>
-                {isCustomerFeatureEnabled("club") ? (
-                  <Link href="/account/club" className="acc-loyalty-cta">
-                    {ar ? "عرض نقاطي" : "View my points"}
-                    <span aria-hidden>←</span>
-                  </Link>
-                ) : null}
+              {/* Loyalty membership card — real ledger balance */}
+              <section className="mt-5 sm:mt-6">
+                <LoyaltyMembershipCard available={loyaltyAvailable} ar={ar} />
               </section>
 
               {/* Compact extras */}

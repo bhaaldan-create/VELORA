@@ -2,7 +2,7 @@ import type { ClubConfig } from "@/lib/club/types";
 
 export const DEFAULT_CLUB_CONFIG: ClubConfig = {
   version: 1,
-  iqdPerPoint: 1000,
+  iqdPerPoint: 5000,
   reviewBonus: 50,
   referralBonus: 200,
   birthdayBonus: 100,

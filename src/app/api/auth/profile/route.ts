@@ -55,6 +55,13 @@ export async function PATCH(req: Request) {
       data,
     });
 
+    try {
+      const { maybeAwardProfileCompleted } = await import("@/lib/loyalty/award");
+      await maybeAwardProfileCompleted(customer.id);
+    } catch (err) {
+      console.error("[auth/profile] loyalty", err);
+    }
+
     return Response.json({
       ok: true,
       customer: publicCustomer(customer),

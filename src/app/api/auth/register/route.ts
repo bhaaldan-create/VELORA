@@ -103,6 +103,33 @@ export async function POST(req: Request) {
       },
     });
 
+    try {
+      const {
+        awardAccountCreated,
+        ensureLoyaltyIdentity,
+        linkReferralOnRegister,
+        maybeAwardProfileCompleted,
+      } = await import("@/lib/loyalty/award");
+      const { REFERRAL_COOKIE } = await import("@/lib/loyalty/config");
+      await ensureLoyaltyIdentity(customer.id);
+      await awardAccountCreated(customer.id);
+      const ref =
+        jar.get(REFERRAL_COOKIE)?.value ||
+        new URL(req.url).searchParams.get("ref");
+      await linkReferralOnRegister({
+        newCustomerId: customer.id,
+        referralCode: ref,
+      });
+      await maybeAwardProfileCompleted(customer.id);
+      jar.set(REFERRAL_COOKIE, "", {
+        ...customerCookieOptions(0),
+        maxAge: 0,
+        path: "/",
+      });
+    } catch (loyaltyErr) {
+      console.error("[auth/register] loyalty", loyaltyErr);
+    }
+
     const token = await createCustomerSessionToken(customer.id);
     jar.set(CUSTOMER_COOKIE, token, customerCookieOptions());
     jar.set(EMAIL_VERIFY_COOKIE, "", {

@@ -139,6 +139,14 @@ export async function PATCH(req: Request) {
         where: { id: customerId },
         data: customerData,
       });
+      try {
+        const { maybeAwardProfileCompleted } = await import(
+          "@/lib/loyalty/award"
+        );
+        await maybeAwardProfileCompleted(customerId);
+      } catch (err) {
+        console.error("[auth/passport] loyalty profile", err);
+      }
     }
 
     if (data.beautyProfile) {

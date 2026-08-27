@@ -25,6 +25,7 @@ export type AdminNavId =
   | "notifications"
   | "homepage"
   | "club"
+  | "loyalty"
   | "my-velora"
   | "passport"
   | "settings";
@@ -65,6 +66,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: "notifications", href: "/admin/notifications", labelAr: "الإشعارات", labelEn: "Notifications", icon: "notifications", group: "system" },
   { id: "homepage", href: "/admin/homepage", labelAr: "الصفحة الرئيسية", labelEn: "Homepage", icon: "homepage", group: "system" },
   { id: "club", href: "/admin/club", labelAr: "نادي الجمال", labelEn: "Beauty Club", icon: "club", group: "system" },
+  { id: "loyalty", href: "/admin/loyalty", labelAr: "المكافآت والنقاط", labelEn: "Loyalty & Rewards", icon: "club", group: "system" },
   { id: "my-velora", href: "/admin/my-velora", labelAr: "MY VELORA Studio", labelEn: "MY VELORA Studio", icon: "my-velora", group: "system" },
   { id: "passport", href: "/admin/passport", labelAr: "MY VELORA PASSPORT", labelEn: "MY VELORA PASSPORT", icon: "passport", group: "system" },
   { id: "settings", href: "/admin/settings", labelAr: "الإعدادات", labelEn: "Settings", icon: "settings", group: "system" },

@@ -54,6 +54,22 @@ export async function GET() {
       })),
     });
 
+    try {
+      const { getLoyaltyBalance } = await import("@/lib/loyalty/award");
+      const { resolveTier, nextTier } = await import("@/lib/club/compute");
+      const balance = await getLoyaltyBalance(customer.id);
+      const points = balance.lifetimeEarned;
+      const tier = resolveTier(points, config.tiers);
+      const nxt = nextTier(points, config.tiers);
+      member.points = points;
+      member.tierId = tier.id;
+      member.nextTierId = (nxt.tier?.id as typeof member.nextTierId) ?? null;
+      member.pointsToNext = nxt.pointsToNext;
+      member.progressRatio = nxt.ratio;
+    } catch {
+      // keep computed fallback
+    }
+
     return Response.json({ ok: true, config, member });
   } catch (error) {
     console.error("[auth/club]", error);

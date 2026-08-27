@@ -168,6 +168,25 @@ export async function updateOrderStatus(
   if (stored && status === "delivered") {
     // Await so serverless (Vercel) does not kill generation mid-flight.
     await maybeGenerateVeloraCard(stored);
+    try {
+      const { awardForDeliveredOrder } = await import("@/lib/loyalty/award");
+      await awardForDeliveredOrder(stored);
+    } catch (err) {
+      console.error("[loyalty] deliver award failed:", err);
+    }
+  }
+  if (
+    stored &&
+    (status === "returned" ||
+      status === "cancelled" ||
+      status === "failed_delivery")
+  ) {
+    try {
+      const { reverseForOrder } = await import("@/lib/loyalty/award");
+      await reverseForOrder(stored);
+    } catch (err) {
+      console.error("[loyalty] order reversal failed:", err);
+    }
   }
   return stored;
 }

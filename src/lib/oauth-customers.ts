@@ -55,6 +55,27 @@ export async function upsertCustomerFromOAuth(profile: OAuthProfile) {
       [providerIdField]: profile.providerUserId,
       authProvider: profile.provider,
     },
+  }).then(async (customer) => {
+    try {
+      const {
+        awardAccountCreated,
+        ensureLoyaltyIdentity,
+        linkReferralOnRegister,
+      } = await import("@/lib/loyalty/award");
+      const { cookies } = await import("next/headers");
+      const { REFERRAL_COOKIE } = await import("@/lib/loyalty/config");
+      await ensureLoyaltyIdentity(customer.id);
+      await awardAccountCreated(customer.id);
+      const jar = await cookies();
+      const ref = jar.get(REFERRAL_COOKIE)?.value;
+      await linkReferralOnRegister({
+        newCustomerId: customer.id,
+        referralCode: ref,
+      });
+    } catch (err) {
+      console.error("[oauth] loyalty", err);
+    }
+    return customer;
   });
 }
 

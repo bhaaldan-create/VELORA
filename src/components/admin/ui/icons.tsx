@@ -45,6 +45,7 @@ import {
   TriangleAlert,
   Tags,
   IdCard,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavId } from "@/lib/admin/nav";
@@ -77,6 +78,7 @@ const NAV_ICONS: Record<AdminNavId, LucideIcon> = {
   notifications: Bell,
   homepage: Images,
   club: Gem,
+  loyalty: Gift,
   "my-velora": Sparkles,
   passport: IdCard,
   settings: Settings,
