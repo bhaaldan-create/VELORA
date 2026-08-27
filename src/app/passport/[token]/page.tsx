@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 type Ctx = { params: Promise<{ token: string }> };
 
 export default async function PublicPassportPage({ params }: Ctx) {
-  if (!isCustomerFeatureEnabled("myVelora")) {
+  if (!isCustomerFeatureEnabled("passport")) {
     redirect("/");
   }
 

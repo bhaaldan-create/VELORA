@@ -407,26 +407,26 @@ export function AccountSettings() {
                 );
               })}
               {isCustomerFeatureEnabled("myVelora") ? (
-                <>
-                  <Link
-                    href="/account/my-velora"
-                    className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                      <span aria-hidden>✦</span>
-                      <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
-                    </span>
-                  </Link>
-                  <Link
-                    href="/account/my-velora/passport"
-                    className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                      <span aria-hidden>◇</span>
-                      <span>{ar ? "جواز VELORA" : "My Passport"}</span>
-                    </span>
-                  </Link>
-                </>
+                <Link
+                  href="/account/my-velora"
+                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+                >
+                  <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                    <span aria-hidden>✦</span>
+                    <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
+                  </span>
+                </Link>
+              ) : null}
+              {isCustomerFeatureEnabled("passport") ? (
+                <Link
+                  href="/account/my-velora/passport"
+                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+                >
+                  <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                    <span aria-hidden>◇</span>
+                    <span>{ar ? "جواز VELORA" : "My Passport"}</span>
+                  </span>
+                </Link>
               ) : null}
               {isCustomerFeatureEnabled("club") ? (
                 <Link
@@ -522,7 +522,7 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              {isCustomerFeatureEnabled("myVelora") ? (
+              {isCustomerFeatureEnabled("passport") ? (
                 <Link
                   href="/account/my-velora/passport"
                   className="acc-passport-hero block overflow-hidden rounded-[20px] border border-[var(--account-border)] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-6 shadow-[0_18px_50px_rgba(90,74,122,0.1)] transition hover:-translate-y-0.5"

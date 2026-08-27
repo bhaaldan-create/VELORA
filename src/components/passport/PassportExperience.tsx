@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/context/LocaleContext";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 import type { PassportPayload } from "@/lib/passport/ensure";
 import {
   BEAUTY_GOAL_OPTIONS,
@@ -279,8 +280,11 @@ export function PassportExperience() {
     return (
       <div className="vp-root" dir={ar ? "rtl" : "ltr"}>
         <div className="vp-shell">
-          <Link href="/account/my-velora" className="vp-back">
-            ← MY VELORA
+          <Link
+            href={isCustomerFeatureEnabled("myVelora") ? "/account/my-velora" : "/account"}
+            className="vp-back"
+          >
+            ← {isCustomerFeatureEnabled("myVelora") ? "MY VELORA" : ar ? "حسابي" : "Account"}
           </Link>
           <p className="vp-empty">{error || "—"}</p>
         </div>
@@ -293,8 +297,11 @@ export function PassportExperience() {
   return (
     <div className="vp-root" dir={ar ? "rtl" : "ltr"}>
       <div className="vp-shell">
-        <Link href="/account/my-velora" className="vp-back">
-          ← MY VELORA
+        <Link
+          href={isCustomerFeatureEnabled("myVelora") ? "/account/my-velora" : "/account"}
+          className="vp-back"
+        >
+          ← {isCustomerFeatureEnabled("myVelora") ? "MY VELORA" : ar ? "حسابي" : "Account"}
         </Link>
 
         {!opened ? (
@@ -559,12 +566,14 @@ export function PassportExperience() {
                 </div>
                 <p className="vp-page-content" style={{ marginTop: "0.85rem", fontSize: "0.72rem" }}>
                   {ar
-                    ? "XP = نقاط Beauty Club — نفس النظام الحالي."
-                    : "XP = Beauty Club points — same underlying system."}
+                    ? "XP = نقاط VELORA — نفس نظام النقاط الحالي."
+                    : "XP = VELORA points — same underlying system."}
                 </p>
-                <Link href="/account/club" className="vp-link">
-                  {ar ? "Beauty Club" : "Beauty Club"} →
-                </Link>
+                {isCustomerFeatureEnabled("club") ? (
+                  <Link href="/account/club" className="vp-link">
+                    {ar ? "Beauty Club" : "Beauty Club"} →
+                  </Link>
+                ) : null}
               </PassportDocumentShell>
             ) : null}
 
@@ -622,9 +631,11 @@ export function PassportExperience() {
                         ? `مستواكِ ${levelName}. واصلي للوصول إلى PRIVÉ.`
                         : `You're at ${levelName}. Reach PRIVÉ for exclusive benefits.`}
                     </p>
-                    <Link href="/account/club" className="vp-link">
-                      {ar ? "مزايا النادي" : "Club benefits"}
-                    </Link>
+                    {isCustomerFeatureEnabled("club") ? (
+                      <Link href="/account/club" className="vp-link">
+                        {ar ? "مزايا النادي" : "Club benefits"}
+                      </Link>
+                    ) : null}
                   </div>
                 )}
                 {passport.isBirthdayToday ? (

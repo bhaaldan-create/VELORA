@@ -6,8 +6,10 @@
 export const customerFeatures = {
   /** VELORA Beauty Club storefront (/account/club) */
   club: false,
-  /** MY VELORA hub, cards, passport, public share pages */
+  /** MY VELORA hub + order cards (not passport) */
   myVelora: false,
+  /** MY VELORA Passport — stays visible */
+  passport: true,
   /** Coupons UI on account overview */
   coupons: false,
 } as const;

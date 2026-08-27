@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function MyVeloraPassportPage() {
-  if (!isCustomerFeatureEnabled("myVelora")) {
+  if (!isCustomerFeatureEnabled("passport")) {
     redirect("/account");
   }
 
