@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default function SearchPage() {
   return (
-    <div className="relative isolate min-h-[70vh] overflow-hidden bg-[var(--background)]">
+    <div className="relative min-h-[70vh] bg-[var(--background)]">
       <div
         aria-hidden
         className="pointer-events-none absolute -start-24 -top-20 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(186,168,198,0.28),transparent_70%)] blur-2xl [[data-theme=dark]_&]:opacity-25"

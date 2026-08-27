@@ -20,6 +20,8 @@ type Props = {
   onPickQuery: (q: string) => void;
   onClearRecent: () => void;
   onClose: () => void;
+  /** Embedded inside SearchFocusLayer — flow layout, not absolute dropdown */
+  embedded?: boolean;
 };
 
 export function SearchSuggestions({
@@ -31,6 +33,7 @@ export function SearchSuggestions({
   onPickQuery,
   onClearRecent,
   onClose,
+  embedded = false,
 }: Props) {
   if (!open) return null;
 
@@ -41,7 +44,11 @@ export function SearchSuggestions({
       data.categories.length > 0);
 
   return (
-    <div className="vs-suggest" role="listbox" aria-label={ar ? "اقتراحات" : "Suggestions"}>
+    <div
+      className={embedded ? "vs-suggest vs-suggest--embedded" : "vs-suggest"}
+      role="listbox"
+      aria-label={ar ? "اقتراحات" : "Suggestions"}
+    >
       {loading ? (
         <p className="vs-suggest__meta" style={{ padding: "0.5rem 0.65rem" }}>
           {ar ? "جارٍ البحث…" : "Searching…"}

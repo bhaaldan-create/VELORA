@@ -1,6 +1,7 @@
 export { SearchBar } from "./SearchBar";
 export { SearchSuggestions } from "./SearchSuggestions";
 export type { SuggestPayload } from "./SearchSuggestions";
+export { SearchFocusLayer } from "./SearchFocusLayer";
 export { ActiveFilterChips } from "./ActiveFilterChips";
 export { QuickFilters } from "./QuickFilters";
 export { SortMenu } from "./SortMenu";

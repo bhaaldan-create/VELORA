@@ -10,6 +10,201 @@
   --vs-border: rgba(126, 104, 181, 0.14);
   --vs-gold: #c4b08a;
   --vs-radius: 14px;
+
+  /* Layer ladder (local + drawers). Focus layer uses body portal vars below. */
+  --vs-z-base: 0;
+  --vs-z-content: 1;
+  --vs-z-drawer-backdrop: 60;
+  --vs-z-drawer: 61;
+}
+
+/*
+  Search focus layer — portal to document.body so page `isolate` / overflow
+  cannot trap or bleed brand cards through suggestions.
+  Ladder: base → sticky chrome (50) → focus backdrop (70) → focus panel (71)
+*/
+.vs-focus {
+  --vs-pearl: #fdfcfe;
+  --vs-paper: #f8f6fc;
+  --vs-lavender: #7e68b5;
+  --vs-lavender-soft: #ebe6f4;
+  --vs-lavender-deep: #5a4a7a;
+  --vs-ink: #1e1a24;
+  --vs-muted: #6e6878;
+  --vs-border: rgba(126, 104, 181, 0.16);
+  --vs-gold: #c4b08a;
+  --vs-radius: 16px;
+  --vs-z-focus-backdrop: 70;
+  --vs-z-focus-panel: 71;
+
+  position: fixed;
+  inset: 0;
+  z-index: var(--vs-z-focus-backdrop);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  /* Prefer visual viewport height when mobile keyboard is open */
+  height: 100dvh;
+  max-height: 100dvh;
+  box-sizing: border-box;
+  animation: vs-focus-in 200ms ease-out both;
+}
+
+@media (min-width: 768px) {
+  .vs-focus {
+    padding:
+      max(0.65rem, env(safe-area-inset-top, 0px))
+      max(0.75rem, env(safe-area-inset-right, 0px))
+      max(0.75rem, env(safe-area-inset-bottom, 0px))
+      max(0.75rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+@keyframes vs-focus-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vs-focus {
+    animation: none;
+  }
+  .vs-focus__panel {
+    animation: none !important;
+  }
+}
+
+.vs-focus__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: none;
+  padding: 0;
+  cursor: default;
+  /* Solid enough that brand logos cannot read through */
+  background: #f7f5fb;
+  background-image:
+    linear-gradient(
+      165deg,
+      #fdfcfe 0%,
+      #f8f6fc 48%,
+      #f0ebf7 100%
+    );
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.vs-focus__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  border-radius: 0;
+  border: none;
+  background: #fdfcfe;
+  box-shadow: none;
+  overflow: hidden;
+  animation: vs-focus-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes vs-focus-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vs-focus__chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  padding:
+    max(0.75rem, env(safe-area-inset-top, 0px))
+    max(0.75rem, env(safe-area-inset-right, 0px))
+    0.55rem
+    max(0.75rem, env(safe-area-inset-left, 0px));
+  border-bottom: 1px solid var(--vs-border);
+  background: #fff;
+}
+
+.vs-focus__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--vs-border);
+  background: #fff;
+  color: var(--vs-lavender-deep);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(90, 74, 122, 0.06);
+}
+
+.vs-focus__back:focus-visible {
+  outline: 2px solid rgba(126, 104, 181, 0.45);
+  outline-offset: 2px;
+}
+
+.vs-focus__chrome .vs-searchbar {
+  flex: 1;
+  min-width: 0;
+}
+
+.vs-focus__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding:
+    0.35rem
+    max(0.45rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px))
+    max(0.45rem, env(safe-area-inset-left, 0px));
+  background: #fdfcfe;
+}
+
+@media (min-width: 768px) {
+  .vs-focus {
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: max(4.5rem, env(safe-area-inset-top, 0px));
+    padding-bottom: 2rem;
+  }
+
+  .vs-focus__panel {
+    flex: 0 1 auto;
+    max-height: min(72dvh, 640px);
+    width: min(36rem, calc(100% - 1.5rem));
+    max-width: 40rem;
+    margin-inline: auto;
+    border-radius: calc(var(--vs-radius) + 4px);
+    border: 1px solid var(--vs-border);
+    background: linear-gradient(180deg, #ffffff 0%, #fdfcfe 55%, #f8f6fc 100%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.85) inset,
+      0 18px 48px rgba(90, 74, 122, 0.12);
+  }
+
+  .vs-focus__chrome {
+    background: linear-gradient(180deg, #fff, rgba(253, 252, 254, 0.98));
+  }
 }
 
 .vs-searchbar {
@@ -41,6 +236,14 @@
   color: var(--vs-ink);
 }
 
+.vs-searchbar input[type="search"]::-webkit-search-decoration,
+.vs-searchbar input[type="search"]::-webkit-search-cancel-button,
+.vs-searchbar input[type="search"]::-webkit-search-results-button,
+.vs-searchbar input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .vs-searchbar input::placeholder {
   color: var(--vs-muted);
 }
@@ -57,7 +260,7 @@
 
 .vs-suggest {
   position: absolute;
-  z-index: 40;
+  z-index: var(--vs-z-content, 1);
   left: 0;
   right: 0;
   top: calc(100% + 0.45rem);
@@ -65,9 +268,25 @@
   overflow: auto;
   border-radius: var(--vs-radius);
   border: 1px solid var(--vs-border);
-  background: rgba(255, 255, 255, 0.98);
+  background: #fff;
   box-shadow: 0 18px 50px rgba(90, 74, 122, 0.12);
   padding: 0.65rem 0.55rem;
+}
+
+/* Inside SearchFocusLayer — part of the same surface, not a floating dropdown */
+.vs-suggest--embedded {
+  position: static;
+  z-index: auto;
+  top: auto;
+  left: auto;
+  right: auto;
+  max-height: none;
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.35rem 0.25rem 0.75rem;
 }
 
 .vs-suggest__group {
@@ -303,13 +522,13 @@
 .vs-drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--vs-z-drawer-backdrop, 60);
   background: rgba(30, 26, 36, 0.35);
 }
 
 .vs-drawer {
   position: fixed;
-  z-index: 61;
+  z-index: var(--vs-z-drawer, 61);
   left: 0;
   right: 0;
   bottom: 0;

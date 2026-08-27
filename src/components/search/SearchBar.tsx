@@ -8,8 +8,12 @@ type Props = {
   onSubmit?: () => void;
   onClear?: () => void;
   onFocus?: () => void;
+  onPointerDown?: () => void;
   placeholder: string;
   ar?: boolean;
+  autoFocus?: boolean;
+  /** When true, renders as the primary control inside SearchFocusLayer */
+  elevated?: boolean;
 };
 
 export function SearchBar({
@@ -18,20 +22,28 @@ export function SearchBar({
   onSubmit,
   onClear,
   onFocus,
+  onPointerDown,
   placeholder,
   ar = false,
+  autoFocus = false,
+  elevated = false,
 }: Props) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Keep caret; no autofocus on mount to avoid mobile keyboard jump
-  }, []);
+    if (!autoFocus) return;
+    const t = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 40);
+    return () => window.clearTimeout(t);
+  }, [autoFocus]);
 
   return (
     <form
-      className="vs-searchbar"
+      className={elevated ? "vs-searchbar vs-searchbar--elevated" : "vs-searchbar"}
       role="search"
+      onPointerDown={() => onPointerDown?.()}
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit?.();
@@ -54,12 +66,15 @@ export function SearchBar({
       <input
         ref={inputRef}
         id={id}
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
         placeholder={placeholder}
         autoComplete="off"
         enterKeyHint="search"
+        autoCorrect="off"
+        spellCheck={false}
       />
       {value ? (
         <button
@@ -68,7 +83,7 @@ export function SearchBar({
           onClick={() => {
             onChange("");
             onClear?.();
-            inputRef.current?.focus();
+            inputRef.current?.focus({ preventScroll: true });
           }}
         >
           {ar ? "مسح" : "Clear"}

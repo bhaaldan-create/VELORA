@@ -17,6 +17,7 @@ import {
   ResultCount,
   SearchBar,
   SearchEmptyState,
+  SearchFocusLayer,
   SearchSuggestions,
   SortMenu,
   useCatalogSearchParams,
@@ -66,6 +67,14 @@ export function SearchScreen() {
   const [facets, setFacets] = useState<CatalogFacets | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const closeSearchFocus = useCallback(() => {
+    setSuggestOpen(false);
+  }, []);
+
+  const openSearchFocus = useCallback(() => {
+    setSuggestOpen(true);
+  }, []);
+
   useEffect(() => {
     setDraftQ(params.q);
   }, [params.q]);
@@ -83,7 +92,7 @@ export function SearchScreen() {
       .catch(() => undefined);
   }, []);
 
-  // Suggestions while typing
+  // Suggestions while typing (only when focus layer is open)
   useEffect(() => {
     const q = draftQ.trim();
     if (!suggestOpen) return;
@@ -174,7 +183,9 @@ export function SearchScreen() {
   );
 
   const brandsVisible = useMemo(() => {
-    const q = draftQ.trim().toLowerCase();
+    // Keep discover grid stable while the focus layer is open (draft typing
+    // should not reshuffle brands under the overlay).
+    const q = suggestOpen ? "" : draftQ.trim().toLowerCase();
     return shopBrands.filter((b) => {
       if (country !== "all" && b.countryCode !== country) return false;
       if (!q) return true;
@@ -186,16 +197,25 @@ export function SearchScreen() {
         b.match.some((m) => m.includes(q))
       );
     });
-  }, [draftQ, country]);
+  }, [draftQ, country, suggestOpen]);
 
   const showDiscover = !hasActiveFilters;
 
+  const placeholder = ar
+    ? "ابحثي عن منتج، ماركة، أو نوع بشرة…"
+    : "Search products, brands, or skin type…";
+
   return (
     <div className="vs-root relative mx-auto max-w-5xl">
-      <div className="relative z-[1] flex items-start gap-3">
+      {/* Idle search chrome — opens dedicated focus layer */}
+      <div
+        className="relative flex items-start gap-3"
+        inert={suggestOpen ? true : undefined}
+      >
         <Link
           href="/"
           aria-label={ar ? "رجوع" : "Back"}
+          tabIndex={suggestOpen ? -1 : undefined}
           className={cn(
             "mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
             "border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--plum)] shadow-[var(--shadow-md)]",
@@ -216,21 +236,62 @@ export function SearchScreen() {
           <SearchBar
             ar={ar}
             value={draftQ}
-            onChange={setDraftQ}
-            onFocus={() => setSuggestOpen(true)}
+            onChange={(v) => {
+              setDraftQ(v);
+              if (!suggestOpen) openSearchFocus();
+            }}
+            onFocus={openSearchFocus}
+            onPointerDown={openSearchFocus}
             onSubmit={() => commitSearch(draftQ)}
             onClear={() => {
               setDraftQ("");
               if (params.q) replace({ q: "" });
             }}
-            placeholder={
-              ar
-                ? "ابحثي عن منتج، ماركة، أو نوع بشرة…"
-                : "Search products, brands, or skin type…"
-            }
+            placeholder={placeholder}
           />
+        </div>
+      </div>
+
+      <SearchFocusLayer
+        open={suggestOpen}
+        ar={ar}
+        onClose={closeSearchFocus}
+      >
+        <div className="vs-focus__chrome">
+          <button
+            type="button"
+            className="vs-focus__back"
+            aria-label={ar ? "إغلاق البحث" : "Close search"}
+            onClick={closeSearchFocus}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d={ar ? "M9 5l7 7-7 7" : "M15 5l-7 7 7 7"}
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <SearchBar
+            ar={ar}
+            elevated
+            autoFocus
+            value={draftQ}
+            onChange={setDraftQ}
+            onSubmit={() => commitSearch(draftQ)}
+            onClear={() => {
+              setDraftQ("");
+              if (params.q) replace({ q: "" });
+            }}
+            placeholder={placeholder}
+          />
+        </div>
+        <div className="vs-focus__body">
           <SearchSuggestions
-            open={suggestOpen}
+            open
+            embedded
             ar={ar}
             loading={suggestLoading}
             data={suggest}
@@ -243,23 +304,14 @@ export function SearchScreen() {
               clearRecentSearches();
               setRecent([]);
             }}
-            onClose={() => setSuggestOpen(false)}
+            onClose={closeSearchFocus}
           />
         </div>
-      </div>
-
-      {suggestOpen ? (
-        <button
-          type="button"
-          className="fixed inset-0 z-[30] cursor-default bg-transparent"
-          aria-label="Close suggestions"
-          onClick={() => setSuggestOpen(false)}
-        />
-      ) : null}
+      </SearchFocusLayer>
 
       {showDiscover ? (
         <>
-          <header className="relative z-[1] mt-10 text-center sm:mt-12">
+          <header className="relative mt-10 text-center sm:mt-12">
             <h1 className="font-display text-[clamp(1.85rem,5vw,2.65rem)] font-bold tracking-[-0.02em] text-[var(--plum)]">
               {ar ? "البراندات" : "Brands"}
             </h1>
@@ -270,7 +322,7 @@ export function SearchScreen() {
             </p>
           </header>
 
-          <div className="relative z-[1] mt-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="relative mt-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setCountry("all")}
@@ -301,7 +353,7 @@ export function SearchScreen() {
             ))}
           </div>
 
-          <section className="relative z-[1] mt-8">
+          <section className="relative mt-8">
             <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5">
               {brandsVisible.map((b) => (
                 <BrandCard key={b.id} brand={b} locale={ar ? "ar" : "en"} />
@@ -319,7 +371,7 @@ export function SearchScreen() {
           </section>
         </>
       ) : (
-        <section className="relative z-[1] mt-8">
+        <section className="relative mt-8">
           <div className="vs-toolbar">
             <div className="vs-mobile-filters">
               <button
@@ -390,9 +442,7 @@ export function SearchScreen() {
                   >
                     {ar ? "السابق" : "Prev"}
                   </button>
-                  <span className="vs-count self-center">
-                    {params.page}
-                  </span>
+                  <span className="vs-count self-center">{params.page}</span>
                   <button
                     type="button"
                     className="vs-btn"
