@@ -1,8 +1,8 @@
-/* VELORA Beauty Club — Private Membership Design System */
+/* VELORA Beauty Club — Premium Membership Design System */
 
 .club-shell {
   --vc-ivory: #faf8f5;
-  --vc-cream: #f5f1ee;
+  --vc-cream: #f4f0ec;
   --vc-mauve: #c9bcc6;
   --vc-mauve-soft: #ebe4e9;
   --vc-plum: #32162f;
@@ -11,54 +11,64 @@
   --vc-espresso: #2a1526;
   --vc-graphite: #6e5c6a;
   --vc-muted: #8a7886;
-  --vc-border: #e8e0e4;
+  --vc-border: rgba(50, 22, 47, 0.08);
   --vc-gold: #c4a574;
   --vc-gold-soft: #e8d5b5;
   --vc-gold-deep: #9a7a4a;
-  --vc-card: #ffffff;
-  --vc-radius-xl: 28px;
-  --vc-radius-lg: 22px;
-  --vc-radius-md: 18px;
-  --vc-radius-sm: 14px;
+  --vc-card: rgba(255, 255, 255, 0.72);
+  --vc-r-sm: 8px;
+  --vc-r-md: 12px;
+  --vc-r-lg: 16px;
+  --vc-r-xl: 20px;
   --vc-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --vc-shadow-soft: 0 18px 48px rgba(50, 22, 47, 0.06);
-  --vc-shadow-card: 0 12px 36px rgba(50, 22, 47, 0.08);
+  --vc-shadow-soft: 0 20px 50px rgba(36, 16, 31, 0.05);
+  --vc-shadow-card: 0 24px 60px rgba(36, 16, 31, 0.1);
   color: var(--vc-espresso);
   background:
-    radial-gradient(780px 380px at 50% -12%, rgba(196, 165, 116, 0.09), transparent 55%),
-    radial-gradient(640px 320px at 88% 8%, rgba(201, 188, 198, 0.18), transparent 50%),
-    linear-gradient(180deg, var(--vc-ivory) 0%, var(--vc-cream) 55%, color-mix(in srgb, var(--vc-cream) 80%, var(--vc-mauve-soft)) 100%);
+    radial-gradient(900px 420px at 50% -8%, rgba(196, 165, 116, 0.07), transparent 58%),
+    radial-gradient(600px 280px at 92% 4%, rgba(201, 188, 198, 0.12), transparent 52%),
+    linear-gradient(180deg, var(--vc-ivory) 0%, var(--vc-cream) 100%);
   min-height: 70vh;
   padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  position: relative;
+}
+
+.club-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='38' y='72' fill='%2332162f' font-size='42' font-family='Georgia,serif' opacity='0.9'%3EV%3C/text%3E%3C/svg%3E");
+  z-index: 0;
 }
 
 [data-theme="dark"] .club-shell {
   --vc-ivory: #141114;
   --vc-cream: #1c181b;
-  --vc-mauve: #8a748c;
-  --vc-mauve-soft: #2a2228;
   --vc-plum: #e8dce0;
   --vc-plum-mid: #cbb6ba;
   --vc-plum-deep: #f3ebe6;
   --vc-espresso: #f3ebe6;
   --vc-graphite: #b5a8b0;
   --vc-muted: #9a8a92;
-  --vc-border: rgba(243, 235, 230, 0.12);
-  --vc-card: #1c181b;
-  --vc-shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.4);
-  --vc-shadow-card: 0 12px 36px rgba(0, 0, 0, 0.45);
-  color: var(--vc-espresso);
+  --vc-border: rgba(243, 235, 230, 0.1);
+  --vc-card: rgba(28, 24, 27, 0.82);
+  --vc-shadow-soft: 0 20px 50px rgba(0, 0, 0, 0.35);
+  --vc-shadow-card: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
 .club-frame {
-  width: min(760px, 100%);
+  position: relative;
+  z-index: 1;
+  width: min(680px, 100%);
   margin-inline: auto;
-  padding: 0.85rem 1.2rem 2.75rem;
+  padding: 0.85rem 1.15rem 2.75rem;
 }
 
 @media (min-width: 640px) {
   .club-frame {
-    padding: 1.5rem 1.5rem 3.5rem;
+    padding: 1.35rem 1.5rem 3.5rem;
   }
 }
 
@@ -66,9 +76,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
   color: var(--vc-muted);
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
   transition: color 200ms var(--vc-ease);
 }
 
@@ -76,26 +87,51 @@
   color: var(--vc-plum);
 }
 
+.club-loading-copy {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--vc-muted);
+}
+
 /* —— Hero —— */
 .club-hero {
-  position: relative;
   text-align: center;
-  padding: 1.25rem 0 1.75rem;
-  overflow: hidden;
+  padding: 0.5rem 0 1.85rem;
+}
+
+.club-hero-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.club-hero-brand {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.75rem, 6.5vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  color: var(--vc-plum);
+  line-height: 1.05;
+  margin-inline-start: 0.26em;
+}
+
+.club-hero-sub {
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
+  font-weight: 500;
 }
 
 .club-hero-ornament {
   pointer-events: none;
-  position: absolute;
-  inset-inline: 8%;
-  top: 42%;
+  margin: 0.85rem auto 0;
+  width: min(220px, 55%);
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(196, 165, 116, 0.45),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(196, 165, 116, 0.42), transparent);
+  position: relative;
 }
 
 .club-hero-ornament::before,
@@ -103,324 +139,514 @@
   content: "";
   position: absolute;
   top: 50%;
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: var(--vc-gold);
-  opacity: 0.55;
-  transform: translateY(-50%);
+  opacity: 0.5;
+  transform: translateY(-50%) rotate(45deg);
 }
 
 .club-hero-ornament::before {
-  inset-inline-start: 18%;
+  inset-inline-start: 22%;
 }
 
 .club-hero-ornament::after {
-  inset-inline-end: 18%;
-}
-
-.club-hero-brand {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.85rem, 7vw, 2.45rem);
-  font-weight: 500;
-  letter-spacing: 0.28em;
-  color: var(--vc-plum);
-  line-height: 1.1;
-  margin-inline-start: 0.28em;
-}
-
-.club-hero-sub {
-  margin-top: 0.35rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: var(--vc-gold-deep);
-  font-weight: 500;
+  inset-inline-end: 22%;
 }
 
 .club-hero-tag {
-  margin-top: 1.15rem;
-  font-size: 0.86rem;
+  margin-top: 1rem;
+  font-size: 0.84rem;
   color: var(--vc-graphite);
   letter-spacing: 0.02em;
+  line-height: 1.55;
+}
+
+.club-hero-greeting {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--vc-muted);
   line-height: 1.5;
 }
 
-.club-hero-logo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.85rem;
-}
-
-/* —— Membership credential —— */
+/* —— Membership card —— */
 .club-member-card {
   position: relative;
   overflow: hidden;
-  border-radius: var(--vc-radius-xl);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 42%, transparent);
+  border-radius: var(--vc-r-xl);
   background:
-    linear-gradient(145deg, #3d1f39 0%, #32162f 42%, #4a2744 78%, #2a1328 100%);
+    linear-gradient(148deg, #3f213b 0%, #32162f 38%, #452840 72%, #2a1328 100%);
   color: var(--vc-ivory);
-  padding: 1.35rem 1.25rem 1.3rem;
-  box-shadow:
-    var(--vc-shadow-card),
-    0 0 0 1px rgba(196, 165, 116, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 1.35rem 1.2rem 1.25rem;
+  box-shadow: var(--vc-shadow-card);
 }
 
-.club-member-card::before {
-  content: "";
+.club-member-card__sheen {
   position: absolute;
   inset: 0;
-  opacity: 0.055;
-  background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='14' y='38' fill='%23E8D5B5' font-size='22' font-family='Georgia,serif'%3EV%3C/text%3E%3C/svg%3E");
+  background:
+    radial-gradient(ellipse 80% 55% at 88% 12%, rgba(232, 213, 181, 0.14), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 8% 92%, rgba(255, 255, 255, 0.04), transparent 50%);
   pointer-events: none;
 }
 
-.club-member-card::after {
-  content: "";
+.club-member-card__watermark {
   position: absolute;
-  top: -40%;
-  inset-inline-end: -20%;
-  width: 70%;
-  height: 80%;
-  background: radial-gradient(
-    circle,
-    rgba(232, 213, 181, 0.18),
-    transparent 68%
-  );
+  inset-inline-end: 0.5rem;
+  bottom: 0.25rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 5.5rem;
+  line-height: 1;
+  color: rgba(232, 213, 181, 0.07);
   pointer-events: none;
-  animation: club-shine 7s var(--vc-ease) infinite;
+  letter-spacing: -0.04em;
 }
 
-.club-member-card > * {
+.club-member-card > *:not(.club-member-card__sheen):not(.club-member-card__watermark) {
   position: relative;
   z-index: 1;
 }
 
-.club-member-emblem {
-  position: absolute;
-  inset-inline-end: 0.85rem;
-  bottom: 0.65rem;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 4.5rem;
-  line-height: 1;
-  color: rgba(232, 213, 181, 0.1);
-  pointer-events: none;
-  z-index: 0;
-  letter-spacing: -0.04em;
-}
-
-.club-member-top {
+.club-member-card__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.club-member-kicker {
-  font-size: 0.62rem;
+.club-member-card__kicker {
+  font-size: 0.58rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--vc-gold-soft) 80%, white);
-  opacity: 0.85;
+  color: rgba(232, 213, 181, 0.78);
+}
+
+.club-member-card__spark {
+  opacity: 0.45;
+  color: var(--vc-gold-soft);
 }
 
 .club-tier-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.55rem;
-  padding: 0.28rem 0.65rem;
+  gap: 0.32rem;
+  margin-top: 0.5rem;
+  padding: 0.22rem 0.58rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 55%, transparent);
-  background: rgba(196, 165, 116, 0.12);
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
+  border: 0.5px solid rgba(196, 165, 116, 0.45);
+  background: rgba(196, 165, 116, 0.1);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--vc-gold-soft);
 }
 
-.club-member-name {
-  margin-top: 1.15rem;
-  font-size: 1.05rem;
+.club-member-card__name {
+  margin-top: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
 }
 
-.club-member-points {
-  margin-top: 1.1rem;
+.club-member-card__points {
+  margin-top: 1rem;
 }
 
-.club-member-points .num {
-  font-size: clamp(2rem, 8vw, 2.55rem);
-  font-weight: 520;
-  letter-spacing: 0.02em;
+.club-member-card__points-num {
+  font-size: clamp(1.85rem, 7vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--vc-gold-soft);
 }
 
-.club-member-points .lbl {
-  margin-top: 0.35rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.24em;
+.club-member-card__points-label {
+  margin-top: 0.28rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
   opacity: 0.72;
 }
 
-.club-member-foot {
-  margin-top: 1.15rem;
+.club-member-card__foot {
+  margin-top: 1.05rem;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.75rem;
-  font-size: 0.72rem;
-  opacity: 0.78;
+  font-size: 0.68rem;
+  opacity: 0.76;
 }
 
-.club-member-foot span[dir="ltr"] {
+.club-member-card__foot span[dir="ltr"] {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
-/* —— Points ring —— */
-.club-points-panel {
-  margin-top: 1.35rem;
-  border-radius: var(--vc-radius-lg);
-  border: 1px solid var(--vc-border);
-  background: var(--vc-card);
-  padding: 1.35rem 1.15rem 1.2rem;
-  box-shadow: var(--vc-shadow-soft);
-  text-align: center;
-}
-
-.club-points-ring-wrap {
+/* —— Points hero —— */
+.club-points-hero {
   position: relative;
-  width: 148px;
-  height: 148px;
-  margin: 0.35rem auto 0.85rem;
+  margin-top: 1.35rem;
+  border-radius: var(--vc-r-xl);
+  overflow: hidden;
+  background:
+    linear-gradient(165deg, #3a1d36 0%, #32162f 42%, #2a1328 100%);
+  color: var(--vc-ivory);
+  box-shadow: var(--vc-shadow-card);
 }
 
-.club-points-ring-wrap svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
+.club-points-hero__atmosphere {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(232, 213, 181, 0.1), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(255, 255, 255, 0.03), transparent 55%);
+  pointer-events: none;
 }
 
-.club-points-ring-wrap .track {
-  fill: none;
-  stroke: var(--vc-mauve-soft);
-  stroke-width: 5.5;
-}
-
-.club-points-ring-wrap .fill {
-  fill: none;
-  stroke: url(#vcGoldGrad);
-  stroke-width: 5.5;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 700ms var(--vc-ease);
-}
-
-.club-points-ring-center {
+.club-points-hero__monogram {
   position: absolute;
   inset: 0;
   display: grid;
-  place-content: center;
+  place-items: center;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(8rem, 38vw, 11rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+  user-select: none;
+}
+
+.club-points-hero__inner {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem 1.25rem 1.35rem;
   text-align: center;
 }
 
-.club-points-ring-center .num {
-  font-size: 2rem;
-  font-weight: 520;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  color: var(--vc-plum);
-  font-variant-numeric: tabular-nums;
+.club-points-hero__logo {
+  margin-inline: auto;
+  opacity: 0.92;
 }
 
-.club-points-ring-center .unit {
-  margin-top: 0.25rem;
+.club-points-hero__kicker {
+  margin-top: 0.85rem;
   font-size: 0.62rem;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--vc-muted);
+  color: rgba(232, 213, 181, 0.72);
 }
 
-.club-points-meta {
-  font-size: 0.84rem;
-  color: var(--vc-graphite);
+.club-points-hero__title {
+  margin-top: 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.club-points-hero__sub {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
   line-height: 1.55;
+  color: rgba(250, 248, 245, 0.72);
+  max-width: 20rem;
+  margin-inline: auto;
+}
+
+.club-points-display {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 0.5px solid rgba(232, 213, 181, 0.18);
+}
+
+.club-points-display__num {
+  display: block;
+  font-size: clamp(2.4rem, 10vw, 3.15rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--vc-gold-soft);
+}
+
+.club-points-display__unit {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 245, 0.65);
+}
+
+.club-points-hero__meta {
+  margin-top: 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(250, 248, 245, 0.68);
   max-width: 18rem;
   margin-inline: auto;
 }
 
-.club-history-btn {
-  margin-top: 0.95rem;
+.club-points-hero__cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+  padding: 0.62rem 1.15rem;
+  border-radius: var(--vc-r-sm);
+  background: var(--vc-ivory);
   color: var(--vc-plum);
-  border-bottom: 1px solid color-mix(in srgb, var(--vc-gold) 40%, transparent);
-  padding-bottom: 0.15rem;
-  transition: opacity 180ms var(--vc-ease);
+  font-size: 0.72rem;
+  font-weight: 550;
+  letter-spacing: 0.06em;
+  transition:
+    transform 160ms var(--vc-ease),
+    box-shadow 160ms var(--vc-ease);
 }
 
-.club-history-btn:hover {
-  opacity: 0.75;
+.club-points-hero__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* —— Surfaces —— */
+.club-points-hero__cta:active {
+  transform: scale(0.985);
+}
+
+/* —— Sections —— */
 .club-section {
-  margin-top: 1.85rem;
+  margin-top: 2.15rem;
 }
 
 .club-section-head {
-  margin-bottom: 0.95rem;
+  margin-bottom: 1rem;
 }
 
-.club-section-head .en {
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
+.club-section-head--center {
+  text-align: center;
+}
+
+.club-section-head__kicker {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--vc-gold-deep);
   font-weight: 500;
 }
 
-.club-section-head h2 {
-  margin-top: 0.2rem;
-  font-size: 1.05rem;
+.club-section-head__title {
+  margin-top: 0.25rem;
+  font-size: 1.02rem;
   font-weight: 560;
   letter-spacing: -0.01em;
   color: var(--vc-plum);
   line-height: 1.35;
 }
 
-.club-section-head p {
+.club-section-head__sub {
   margin-top: 0.35rem;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   color: var(--vc-muted);
   line-height: 1.55;
+  max-width: 28rem;
 }
 
-.club-surface {
-  border-radius: var(--vc-radius-lg);
-  border: 1px solid var(--vc-border);
+/* —— Tier hierarchy —— */
+.club-tier-hierarchy {
+  padding: 1.15rem 1.05rem;
+  border-radius: var(--vc-r-lg);
   background: var(--vc-card);
-  padding: 1.15rem 1.1rem;
-  box-shadow: 0 8px 28px rgba(50, 22, 47, 0.03);
+  box-shadow: var(--vc-shadow-soft);
+  backdrop-filter: blur(8px);
+}
+
+.club-tier-hierarchy__status {
+  margin-bottom: 1rem;
+}
+
+.club-tier-hierarchy__label {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
+}
+
+.club-tier-hierarchy__current {
+  margin-top: 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 560;
+  letter-spacing: 0.12em;
+  color: var(--vc-plum);
+}
+
+.club-tier-hierarchy__caption {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--vc-muted);
+  line-height: 1.45;
+}
+
+.club-tier-ladder {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
+}
+
+.club-tier-ladder::-webkit-scrollbar {
+  display: none;
+}
+
+.club-tier-step {
+  flex: 1 0 auto;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.club-tier-step__mark {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  margin-inline: auto;
+  color: var(--vc-muted);
+  opacity: 0.65;
+}
+
+.club-tier-step.is-done .club-tier-step__mark,
+.club-tier-step.is-current .club-tier-step__mark {
+  opacity: 1;
+  color: var(--vc-plum);
+}
+
+.club-tier-step.is-current .club-tier-step__mark {
+  color: var(--vc-gold-deep);
+}
+
+.club-tier-step__name {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vc-muted);
+}
+
+.club-tier-step.is-current .club-tier-step__name {
+  color: var(--vc-plum);
+  font-weight: 600;
+}
+
+.club-tier-track {
+  margin-top: 0.75rem;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(50, 22, 47, 0.08);
+  overflow: hidden;
+}
+
+.club-tier-track > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--vc-plum), var(--vc-gold));
+  transition: width 620ms var(--vc-ease);
+}
+
+.club-tier-hierarchy__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  font-size: 0.7rem;
+  color: var(--vc-muted);
+}
+
+/* —— Next reward —— */
+.club-next-reward {
+  border-radius: var(--vc-r-xl);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.88) 0%, rgba(250, 248, 245, 0.95) 100%);
+  padding: 1.25rem 1.1rem;
+  box-shadow: var(--vc-shadow-soft);
+}
+
+.club-next-reward__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.club-next-reward__kicker {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
+}
+
+.club-next-reward__status {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(196, 165, 116, 0.12);
+}
+
+.club-next-reward__status[data-ready="true"] {
+  color: var(--vc-plum);
+  background: rgba(50, 22, 47, 0.06);
+}
+
+.club-next-reward__title {
+  margin-top: 0.75rem;
+  font-size: 1.28rem;
+  font-weight: 560;
+  color: var(--vc-plum);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.club-next-reward__cost {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--vc-gold-deep);
+}
+
+.club-next-reward__sub {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--vc-muted);
+  line-height: 1.5;
+}
+
+/* —— Features / privileges —— */
+.club-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+@media (min-width: 520px) {
+  .club-grid-2 {
+    gap: 0.65rem;
+  }
 }
 
 .club-feature {
-  border-radius: var(--vc-radius-md);
-  border: 1px solid var(--vc-border);
-  background: var(--vc-ivory);
-  padding: 0.95rem 0.9rem;
+  border-radius: var(--vc-r-md);
+  background: var(--vc-card);
+  padding: 0.9rem 0.85rem;
+  box-shadow: 0 6px 20px rgba(36, 16, 31, 0.03);
   transition:
     transform 180ms var(--vc-ease),
-    border-color 180ms var(--vc-ease),
     box-shadow 180ms var(--vc-ease);
 }
 
@@ -430,212 +656,113 @@
 
 .club-feature-icon {
   color: var(--vc-plum);
-  opacity: 0.88;
+  opacity: 0.82;
+}
+
+.club-feature__title {
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 560;
+  color: var(--vc-plum);
+  line-height: 1.3;
+}
+
+.club-feature__body {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--vc-muted);
 }
 
 .club-mini-badge {
   display: inline-flex;
-  margin-top: 0.55rem;
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--vc-gold-deep);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 35%, var(--vc-border));
-  border-radius: 999px;
-  padding: 0.18rem 0.45rem;
-}
-
-/* —— Tier journey —— */
-.club-tier-rail {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  overflow-x: auto;
-  padding: 0.35rem 0.15rem 0.5rem;
-  scrollbar-width: none;
-}
-
-.club-tier-rail::-webkit-scrollbar {
-  display: none;
-}
-
-.club-tier-node {
-  flex: 0 0 auto;
-  width: 4.85rem;
-  text-align: center;
-  position: relative;
-}
-
-.club-tier-node::after {
-  content: "";
-  position: absolute;
-  top: 1.05rem;
-  inset-inline-start: 50%;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--vc-gold) 35%, var(--vc-border)),
-    var(--vc-border)
-  );
-  z-index: 0;
-}
-
-.club-tier-node:last-child::after {
-  display: none;
-}
-
-.club-tier-node .dot {
-  position: relative;
-  z-index: 1;
-  width: 2.15rem;
-  height: 2.15rem;
-  margin-inline: auto;
-  border-radius: 999px;
-  border: 1px solid var(--vc-border);
-  background: var(--vc-ivory);
-  display: grid;
-  place-items: center;
-  color: var(--vc-muted);
-}
-
-.club-tier-node.is-done .dot {
-  border-color: color-mix(in srgb, var(--vc-gold) 50%, var(--vc-plum));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, var(--vc-card));
-  color: var(--vc-plum);
-}
-
-.club-tier-node.is-current .dot {
-  border-color: transparent;
-  background: var(--vc-plum);
-  color: var(--vc-gold-soft);
-  box-shadow: 0 0 0 4px rgba(196, 165, 116, 0.18);
-}
-
-.club-tier-node .name {
-  margin-top: 0.45rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--vc-muted);
-  line-height: 1.3;
-}
-
-.club-tier-node.is-current .name {
-  color: var(--vc-plum);
-  font-weight: 600;
-}
-
-.club-tier-progress {
-  margin-top: 0.95rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--vc-border);
-}
-
-.club-tier-progress .row {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.74rem;
-  color: var(--vc-muted);
-  margin-bottom: 0.45rem;
-}
-
-.club-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: var(--vc-mauve-soft);
-  overflow: hidden;
-}
-
-.club-bar > i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--vc-plum), var(--vc-gold));
-  transition: width 620ms var(--vc-ease);
-}
-
-/* —— Next reward —— */
-.club-next-reward {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--vc-radius-xl);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 28%, var(--vc-border));
-  background:
-    linear-gradient(160deg, var(--vc-card) 0%, var(--vc-ivory) 45%, var(--vc-cream) 100%);
-  padding: 1.25rem 1.15rem;
-  box-shadow: var(--vc-shadow-soft);
-}
-
-.club-next-reward .status {
-  display: inline-flex;
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--vc-gold-deep);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 40%, transparent);
-  border-radius: 999px;
-  padding: 0.22rem 0.55rem;
-}
-
-.club-next-reward .title {
-  margin-top: 0.75rem;
-  font-size: 1.35rem;
-  font-weight: 560;
-  color: var(--vc-plum);
-  letter-spacing: -0.01em;
-}
-
-.club-next-reward .cost {
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
+  margin-top: 0.5rem;
+  font-size: 0.54rem;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--vc-gold-deep);
 }
 
-/* —— Grids / carousels —— */
-.club-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
-}
-
+/* —— Earn actions —— */
 .club-earn-list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
-.club-earn-row {
+.club-earn-action {
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
-  padding: 0.95rem 1rem;
-  border-radius: var(--vc-radius-md);
-  border: 1px solid var(--vc-border);
-  background: var(--vc-ivory);
-  transition: border-color 180ms var(--vc-ease);
+  padding: 0.85rem 0.15rem;
+  border-bottom: 0.5px solid var(--vc-border);
+  transition:
+    opacity 180ms var(--vc-ease),
+    transform 180ms var(--vc-ease);
 }
 
-.club-earn-row:active {
-  border-color: color-mix(in srgb, var(--vc-plum) 25%, var(--vc-border));
+.club-earn-action:hover {
+  opacity: 0.92;
+  transform: translateX(var(--club-earn-shift, 2px));
 }
 
-.club-earn-ico {
+[dir="rtl"] .club-earn-action:hover {
+  --club-earn-shift: -2px;
+}
+
+.club-earn-action:last-child {
+  border-bottom: 0;
+}
+
+.club-earn-action:active {
+  opacity: 0.82;
+}
+
+.club-earn-action__icon {
   flex-shrink: 0;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--vc-mauve-soft) 70%, var(--vc-card));
   color: var(--vc-plum);
-  border: 1px solid var(--vc-border);
+  opacity: 0.78;
+  padding-top: 0.1rem;
 }
 
+.club-earn-action__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.club-earn-action__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.club-earn-action__title {
+  font-size: 0.78rem;
+  font-weight: 560;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vc-plum);
+}
+
+.club-earn-action__hint {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--vc-gold-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.club-earn-action__desc {
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--vc-muted);
+}
+
+/* —— Filters / rewards —— */
 .club-filters {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   overflow-x: auto;
   padding-bottom: 0.65rem;
   scrollbar-width: none;
@@ -647,34 +774,31 @@
 
 .club-filter {
   flex: 0 0 auto;
-  border-radius: 999px;
-  border: 1px solid var(--vc-border);
-  background: var(--vc-ivory);
-  padding: 0.38rem 0.75rem;
-  font-size: 0.72rem;
+  border-radius: var(--vc-r-sm);
+  border: none;
+  background: rgba(50, 22, 47, 0.04);
+  padding: 0.38rem 0.7rem;
+  font-size: 0.7rem;
   color: var(--vc-graphite);
   letter-spacing: 0.02em;
   transition:
     background 180ms var(--vc-ease),
-    color 180ms var(--vc-ease),
-    border-color 180ms var(--vc-ease);
+    color 180ms var(--vc-ease);
 }
 
 .club-filter.is-on {
   background: var(--vc-plum);
-  border-color: var(--vc-plum);
   color: var(--vc-ivory);
 }
 
 .club-rewards {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
   grid-auto-flow: column;
   grid-auto-columns: minmax(200px, 78%);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding-bottom: 0.2rem;
-  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -692,47 +816,110 @@
 
 .club-reward {
   scroll-snap-align: start;
-  border-radius: var(--vc-radius-lg);
-  border: 1px solid var(--vc-border);
-  background: var(--vc-ivory);
-  padding: 1.15rem 1.05rem;
+  border-radius: var(--vc-r-lg);
+  background: var(--vc-card);
+  padding: 1.1rem 1rem;
   display: flex;
   flex-direction: column;
-  min-height: 195px;
-  transition: box-shadow 200ms var(--vc-ease);
+  min-height: 190px;
+  box-shadow: var(--vc-shadow-soft);
+  transition: transform 200ms var(--vc-ease);
 }
 
 .club-reward:active {
-  box-shadow: var(--vc-shadow-soft);
+  transform: scale(0.985);
 }
 
-.club-reward .brand {
-  font-size: 0.62rem;
+.club-reward__brand {
+  font-size: 0.58rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--vc-gold-deep);
 }
 
-.club-reward h3 {
-  margin-top: 0.45rem;
-  font-size: 1.05rem;
+.club-reward__title {
+  margin-top: 0.4rem;
+  font-size: 1rem;
   font-weight: 560;
   color: var(--vc-plum);
+  line-height: 1.3;
 }
 
-.club-reward .cost {
-  margin-top: 0.35rem;
-  font-size: 0.72rem;
+.club-reward__cost {
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
   letter-spacing: 0.1em;
   color: var(--vc-muted);
 }
 
-.club-reward p {
-  margin-top: 0.35rem;
+.club-reward__sub {
+  margin-top: 0.3rem;
   flex: 1;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--vc-muted);
   line-height: 1.5;
+}
+
+/* —— Journey panel —— */
+.club-journey-panel {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* —— Shared surfaces —— */
+.club-empty,
+.club-referral,
+.club-activity,
+.club-prive-list {
+  border-radius: var(--vc-r-lg);
+  background: var(--vc-card);
+  padding: 1.15rem 1.05rem;
+  box-shadow: var(--vc-shadow-soft);
+  text-align: center;
+}
+
+.club-empty__text {
+  margin-top: 1rem;
+  font-size: 0.86rem;
+  color: var(--vc-muted);
+  line-height: 1.55;
+}
+
+.club-referral {
+  text-align: start;
+}
+
+.club-referral__label {
+  font-size: 0.7rem;
+  color: var(--vc-muted);
+}
+
+.club-referral__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.club-referral__meta {
+  margin-top: 0.85rem;
+  font-size: 0.78rem;
+  color: var(--vc-muted);
+}
+
+.club-prive-list {
+  text-align: start;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.club-prive-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+  color: var(--vc-plum);
 }
 
 /* —— Buttons —— */
@@ -741,16 +928,16 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  border-radius: 999px;
-  padding: 0.68rem 1.2rem;
-  font-size: 0.74rem;
+  border-radius: var(--vc-r-sm);
+  padding: 0.65rem 1.15rem;
+  font-size: 0.72rem;
   font-weight: 550;
   letter-spacing: 0.06em;
+  border: none;
   transition:
     transform 160ms var(--vc-ease),
     background 160ms var(--vc-ease),
-    opacity 160ms var(--vc-ease),
-    border-color 160ms var(--vc-ease);
+    opacity 160ms var(--vc-ease);
 }
 
 .club-btn:active {
@@ -766,7 +953,6 @@
 .club-btn-primary {
   background: var(--vc-plum);
   color: var(--vc-ivory);
-  border: 1px solid transparent;
 }
 
 .club-btn-primary:hover {
@@ -776,35 +962,71 @@
 .club-btn-gold {
   background: linear-gradient(135deg, #3a1f36, #32162f);
   color: var(--vc-gold-soft);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 45%, transparent);
+  border: 0.5px solid rgba(196, 165, 116, 0.35);
 }
 
 .club-btn-ghost {
-  background: transparent;
+  background: rgba(50, 22, 47, 0.04);
   color: var(--vc-plum);
-  border: 1px solid var(--vc-border);
 }
 
 .club-btn-ghost:hover {
-  border-color: color-mix(in srgb, var(--vc-plum) 25%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 40%, var(--vc-card));
+  background: rgba(50, 22, 47, 0.07);
 }
 
-/* —— Birthday / mystery / referral / larsa —— */
-.club-birthday {
-  border-radius: var(--vc-radius-lg);
-  border: 1px solid var(--vc-border);
-  background: linear-gradient(165deg, #f8f3f7 0%, var(--vc-ivory) 50%, #f4ebe6 100%);
+/* —— Birthday / mystery / gift —— */
+.club-birthday,
+.club-mystery {
+  border-radius: var(--vc-r-xl);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 240, 236, 0.95) 100%);
   padding: 1.4rem 1.15rem;
   text-align: center;
+  box-shadow: var(--vc-shadow-soft);
 }
 
-.club-mystery {
-  border-radius: var(--vc-radius-xl);
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 22%, var(--vc-border));
-  background: linear-gradient(165deg, #efe8f1 0%, var(--vc-ivory) 48%, #f4ebe6 100%);
-  padding: 1.6rem 1.2rem;
-  text-align: center;
+.club-birthday__kicker,
+.club-mystery__kicker {
+  margin-top: 0.85rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
+}
+
+.club-birthday__title,
+.club-mystery__title {
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 560;
+  color: var(--vc-plum);
+}
+
+.club-birthday__sub,
+.club-mystery__sub {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--vc-muted);
+  line-height: 1.5;
+}
+
+.club-birthday__points {
+  margin-top: 0.85rem;
+  font-size: 1rem;
+  font-weight: 560;
+  color: var(--vc-plum);
+  font-variant-numeric: tabular-nums;
+}
+
+.club-birthday__gift {
+  margin-top: 0.25rem;
+  font-size: 0.76rem;
+  color: var(--vc-muted);
+}
+
+.club-birthday__note {
+  margin-top: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--vc-graphite);
 }
 
 .club-mystery-inner {
@@ -821,40 +1043,33 @@
 }
 
 .club-gift-visual {
-  width: 3.25rem;
-  height: 3.25rem;
-  margin-inline: auto;
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 40%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 50%, var(--vc-card));
-  display: grid;
-  place-items: center;
-  color: var(--vc-plum);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  color: var(--vc-gold-deep);
+  opacity: 0.72;
 }
 
 .club-code {
+  margin-top: 0.65rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.08em;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   direction: ltr;
   unicode-bidi: isolate;
   word-break: break-all;
-  padding: 0.85rem 1rem;
-  border-radius: var(--vc-radius-md);
-  border: 1px dashed color-mix(in srgb, var(--vc-gold) 40%, var(--vc-border));
-  background: color-mix(in srgb, var(--vc-mauve-soft) 25%, var(--vc-card));
+  padding: 0.8rem 0.95rem;
+  border-radius: var(--vc-r-md);
+  background: rgba(50, 22, 47, 0.04);
   color: var(--vc-plum);
   text-align: center;
 }
 
+/* —— LARSA —— */
 .club-larsa {
   display: grid;
   gap: 1rem;
-  border-radius: var(--vc-radius-xl);
-  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-r-xl);
   background: var(--vc-card);
-  padding: 1.25rem 1.15rem;
+  padding: 1.2rem 1.1rem;
   box-shadow: var(--vc-shadow-soft);
 }
 
@@ -862,23 +1077,14 @@
   .club-larsa {
     grid-template-columns: auto 1fr;
     align-items: center;
-    text-align: start;
   }
 }
 
 .club-larsa-avatar {
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 999px;
-  margin-inline: auto;
-  border: 1px solid color-mix(in srgb, var(--vc-gold) 45%, var(--vc-border));
-  background:
-    radial-gradient(circle at 35% 30%, rgba(232, 213, 181, 0.35), transparent 50%),
-    linear-gradient(145deg, #4a2a45, #32162f);
-  display: grid;
-  place-items: center;
-  color: var(--vc-gold-soft);
-  box-shadow: 0 8px 24px rgba(50, 22, 47, 0.12);
+  flex-shrink: 0;
+  color: var(--vc-gold-deep);
+  opacity: 0.78;
+  padding-top: 0.15rem;
 }
 
 .club-larsa-body {
@@ -891,17 +1097,55 @@
   }
 }
 
-.club-timeline {
-  display: grid;
-  gap: 0;
+.club-larsa__kicker {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vc-gold-deep);
 }
 
+.club-larsa__title {
+  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 560;
+  letter-spacing: 0.06em;
+  color: var(--vc-plum);
+}
+
+.club-larsa__sub {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--vc-muted);
+  line-height: 1.5;
+}
+
+.club-larsa__hello {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--vc-plum);
+}
+
+.club-larsa__actions {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+@media (min-width: 520px) {
+  .club-larsa__actions {
+    justify-content: flex-start;
+  }
+}
+
+/* —— Timeline —— */
 .club-timeline-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.85rem;
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--vc-border);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 0.5px solid var(--vc-border);
 }
 
 .club-timeline-row:last-child {
@@ -910,21 +1154,28 @@
 
 .club-timeline-ico {
   flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--vc-mauve-soft) 55%, var(--vc-card));
   color: var(--vc-plum);
-  border: 1px solid var(--vc-border);
+  opacity: 0.72;
+  padding-top: 0.05rem;
+}
+
+.club-timeline__label {
+  font-size: 0.84rem;
+  color: var(--vc-plum);
+  line-height: 1.35;
+}
+
+.club-timeline__date {
+  margin-top: 0.15rem;
+  font-size: 0.68rem;
+  color: var(--vc-muted);
 }
 
 .club-delta-pos {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, #3d6b55 50%, var(--vc-plum));
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   white-space: nowrap;
 }
 
@@ -932,8 +1183,22 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, #8b3a48 55%, var(--vc-plum));
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   white-space: nowrap;
+}
+
+/* —— Footer / modal / skeleton —— */
+.club-footer {
+  margin-top: 2.5rem;
+  padding-bottom: 0.5rem;
+  text-align: center;
+}
+
+.club-footer__tag {
+  margin-top: 0.65rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: var(--vc-mauve);
 }
 
 .club-modal {
@@ -949,16 +1214,40 @@
 
 .club-modal-panel {
   width: min(400px, 100%);
-  border-radius: 28px;
-  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-r-xl);
   background: var(--vc-ivory);
-  padding: 1.75rem 1.35rem 1.35rem;
+  padding: 1.65rem 1.25rem 1.25rem;
   text-align: center;
   animation: club-rise 280ms var(--vc-ease);
+  box-shadow: var(--vc-shadow-card);
+}
+
+.club-modal__title {
+  margin-top: 0.65rem;
+  font-size: 1rem;
+  font-weight: 560;
+  letter-spacing: 0.08em;
+  color: var(--vc-plum);
+}
+
+.club-modal__body {
+  margin-top: 0.65rem;
+  white-space: pre-line;
+  font-size: 0.86rem;
+  color: var(--vc-muted);
+  line-height: 1.55;
+}
+
+.club-modal__actions {
+  margin-top: 1.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
 }
 
 .club-skeleton {
-  border-radius: var(--vc-radius-lg);
+  border-radius: var(--vc-r-lg);
   height: 170px;
   background: linear-gradient(90deg, #efe8f1 0%, #f7f2f6 45%, #efe8f1 100%);
   background-size: 200% 100%;
@@ -985,27 +1274,15 @@
   }
 }
 
-@keyframes club-shine {
-  0%,
-  100% {
-    opacity: 0.7;
-    transform: translate(0, 0);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-6%, 4%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .club-btn,
   .club-feature,
-  .club-bar > i,
+  .club-tier-track > i,
   .club-mystery-inner,
   .club-modal-panel,
   .club-skeleton,
-  .club-member-card::after,
-  .club-points-ring-wrap .fill {
+  .club-earn-action,
+  .club-reward {
     animation: none !important;
     transition: none !important;
   }

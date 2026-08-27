@@ -19,6 +19,7 @@ export function clubCopy(ar: boolean) {
     atReward: ar ? "مكافأتكِ جاهزة للاستبدال." : "Your next reward is ready.",
     highestTier: ar ? "أنتِ في أعلى مستوى" : "Highest tier reached",
     pointHistory: ar ? "سجل النقاط" : "Point History",
+    viewMyPoints: ar ? "عرض نقاطي" : "View my points",
     pointsLabel: "V•POINTS",
     pointsUnit: ar ? "نقطة" : "points",
     nextReward: ar ? "المكافأة القادمة" : "NEXT REWARD",

@@ -5,7 +5,7 @@ type IconProps = { className?: string; size?: number };
 const stroke = {
   fill: "none" as const,
   stroke: "currentColor",
-  strokeWidth: 1.4,
+  strokeWidth: 1.15,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
 };
