@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { brand } from "@/constants/brand";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 import { getStoredOrder } from "@/lib/orders";
 import { ORDER_STATUS_LABELS } from "@/lib/order-types";
 import { formatPrice } from "@/lib/utils";
@@ -91,7 +92,7 @@ export default async function TrackOrderPage({ params }: Props) {
         </div>
       </div>
 
-      {entry.status === "delivered" ? (
+      {isCustomerFeatureEnabled("myVelora") && entry.status === "delivered" ? (
         <Link
           href={`/account/my-velora/${entry.orderId}`}
           className="mt-6 block rounded-[18px] border border-[var(--plum)]/15 bg-[#F6F0F8] px-5 py-4 text-center transition-colors hover:bg-[#EDE4F3]"

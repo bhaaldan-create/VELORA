@@ -1,51 +1,40 @@
 type Props = {
   ar?: boolean;
-  onShare?: () => void;
-  onSave?: () => void;
-  onPrint?: () => void;
-  onEdit?: () => void;
-  saveDisabled?: boolean;
+  onEdit: () => void;
 };
 
-export function PassportActionBar({
-  ar = false,
-  onShare,
-  onSave,
-  onPrint,
-  onEdit,
-  saveDisabled = false,
-}: Props) {
+/** Single Edit CTA — same visual language as «أضف للحقيبة». */
+export function PassportActionBar({ ar = false, onEdit }: Props) {
   return (
-    <footer className="vp-actions">
-      {onEdit ? (
-        <button type="button" className="vp-actions__btn" onClick={onEdit}>
-          <span className="vp-actions__icon">✎</span>
-          <span>{ar ? "تعديل" : "Edit"}</span>
-        </button>
-      ) : null}
-      {onShare ? (
-        <button type="button" className="vp-actions__btn" onClick={onShare}>
-          <span className="vp-actions__icon">↗</span>
-          <span>{ar ? "مشاركة" : "Share"}</span>
-        </button>
-      ) : null}
-      {onSave ? (
-        <button
-          type="button"
-          className="vp-actions__btn"
-          disabled={saveDisabled}
-          onClick={onSave}
-        >
-          <span className="vp-actions__icon">↓</span>
-          <span>{ar ? "حفظ" : "Save"}</span>
-        </button>
-      ) : null}
-      {onPrint ? (
-        <button type="button" className="vp-actions__btn" onClick={onPrint}>
-          <span className="vp-actions__icon">⎙</span>
-          <span>{ar ? "طباعة" : "Print"}</span>
-        </button>
-      ) : null}
-    </footer>
+    <div className="vp-actions">
+      <button
+        type="button"
+        className="vp-edit-cta"
+        onClick={onEdit}
+        aria-label={ar ? "تعديل" : "Edit"}
+      >
+        <span className="vp-edit-cta__wash" aria-hidden />
+        <span className="vp-edit-cta__inner">
+          <svg viewBox="0 0 24 24" className="vp-edit-cta__icon" aria-hidden>
+            <path
+              d="M4 20h4l10.5-10.5a1.4 1.4 0 0 0 0-2L14 3.5a1.4 1.4 0 0 0-2 0L4 12v8Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12.5 5.5 18.5 11.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+            />
+          </svg>
+          <span className="vp-edit-cta__label">
+            {ar ? "تعديل" : "Edit"}
+          </span>
+        </span>
+      </button>
+    </div>
   );
 }

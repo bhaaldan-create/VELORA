@@ -24,6 +24,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { formatIraqMobileLocal } from "@/lib/phone";
 import { getProductBrand } from "@/lib/product-brand";
 import { getDefaultWhatsAppUrl } from "@/lib/social-links";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 import { cn } from "@/lib/utils";
 import type { CategorySlug, Product } from "@/types";
 
@@ -405,33 +406,39 @@ export function AccountSettings() {
                   </button>
                 );
               })}
-              <Link
-                href="/account/my-velora"
-                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-              >
-                <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                  <span aria-hidden>✦</span>
-                  <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
-                </span>
-              </Link>
-              <Link
-                href="/account/my-velora/passport"
-                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-              >
-                <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                  <span aria-hidden>◇</span>
-                  <span>{ar ? "جواز VELORA" : "My Passport"}</span>
-                </span>
-              </Link>
-              <Link
-                href="/account/club"
-                className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-              >
-                <span className="inline-flex items-center justify-center gap-2.5 lg:justify-start">
-                  <ClubLogo height={26} />
-                  <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
-                </span>
-              </Link>
+              {isCustomerFeatureEnabled("myVelora") ? (
+                <>
+                  <Link
+                    href="/account/my-velora"
+                    className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                      <span aria-hidden>✦</span>
+                      <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
+                    </span>
+                  </Link>
+                  <Link
+                    href="/account/my-velora/passport"
+                    className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
+                      <span aria-hidden>◇</span>
+                      <span>{ar ? "جواز VELORA" : "My Passport"}</span>
+                    </span>
+                  </Link>
+                </>
+              ) : null}
+              {isCustomerFeatureEnabled("club") ? (
+                <Link
+                  href="/account/club"
+                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
+                >
+                  <span className="inline-flex items-center justify-center gap-2.5 lg:justify-start">
+                    <ClubLogo height={26} />
+                    <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
+                  </span>
+                </Link>
+              ) : null}
             </nav>
 
             <div className="mt-8 hidden lg:block">
@@ -515,25 +522,27 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              <Link
-                href="/account/my-velora/passport"
-                className="acc-passport-hero block overflow-hidden rounded-[20px] border border-[var(--account-border)] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-6 shadow-[0_18px_50px_rgba(90,74,122,0.1)] transition hover:-translate-y-0.5"
-              >
-                <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#7E68B5]">
-                  MY VELORA PASSPORT
-                </p>
-                <p className="font-display mt-2 text-[1.2rem] tracking-[0.04em] text-[#24202B]">
-                  {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
-                </p>
-                <p className="mt-2 max-w-md text-[0.82rem] leading-relaxed text-[#777080]">
-                  {ar
-                    ? "هويتكِ داخل VELORA — المستوى، XP، الإنجازات، والتحقق."
-                    : "Your identity inside VELORA — level, XP, achievements, and verification."}
-                </p>
-                <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.6rem] tracking-[0.24em] text-white uppercase">
-                  {ar ? "فتح الجواز" : "Open Passport"}
-                </span>
-              </Link>
+              {isCustomerFeatureEnabled("myVelora") ? (
+                <Link
+                  href="/account/my-velora/passport"
+                  className="acc-passport-hero block overflow-hidden rounded-[20px] border border-[var(--account-border)] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-6 shadow-[0_18px_50px_rgba(90,74,122,0.1)] transition hover:-translate-y-0.5"
+                >
+                  <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#7E68B5]">
+                    MY VELORA PASSPORT
+                  </p>
+                  <p className="font-display mt-2 text-[1.2rem] tracking-[0.04em] text-[#24202B]">
+                    {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
+                  </p>
+                  <p className="mt-2 max-w-md text-[0.82rem] leading-relaxed text-[#777080]">
+                    {ar
+                      ? "هويتكِ داخل VELORA — المستوى، XP، الإنجازات، والتحقق."
+                      : "Your identity inside VELORA — level, XP, achievements, and verification."}
+                  </p>
+                  <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.6rem] tracking-[0.24em] text-white uppercase">
+                    {ar ? "فتح الجواز" : "Open Passport"}
+                  </span>
+                </Link>
+              ) : null}
 
               {/* Stats */}
               <section className="acc-card mt-5 sm:mt-6">
@@ -549,21 +558,27 @@ export function AccountSettings() {
                     <p className="num">{wishCount}</p>
                     <p className="lbl">{ar ? "المفضلة" : "Saved"}</p>
                   </button>
+                  {isCustomerFeatureEnabled("coupons") ? (
+                    <button
+                      type="button"
+                      className="acc-stat"
+                      onClick={() => goTo("settings")}
+                    >
+                      <span className="ico">
+                        <AccIcon name="ticket" size={16} />
+                      </span>
+                      <p className="num">{couponCount}</p>
+                      <p className="lbl">{ar ? "الكوبونات" : "Coupons"}</p>
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="acc-stat"
-                    onClick={() => goTo("settings")}
-                  >
-                    <span className="ico">
-                      <AccIcon name="ticket" size={16} />
-                    </span>
-                    <p className="num">{couponCount}</p>
-                    <p className="lbl">{ar ? "الكوبونات" : "Coupons"}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-stat"
-                    onClick={() => router.push("/account/club")}
+                    onClick={() => {
+                      if (isCustomerFeatureEnabled("club")) {
+                        router.push("/account/club");
+                      }
+                    }}
                   >
                     <span className="ico">
                       <AccIcon name="points" size={16} />
@@ -758,11 +773,13 @@ export function AccountSettings() {
                 </div>
               </section>
 
-              {/* Loyalty */}
+              {/* Loyalty / points — points keep accruing; club UI gated separately */}
               <section className="acc-loyalty mt-5 sm:mt-6 text-center">
-                <div className="flex justify-center">
-                  <ClubLogo height={40} />
-                </div>
+                {isCustomerFeatureEnabled("club") ? (
+                  <div className="flex justify-center">
+                    <ClubLogo height={40} />
+                  </div>
+                ) : null}
                 <p className="mt-4 text-[0.65rem] tracking-[0.2em] uppercase opacity-75">
                   VELORA POINTS
                 </p>
@@ -771,8 +788,8 @@ export function AccountSettings() {
                 </h2>
                 <p className="mx-auto mt-2 max-w-sm text-[0.84rem] leading-relaxed opacity-80">
                   {ar
-                    ? "تجميعك لنقاطك واستبدالها بمكافآت حصرية"
-                    : "Collect points and redeem exclusive beauty rewards."}
+                    ? "تجميعك لنقاطك مستمر — نظام المكافآت قريباً."
+                    : "Your points keep growing — rewards system coming soon."}
                 </p>
                 <div className="acc-loyalty-ring">
                   <p className="num">
@@ -780,10 +797,12 @@ export function AccountSettings() {
                   </p>
                   <p className="unit">{ar ? "نقطة" : "points"}</p>
                 </div>
-                <Link href="/account/club" className="acc-loyalty-cta">
-                  {ar ? "عرض نقاطي" : "View my points"}
-                  <span aria-hidden>←</span>
-                </Link>
+                {isCustomerFeatureEnabled("club") ? (
+                  <Link href="/account/club" className="acc-loyalty-cta">
+                    {ar ? "عرض نقاطي" : "View my points"}
+                    <span aria-hidden>←</span>
+                  </Link>
+                ) : null}
               </section>
 
               {/* Compact extras */}
@@ -938,7 +957,8 @@ export function AccountSettings() {
                       </div>
                       <p className="font-medium text-[var(--account-plum)]">{o.totalLabel}</p>
                     </Link>
-                    {o.status === "delivered" ? (
+                    {isCustomerFeatureEnabled("myVelora") &&
+                    o.status === "delivered" ? (
                       <Link
                         href={`/account/my-velora/${o.orderId}`}
                         className="mt-3 flex items-center justify-between rounded-[14px] bg-[var(--account-lilac)]/45 px-4 py-3 text-[0.88rem] text-[var(--account-plum)] transition-colors hover:bg-[var(--account-lilac)]/70"

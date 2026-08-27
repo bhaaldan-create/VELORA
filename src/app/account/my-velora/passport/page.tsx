@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { PassportExperience } from "@/components/passport/PassportExperience";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 
 export const metadata: Metadata = {
   title: "MY VELORA Passport",
@@ -7,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function MyVeloraPassportPage() {
+  if (!isCustomerFeatureEnabled("myVelora")) {
+    redirect("/account");
+  }
+
   return <PassportExperience />;
 }

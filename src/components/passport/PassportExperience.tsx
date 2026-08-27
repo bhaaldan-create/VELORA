@@ -17,10 +17,7 @@ import { PassportIdentityPage } from "./identity/PassportIdentityPage";
 import { PassportPageIndex, type PassportPageId } from "./navigation/PassportPageIndex";
 import { PassportDocumentShell } from "./shell/PassportDocumentShell";
 import { PassportEditSheet } from "./edit/PassportEditSheet";
-import {
-  downloadPassportStoryPng,
-  sharePassportStory,
-} from "@/lib/passport/story-image";
+import { PassportActionBar } from "./actions/PassportActionBar";
 import { labelPassportOption, labelPassportOptions } from "./utils";
 import "./passport-document.css";
 
@@ -99,7 +96,6 @@ export function PassportExperience() {
   const [page, setPage] = useState<PassportPageId>("identity");
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [savingStory, setSavingStory] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -233,66 +229,6 @@ export function PassportExperience() {
     }
   }
 
-  async function onShare() {
-    if (!passport?.publicUrl) return;
-    if (!passport.config.publicShareEnabled) {
-      setMessage(ar ? "المشاركة العامة غير مفعّلة." : "Public sharing is disabled.");
-      return;
-    }
-    try {
-      const mode = await sharePassportStory({
-        locale: ar ? "ar" : "en",
-        title: "MY VELORA PASSPORT",
-        text: ar
-          ? `${passport.fullName} · ${ar ? passport.level.nameAr : passport.level.nameEn}`
-          : `${passport.fullName} · ${passport.level.nameEn}`,
-        url: passport.publicUrl,
-        passportNumber: passport.passportNumber,
-      });
-      if (mode === "clipboard") {
-        setMessage(ar ? "تم نسخ الرابط" : "Link copied");
-      } else if (mode === "native-file") {
-        setMessage(ar ? "اختاري Instagram ثم Story ✦" : "Choose Instagram → Story ✦");
-      } else if (mode === "download-instagram") {
-        setMessage(
-          ar
-            ? "تم حفظ الستوري — افتحي Instagram Stories ✦"
-            : "Story saved — open Instagram Stories ✦",
-        );
-      } else if (mode === "download") {
-        setMessage(ar ? "تم حفظ الستوري 1080×1920 ✦" : "Saved Story 1080×1920 ✦");
-      }
-    } catch {
-      /* cancelled */
-    }
-  }
-
-  async function onSaveStory() {
-    setSavingStory(true);
-    setMessage(null);
-    try {
-      await downloadPassportStoryPng(
-        ar ? "ar" : "en",
-        passport?.passportNumber,
-      );
-      setMessage(ar ? "تم حفظ الستوري 1080×1920 ✦" : "Saved Story 1080×1920 ✦");
-    } catch (err) {
-      setMessage(
-        err instanceof Error
-          ? err.message
-          : ar
-            ? "تعذّر حفظ الستوري."
-            : "Could not save Story.",
-      );
-    } finally {
-      setSavingStory(false);
-    }
-  }
-
-  function onPrint() {
-    window.print();
-  }
-
   const match = useMemo(
     () => (passport ? computeMatch(passport) : null),
     [passport],
@@ -375,12 +311,7 @@ export function PassportExperience() {
               <PassportIdentityPage
                 ar={ar}
                 passport={passport}
-                onEdit={() => setEditOpen(true)}
                 onChangePhoto={() => fileRef.current?.click()}
-                onShare={() => void onShare()}
-                onSave={() => void onSaveStory()}
-                onPrint={onPrint}
-                savingStory={savingStory}
               />
             ) : null}
 
@@ -708,7 +639,15 @@ export function PassportExperience() {
 
             {message ? <p className="vp-toast">{message}</p> : null}
 
-            <PassportPageIndex ar={ar} active={page} onChange={setPage} />
+            <div className="vp-dock">
+              {page === "identity" ? (
+                <PassportActionBar
+                  ar={ar}
+                  onEdit={() => setEditOpen(true)}
+                />
+              ) : null}
+              <PassportPageIndex ar={ar} active={page} onChange={setPage} />
+            </div>
           </div>
         )}
 

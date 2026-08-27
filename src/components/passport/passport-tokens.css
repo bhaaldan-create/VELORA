@@ -1,21 +1,26 @@
-/* MY VELORA PASSPORT — Design tokens */
+/* MY VELORA PASSPORT — Luxury document tokens */
 .vp-root {
-  --vp-pearl: #fafafe;
-  --vp-paper: #f5f1fb;
-  --vp-lavender-50: #faf9fc;
-  --vp-lavender-100: #f5f1fb;
-  --vp-lavender-200: #dcd3f5;
+  --vp-pearl: #fdfcfe;
+  --vp-paper: #f8f6fc;
+  --vp-white: #ffffff;
+  --vp-lavender-50: #f5f2fa;
+  --vp-lavender-100: #ebe6f4;
+  --vp-lavender-200: #d4cae8;
   --vp-lavender-300: #b9a7e8;
+  --vp-lavender-400: #9a84c9;
   --vp-lavender-500: #7e68b5;
   --vp-lavender-700: #5a4a7a;
-  --vp-ink: #24202b;
-  --vp-muted: #777080;
-  --vp-grey: #b8b4c0;
-  --vp-gold: #c9b896;
-  --vp-gold-soft: rgba(201, 184, 150, 0.35);
-  --vp-stamp-color: rgba(126, 104, 181, 0.72);
-  --vp-doc-shadow: 0 40px 100px rgba(90, 74, 122, 0.14);
-  --vp-doc-radius: 6px;
+  --vp-ink: #1e1a24;
+  --vp-muted: #6e6878;
+  --vp-grey: #a8a3b0;
+  --vp-gold: #c4b08a;
+  --vp-gold-light: #e8dcc4;
+  --vp-gold-soft: rgba(196, 176, 138, 0.32);
+  --vp-stamp-color: rgba(126, 104, 181, 0.58);
+  --vp-doc-shadow: 0 28px 80px rgba(90, 74, 122, 0.11), 0 8px 24px rgba(90, 74, 122, 0.06);
+  --vp-doc-radius: 4px;
   --vp-font-serif: var(--font-kufyan), Georgia, "Times New Roman", serif;
-  --vp-font-sans: var(--font-latin), var(--font-body), system-ui, sans-serif;
+  --vp-font-sans: var(--font-body), "IBM Plex Sans Arabic", var(--font-latin), system-ui, sans-serif;
+  --vp-font-ibm: var(--font-body), "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --vp-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }

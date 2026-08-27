@@ -1,40 +1,97 @@
 type Props = { size?: number; className?: string };
 
-export function PassportEmblem({ size = 48, className = "" }: Props) {
+/** VELORA Passport Seal — ornamental fine-line emblem. */
+export function PassportEmblem({ size = 52, className = "" }: Props) {
+  const gid = "vp-seal";
   return (
     <svg
       className={`vp-emblem ${className}`.trim()}
       width={size}
       height={size}
-      viewBox="0 0 64 64"
+      viewBox="0 0 80 80"
       aria-hidden
     >
-      <circle cx="32" cy="32" r="30" fill="none" stroke="url(#vp-emblem-gold)" strokeWidth="1.2" />
-      <circle cx="32" cy="32" r="24" fill="none" stroke="var(--vp-lavender-500)" strokeWidth="0.6" opacity="0.7" />
-      <path
-        d="M32 14 L38 28 L52 28 L41 37 L45 51 L32 42 L19 51 L23 37 L12 28 L26 28 Z"
+      <defs>
+        <linearGradient id={`${gid}-gold`} x1="0" y1="0" x2="80" y2="80">
+          <stop offset="0%" stopColor="var(--vp-gold-light)" />
+          <stop offset="50%" stopColor="var(--vp-gold)" />
+          <stop offset="100%" stopColor="var(--vp-lavender-300)" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer seal rings */}
+      <circle cx="40" cy="40" r="38" fill="none" stroke={`url(#${gid}-gold)`} strokeWidth="1" />
+      <circle
+        cx="40"
+        cy="40"
+        r="34.5"
+        fill="none"
+        stroke="var(--vp-lavender-400)"
+        strokeWidth="0.4"
+        opacity="0.55"
+        strokeDasharray="1.6 1.4"
+      />
+      <circle
+        cx="40"
+        cy="40"
+        r="31"
         fill="none"
         stroke="var(--vp-lavender-500)"
-        strokeWidth="0.8"
-        opacity="0.5"
+        strokeWidth="0.55"
+        opacity="0.45"
       />
+
+      {/* Fine ornamental ticks */}
+      {Array.from({ length: 32 }).map((_, i) => {
+        const a = (i * Math.PI * 2) / 32;
+        const inner = i % 2 === 0 ? 26.5 : 27.5;
+        const outer = i % 2 === 0 ? 30 : 29.2;
+        return (
+          <line
+            key={i}
+            x1={40 + Math.cos(a) * inner}
+            y1={40 + Math.sin(a) * inner}
+            x2={40 + Math.cos(a) * outer}
+            y2={40 + Math.sin(a) * outer}
+            stroke="var(--vp-lavender-400)"
+            strokeWidth="0.35"
+            opacity="0.5"
+          />
+        );
+      })}
+
+      {/* Inner disc */}
+      <circle cx="40" cy="40" r="18" fill="rgba(255,255,255,0.55)" />
+      <circle
+        cx="40"
+        cy="40"
+        r="17"
+        fill="none"
+        stroke="var(--vp-gold)"
+        strokeWidth="0.45"
+        opacity="0.55"
+      />
+
+      {/* Geometric diamond */}
+      <path
+        d="M40 26 L48 40 L40 54 L32 40 Z"
+        fill="none"
+        stroke="var(--vp-lavender-500)"
+        strokeWidth="0.55"
+        opacity="0.4"
+      />
+
       <text
-        x="32"
-        y="38"
+        x="40"
+        y="45"
         textAnchor="middle"
-        fontFamily="Georgia, serif"
-        fontSize="22"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontSize="18"
         fontWeight="600"
         fill="var(--vp-lavender-700)"
       >
         V
       </text>
-      <defs>
-        <linearGradient id="vp-emblem-gold" x1="0" y1="0" x2="64" y2="64">
-          <stop offset="0%" stopColor="var(--vp-gold)" />
-          <stop offset="100%" stopColor="var(--vp-lavender-300)" />
-        </linearGradient>
-      </defs>
     </svg>
   );
 }

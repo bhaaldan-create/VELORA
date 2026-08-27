@@ -1,63 +1,81 @@
 type Props = { className?: string; ar?: boolean };
 
+/** Official VELORA verification stamp — overlaps portrait. */
 export function PassportStamp({ className = "", ar = false }: Props) {
   return (
     <div className={`vp-stamp ${className}`.trim()} aria-hidden>
-      <svg viewBox="0 0 120 120" className="vp-stamp__svg">
+      <svg viewBox="0 0 128 128" className="vp-stamp__svg">
         <circle
-          cx="60"
-          cy="60"
-          r="54"
+          cx="64"
+          cy="64"
+          r="58"
+          fill="rgba(126, 104, 181, 0.06)"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          opacity="0.9"
+        />
+        <circle
+          cx="64"
+          cy="64"
+          r="50"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray="4 3"
-          opacity="0.85"
+          strokeWidth="0.6"
+          strokeDasharray="3 2.5"
+          opacity="0.55"
         />
-        <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+        <circle
+          cx="64"
+          cy="64"
+          r="42"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="0.4"
+          opacity="0.35"
+        />
         <text
-          x="60"
-          y="48"
+          x="64"
+          y="46"
           textAnchor="middle"
-          fontSize="11"
+          fontSize="9.5"
           fontWeight="700"
-          letterSpacing="3"
+          letterSpacing="2.8"
           fill="currentColor"
         >
           VELORA
         </text>
         <text
-          x="60"
-          y="62"
+          x="64"
+          y="58"
           textAnchor="middle"
-          fontSize="6"
-          letterSpacing="1.5"
+          fontSize="5.2"
+          letterSpacing="1.2"
           fill="currentColor"
-          opacity="0.9"
+          opacity="0.92"
         >
-          {ar ? "جواز الجمال الرقمي" : "DIGITAL BEAUTY"}
+          {ar ? "جمال يُكتشف" : "BEAUTY REVEALED"}
         </text>
         <text
-          x="60"
-          y="72"
+          x="64"
+          y="68"
           textAnchor="middle"
-          fontSize="6"
-          letterSpacing="1.5"
+          fontSize="4.8"
+          letterSpacing="1"
           fill="currentColor"
-          opacity="0.9"
+          opacity="0.88"
         >
-          {ar ? "عضوة موثّقة" : "PASSPORT"}
+          {ar ? "جواز الجمال الرقمي" : "DIGITAL BEAUTY PASSPORT"}
         </text>
         <text
-          x="60"
-          y="84"
+          x="64"
+          y="80"
           textAnchor="middle"
-          fontSize="5.5"
-          letterSpacing="2"
+          fontSize="5"
+          letterSpacing="2.2"
           fill="currentColor"
-          opacity="0.75"
+          opacity="0.78"
         >
-          {ar ? "VERIFIED MEMBER" : "VERIFIED MEMBER"}
+          VERIFIED MEMBER
         </text>
       </svg>
     </div>

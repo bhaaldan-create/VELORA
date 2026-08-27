@@ -17,12 +17,17 @@ import {
 } from "@/lib/my-velora/generate";
 import { getVeloraCardConfig } from "@/lib/my-velora/config";
 import type { VeloraCardStyleKey } from "@/lib/my-velora/types";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ orderId: string }> };
 
 export default async function MyVeloraOrderPage({ params }: Props) {
+  if (!isCustomerFeatureEnabled("myVelora")) {
+    redirect("/account");
+  }
+
   const { orderId } = await params;
   const jar = await cookies();
   const session = await verifyCustomerSessionToken(

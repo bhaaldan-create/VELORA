@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { isCustomerFeatureEnabled } from "@/lib/customer-features";
 import { recordCardEvent } from "@/lib/my-velora/generate";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -9,6 +10,10 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ token: string }> };
 
 export default async function MyVeloraReferralPage({ params }: Props) {
+  if (!isCustomerFeatureEnabled("myVelora")) {
+    redirect("/");
+  }
+
   const { token } = await params;
 
   const link = await prisma.veloraReferralLink.findUnique({
