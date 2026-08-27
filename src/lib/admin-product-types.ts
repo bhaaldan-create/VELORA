@@ -28,6 +28,9 @@ export type AdminProductDetail = AdminProduct & {
   benefitsAr: string[];
   ingredients: string[];
   concerns: string[];
+  skinTypes: string[];
+  productType: string | null;
+  featureTags: string[];
   supplierId: string | null;
   costCurrency: string;
   costExchangeRate: number;

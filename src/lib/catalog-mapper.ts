@@ -1,5 +1,5 @@
 import type { Category as DbCategory, Product as DbProduct, Prisma } from "@/generated/prisma/client";
-import type { Category, CategorySlug, Currency, Product, SkinConcern } from "@/types";
+import type { Category, CategorySlug, Currency, Product, SkinConcern, SkinType } from "@/types";
 import { salePriceFromBase } from "@/lib/pricing";
 
 function asStringArray<T = string>(value: Prisma.JsonValue): T[] {
@@ -49,6 +49,10 @@ export const productCardSelect = {
   imageUrl: true,
   brandName: true,
   concernsJson: true,
+  skinTypesJson: true,
+  productType: true,
+  featureTagsJson: true,
+  stock: true,
 } as const;
 
 export type ProductCardRow = Prisma.ProductGetPayload<{
@@ -89,6 +93,9 @@ export function mapProductCard(row: ProductCardRow): Product {
     benefitsAr: [],
     ingredients: [],
     concerns: asStringArray<SkinConcern>(row.concernsJson),
+    skinTypes: asStringArray<SkinType>(row.skinTypesJson),
+    productType: row.productType || null,
+    featureTags: asStringArray(row.featureTagsJson),
     size: row.size,
     isBestseller: row.isBestseller,
     isNew: row.isNew,
@@ -98,7 +105,7 @@ export function mapProductCard(row: ProductCardRow): Product {
     imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
     brandName: row.brandName || null,
     brandLogoUrl: null,
-    stock: undefined,
+    stock: row.stock,
   };
 }
 
@@ -124,6 +131,9 @@ export function mapProduct(row: DbProduct): Product {
     benefitsAr: asStringArray(row.benefitsArJson),
     ingredients: asStringArray(row.ingredientsJson),
     concerns: asStringArray<SkinConcern>(row.concernsJson),
+    skinTypes: asStringArray<SkinType>(row.skinTypesJson),
+    productType: row.productType || null,
+    featureTags: asStringArray(row.featureTagsJson),
     size: row.size,
     isBestseller: row.isBestseller,
     isNew: row.isNew,

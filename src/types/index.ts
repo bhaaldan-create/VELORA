@@ -12,6 +12,13 @@ export type SkinConcern =
   | "sensitivity"
   | "oil-control";
 
+export type SkinType =
+  | "oily"
+  | "dry"
+  | "combination"
+  | "normal"
+  | "sensitive";
+
 export type Currency = "IQD";
 
 export interface Category {
@@ -43,6 +50,10 @@ export interface Product {
   benefitsAr: string[];
   ingredients: string[];
   concerns: SkinConcern[];
+  skinTypes?: SkinType[];
+  /** Product type / subcategory slug */
+  productType?: string | null;
+  featureTags?: string[];
   size: string;
   isBestseller?: boolean;
   isNew?: boolean;

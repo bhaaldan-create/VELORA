@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { PassportGuillochePattern } from "./PassportGuillochePattern";
+import { PassportWorldMapWatermark } from "./PassportWorldMapWatermark";
 import { PassportEmblem } from "../identity/PassportEmblem";
 import "../passport-tokens.css";
 import "../passport-document.css";
@@ -32,6 +33,7 @@ export function PassportDocumentShell({
       <div className="vp-document__guilloche vp-document__guilloche--main" aria-hidden />
       <div className="vp-document__guilloche vp-document__guilloche--fine" aria-hidden />
       <div className="vp-document__guilloche vp-document__guilloche--corner" aria-hidden />
+      <PassportWorldMapWatermark />
       <div className="vp-document__microtext vp-document__microtext--band" aria-hidden>
         VELORA · DIGITAL BEAUTY PASSPORT · VERIFIED · VELORA · DIGITAL BEAUTY PASSPORT ·
       </div>

@@ -90,6 +90,9 @@ function toAdminProductDetail(row: {
   benefitsArJson: unknown;
   ingredientsJson: unknown;
   concernsJson: unknown;
+  skinTypesJson: unknown;
+  productType: string | null;
+  featureTagsJson: unknown;
   supplierId: string | null;
   costCurrency: string;
   costExchangeRate: number;
@@ -110,6 +113,9 @@ function toAdminProductDetail(row: {
     benefitsAr: asStringArray(row.benefitsArJson),
     ingredients: asStringArray(row.ingredientsJson),
     concerns: asStringArray(row.concernsJson),
+    skinTypes: asStringArray(row.skinTypesJson),
+    productType: row.productType,
+    featureTags: asStringArray(row.featureTagsJson),
     supplierId: row.supplierId,
     costCurrency: row.costCurrency,
     costExchangeRate: row.costExchangeRate,
@@ -159,6 +165,9 @@ export type AdminProductUpdate = {
   benefitsAr?: string[];
   ingredients?: string[];
   concerns?: string[];
+  skinTypes?: string[];
+  productType?: string | null;
+  featureTags?: string[];
   rating?: number;
   reviews?: number;
   imageTone?: string;
@@ -189,6 +198,9 @@ export type AdminProductCreateInput = {
   benefitsAr: string[];
   ingredients: string[];
   concerns: SkinConcern[];
+  skinTypes?: string[];
+  productType?: string | null;
+  featureTags?: string[];
   isActive?: boolean;
   isBestseller?: boolean;
   isNew?: boolean;
@@ -256,6 +268,9 @@ export async function createAdminProduct(
       benefitsArJson: cleanList(data.benefitsAr),
       ingredientsJson: cleanList(data.ingredients),
       concernsJson: data.concerns,
+      skinTypesJson: cleanList(data.skinTypes ?? []),
+      productType: data.productType?.trim() || null,
+      featureTagsJson: cleanList(data.featureTags ?? []),
       size: data.size.trim() || "—",
       isBestseller: !!data.isBestseller,
       isNew: data.isNew !== false,
@@ -336,6 +351,18 @@ export async function updateAdminProduct(
         ? { ingredientsJson: cleanList(data.ingredients) }
         : {}),
       ...(data.concerns ? { concernsJson: data.concerns } : {}),
+      ...(data.skinTypes ? { skinTypesJson: cleanList(data.skinTypes) } : {}),
+      ...(data.productType !== undefined
+        ? {
+            productType:
+              typeof data.productType === "string"
+                ? data.productType.trim() || null
+                : null,
+          }
+        : {}),
+      ...(data.featureTags
+        ? { featureTagsJson: cleanList(data.featureTags) }
+        : {}),
       ...(typeof data.rating === "number" ? { rating: data.rating } : {}),
       ...(typeof data.reviews === "number"
         ? { reviews: Math.round(data.reviews) }

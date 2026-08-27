@@ -1,14 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  getShopBrand,
-  productMatchesBrand,
-} from "@/data/shop-brands";
+import { getShopBrand } from "@/data/shop-brands";
 import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
+import { CompactProductCard } from "@/components/shop/CompactProductCard";
+import {
+  ActiveFilterChips,
+  FilterDrawer,
+  FilterPanel,
+  QuickFilters,
+  ResultCount,
+  SearchEmptyState,
+  SortMenu,
+  useCatalogSearchParams,
+} from "@/components/search";
+import "@/components/search/search-ui.css";
 import { useLocale } from "@/context/LocaleContext";
+import type { CatalogFacets } from "@/lib/catalog-search-params";
+import { serializeCatalogSearchParams } from "@/lib/catalog-search-params";
 import type { Category, CategorySlug, Product } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -19,63 +29,145 @@ interface ShopCatalogProps {
 
 export function ShopCatalog({ categories, products }: ShopCatalogProps) {
   const { locale, t } = useLocale();
-  const searchParams = useSearchParams();
-  const brand = getShopBrand(searchParams.get("brand") ?? undefined);
-  const categoryFromUrl = searchParams.get("category") ?? undefined;
-  const [category, setCategory] = useState<string | undefined>(() =>
-    categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
-      ? categoryFromUrl
-      : undefined,
-  );
+  const ar = locale !== "en";
+  const {
+    params,
+    replace,
+    clearAll,
+    toggleConcern,
+    toggleSkinType,
+    toggleList,
+    setCategory,
+    setSort,
+    hasActiveFilters,
+  } = useCatalogSearchParams();
+
+  const brandMeta = getShopBrand(params.brand);
+  const [facets, setFacets] = useState<CatalogFacets | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [remote, setRemote] = useState<Product[] | null>(null);
+  const [remoteTotal, setRemoteTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const advanced =
+    hasActiveFilters &&
+    (!!params.q ||
+      !!params.productType ||
+      params.minPrice != null ||
+      params.maxPrice != null ||
+      params.inStock ||
+      params.concerns.length > 0 ||
+      params.skinTypes.length > 0 ||
+      params.ingredients.length > 0 ||
+      params.features.length > 0 ||
+      params.ratingMin != null ||
+      params.onSale ||
+      params.isNew ||
+      params.isBestseller ||
+      !!params.origin ||
+      (params.sort &&
+        params.sort !== "best-selling" &&
+        params.sort !== "best-match") ||
+      // brand as free-text brandName (not only shop-brands slug)
+      (!!params.brand && !brandMeta));
 
   useEffect(() => {
-    setCategory(
-      categoryFromUrl && categories.some((c) => c.slug === categoryFromUrl)
-        ? categoryFromUrl
-        : undefined,
-    );
-  }, [categoryFromUrl, categories]);
+    void fetch("/api/catalog/facets")
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; facets?: CatalogFacets }) => {
+        if (d.ok && d.facets) setFacets(d.facets);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!advanced) {
+      setRemote(null);
+      setRemoteTotal(0);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const qs = serializeCatalogSearchParams(params).toString();
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/catalog/search?${qs}`);
+          const data = (await res.json()) as {
+            ok?: boolean;
+            products?: Product[];
+            total?: number;
+          };
+          setRemote(
+            data.ok && Array.isArray(data.products) ? data.products : [],
+          );
+          setRemoteTotal(typeof data.total === "number" ? data.total : 0);
+        } catch {
+          setRemote([]);
+          setRemoteTotal(0);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 280);
+    return () => window.clearTimeout(t);
+  }, [advanced, params]);
 
   const list = useMemo(() => {
+    if (advanced && remote) return remote;
     let result = products;
-    if (brand) {
-      result = result.filter((p) =>
-        productMatchesBrand(p.name, p.nameAr, brand),
+    if (brandMeta) {
+      result = result.filter((p) => {
+        const hay = `${p.name} ${p.nameAr} ${p.brandName || ""}`.toLowerCase();
+        return (
+          brandMeta.match.some((m) => hay.includes(m)) ||
+          hay.includes(brandMeta.name.toLowerCase())
+        );
+      });
+    } else if (params.brand) {
+      const b = params.brand.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.brandName?.toLowerCase().includes(b) ||
+          p.name.toLowerCase().includes(b) ||
+          p.nameAr.includes(params.brand!),
       );
     }
-    if (category) {
-      result = result.filter((p) => p.category === (category as CategorySlug));
+    if (params.category) {
+      result = result.filter((p) => p.category === params.category);
     }
     return result;
-  }, [products, brand, category]);
+  }, [advanced, remote, products, brandMeta, params.brand, params.category]);
 
   const rails = useMemo(() => {
-    if (brand || category) return null;
+    if (hasActiveFilters) return null;
     return categories
       .map((cat) => ({
         cat,
         items: products.filter((p) => p.category === cat.slug).slice(0, 12),
       }))
       .filter((r) => r.items.length > 0);
-  }, [brand, category, categories, products]);
+  }, [hasActiveFilters, categories, products]);
 
-  const heading = brand
+  const heading = brandMeta
     ? locale === "en"
-      ? brand.name
-      : brand.nameAr
-    : category
+      ? brandMeta.name
+      : brandMeta.nameAr
+    : params.category
       ? locale === "en"
-        ? (categories.find((c) => c.slug === category)?.name ?? t.shop)
-        : (categories.find((c) => c.slug === category)?.nameAr ?? t.shop)
+        ? (categories.find((c) => c.slug === params.category)?.name ?? t.shop)
+        : (categories.find((c) => c.slug === params.category)?.nameAr ?? t.shop)
       : locale === "en"
         ? "Shop"
         : "التسوق";
 
+  const total = advanced ? remoteTotal : list.length;
+
   return (
-    <div>
+    <div className="vs-root">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          {brand ? (
+          {brandMeta ? (
             <Link
               href="/search"
               className="font-latin text-[11px] font-medium tracking-[0.16em] text-[var(--muted)] uppercase transition-colors hover:text-[var(--plum)]"
@@ -86,37 +178,58 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
           <h1
             className={cn(
               "mt-2 text-[clamp(1.5rem,3.5vw,2.2rem)] font-black text-[var(--plum)]",
-              brand ? "font-latin tracking-tight" : "font-display",
+              brandMeta ? "font-latin tracking-tight" : "font-display",
             )}
-            dir={brand ? "ltr" : undefined}
+            dir={brandMeta ? "ltr" : undefined}
           >
             {heading}
           </h1>
-          <p className="font-display mt-1 text-[0.85rem] font-light text-[var(--muted)]">
-            {locale === "en"
-              ? `${list.length} products · swipe`
-              : `${list.length} منتج · مرّري`}
-          </p>
         </div>
       </div>
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <FilterPill
-          active={!category}
+          active={!params.category}
           onClick={() => setCategory(undefined)}
           label={locale === "en" ? "All" : "الكل"}
         />
         {categories.map((cat) => (
           <FilterPill
             key={cat.slug}
-            active={category === cat.slug}
-            onClick={() => setCategory(cat.slug)}
+            active={params.category === cat.slug}
+            onClick={() => setCategory(cat.slug as CategorySlug)}
             label={locale === "en" ? cat.name : cat.nameAr}
           />
         ))}
       </div>
 
-      {rails && !category ? (
+      <div className="vs-toolbar">
+        <div className="vs-mobile-filters">
+          <button
+            type="button"
+            className="vs-btn"
+            onClick={() => setDrawerOpen(true)}
+          >
+            {ar ? "فلاتر" : "Filters"}
+          </button>
+        </div>
+        <SortMenu
+          ar={ar}
+          value={params.sort}
+          hasQuery={!!params.q}
+          onChange={setSort}
+        />
+      </div>
+
+      <QuickFilters ar={ar} params={params} onApply={replace} />
+      <ActiveFilterChips
+        ar={ar}
+        params={params}
+        onClearAll={clearAll}
+        onRemove={replace}
+      />
+
+      {rails ? (
         <div className="mt-10 space-y-12">
           {rails.map(({ cat, items }) => (
             <section key={cat.slug}>
@@ -126,7 +239,7 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
                 </h2>
                 <button
                   type="button"
-                  onClick={() => setCategory(cat.slug)}
+                  onClick={() => setCategory(cat.slug as CategorySlug)}
                   className="font-latin text-[11px] font-medium tracking-[0.12em] text-[var(--muted)] uppercase hover:text-[var(--plum)]"
                 >
                   {locale === "en" ? "See all" : "الكل"}
@@ -136,25 +249,52 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
             </section>
           ))}
         </div>
-      ) : list.length ? (
-        <div className="mt-8">
-          <ProductScrollRail products={list} variant="compact" />
-        </div>
       ) : (
-        <div className="mt-10 rounded-3xl border border-dashed border-[var(--plum)]/12 px-6 py-16 text-center">
-          <p className="text-[0.95rem] text-[var(--muted)]">
-            {locale === "en"
-              ? "No products here yet."
-              : "لا توجد منتجات هنا حالياً."}
-          </p>
-          <Link
-            href="/search"
-            className="mt-4 inline-block text-[0.875rem] text-[var(--plum)] underline underline-offset-4"
-          >
-            {locale === "en" ? "Browse brands" : "تصفّح البراندات"}
-          </Link>
+        <div className="vs-layout mt-6">
+          <aside className="vs-sidebar">
+            <FilterPanel
+              ar={ar}
+              params={params}
+              facets={facets}
+              onChange={replace}
+              toggleConcern={toggleConcern}
+              toggleSkinType={toggleSkinType}
+              toggleList={toggleList}
+            />
+          </aside>
+          <div>
+            <ResultCount ar={ar} total={total} />
+            {loading ? (
+              <div className="h-40 animate-pulse rounded-3xl bg-[var(--mist)]" />
+            ) : list.length ? (
+              advanced ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {list.map((product) => (
+                    <CompactProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <ProductScrollRail products={list} variant="compact" />
+              )
+            ) : (
+              <SearchEmptyState ar={ar} onClear={clearAll} />
+            )}
+          </div>
         </div>
       )}
+
+      <FilterDrawer
+        open={drawerOpen}
+        ar={ar}
+        params={params}
+        facets={facets}
+        onClose={() => setDrawerOpen(false)}
+        onChange={replace}
+        onReset={clearAll}
+        toggleConcern={toggleConcern}
+        toggleSkinType={toggleSkinType}
+        toggleList={toggleList}
+      />
     </div>
   );
 }

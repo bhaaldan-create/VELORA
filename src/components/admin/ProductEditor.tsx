@@ -55,6 +55,9 @@ type Draft = {
   description: string;
   benefitsAr: string[];
   brandName: string;
+  skinTypes: string[];
+  productType: string;
+  featureTags: string[];
   supplierId: string;
   costCurrency: string;
   costExchangeRate: string;
@@ -87,6 +90,9 @@ function draftFromProduct(p: AdminProductDetail): Draft {
     description: p.description,
     benefitsAr: [...p.benefitsAr],
     brandName: p.brandName || "",
+    skinTypes: [...(p.skinTypes || [])],
+    productType: p.productType || "",
+    featureTags: [...(p.featureTags || [])],
     supplierId: p.supplierId || "",
     costCurrency: p.costCurrency,
     costExchangeRate: String(p.costExchangeRate),
@@ -247,6 +253,9 @@ export function ProductEditor({
       draft.isNew !== base.isNew ||
       draft.specialOffer !== base.specialOffer ||
       draft.brandName !== base.brandName ||
+      draft.productType !== base.productType ||
+      JSON.stringify(draft.skinTypes) !== JSON.stringify(base.skinTypes) ||
+      JSON.stringify(draft.featureTags) !== JSON.stringify(base.featureTags) ||
       draft.supplierId !== base.supplierId ||
       draft.costCurrency !== base.costCurrency ||
       draft.costExchangeRate !== base.costExchangeRate ||
@@ -353,6 +362,9 @@ export function ProductEditor({
           isBestseller: draft.isBestseller,
           isNew: draft.isNew,
           brandName: draft.brandName.trim() || null,
+          skinTypes: draft.skinTypes,
+          productType: draft.productType.trim() || null,
+          featureTags: draft.featureTags,
           supplierId: draft.supplierId.trim() || null,
           costCurrency: draft.costCurrency,
           costExchangeRate: draft.costCurrency === "IQD" ? 1 : Number(draft.costExchangeRate),
@@ -1215,6 +1227,114 @@ export function ProductEditor({
             >
               + إضافة ميزة
             </button>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="فلاتر الجمال (بحث)">
+          <Field label="نوع المنتج (Product Type)">
+            <input
+              className={inputClass}
+              value={draft.productType}
+              onChange={(e) => patchDraft({ productType: e.target.value })}
+              placeholder="serum · cleanser · moisturizer…"
+              dir="ltr"
+            />
+          </Field>
+          <div className="mt-4">
+            <p className="mb-2 text-[12px] font-medium text-[var(--admin-text-muted)]">
+              نوع البشرة
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ["oily", "دهنية"],
+                  ["dry", "جافة"],
+                  ["combination", "مختلطة"],
+                  ["normal", "عادية"],
+                  ["sensitive", "حساسة"],
+                ] as const
+              ).map(([id, label]) => {
+                const on = draft.skinTypes.includes(id);
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() =>
+                      patchDraft({
+                        skinTypes: on
+                          ? draft.skinTypes.filter((t) => t !== id)
+                          : [...draft.skinTypes, id],
+                      })
+                    }
+                    className={
+                      on
+                        ? "rounded-full bg-[var(--admin-plum)] px-3 py-1.5 text-[12px] text-white"
+                        : "rounded-full border border-[var(--admin-border)] px-3 py-1.5 text-[12px] text-[var(--admin-text)]"
+                    }
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="mb-2 text-[12px] font-medium text-[var(--admin-text-muted)]">
+              وسوم الميزات (Feature Tags)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {draft.featureTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3 py-1.5 text-[12.5px]"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      patchDraft({
+                        featureTags: draft.featureTags.filter((t) => t !== tag),
+                      })
+                    }
+                    className="text-[var(--admin-text-muted)] hover:text-[var(--admin-danger)]"
+                  >
+                    <X className="size-3.5" strokeWidth={1.8} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <input
+                className={inputClass}
+                id="feature-tag-input"
+                placeholder="vegan · fragrance-free · k-beauty…"
+                dir="ltr"
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  const el = e.currentTarget;
+                  const v = el.value.trim().toLowerCase();
+                  if (!v || draft.featureTags.includes(v)) return;
+                  patchDraft({ featureTags: [...draft.featureTags, v] });
+                  el.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById(
+                    "feature-tag-input",
+                  ) as HTMLInputElement | null;
+                  const v = el?.value.trim().toLowerCase();
+                  if (!v || draft.featureTags.includes(v)) return;
+                  patchDraft({ featureTags: [...draft.featureTags, v] });
+                  if (el) el.value = "";
+                }}
+                className="h-10 shrink-0 rounded-[10px] border border-[var(--admin-border)] bg-white px-3 text-[12.5px] font-medium text-[var(--admin-plum)]"
+              >
+                + وسم
+              </button>
+            </div>
           </div>
         </SectionCard>
 

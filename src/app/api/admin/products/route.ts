@@ -25,6 +25,14 @@ const concernEnum = z.enum([
   "oil-control",
 ]);
 
+const skinTypeEnum = z.enum([
+  "oily",
+  "dry",
+  "combination",
+  "normal",
+  "sensitive",
+]);
+
 const stringList = z.array(z.string()).transform((arr) =>
   arr.map((s) => s.trim()).filter(Boolean),
 );
@@ -90,6 +98,9 @@ const createSchema = z.object({
   benefitsAr: stringListRequired,
   ingredients: stringListRequired,
   concerns: z.array(concernEnum).min(1),
+  skinTypes: z.array(skinTypeEnum).optional(),
+  productType: z.string().max(60).nullable().optional(),
+  featureTags: stringList.optional(),
   isActive: z.boolean().optional(),
   isBestseller: z.boolean().optional(),
   isNew: z.boolean().optional(),
@@ -149,6 +160,9 @@ const patchSchema = z.object({
   benefitsAr: stringList.optional(),
   ingredients: stringList.optional(),
   concerns: z.array(concernEnum).optional(),
+  skinTypes: z.array(skinTypeEnum).optional(),
+  productType: z.string().max(60).nullable().optional(),
+  featureTags: stringList.optional(),
   rating: z.number().min(0).max(5).optional(),
   reviews: z.number().int().nonnegative().optional(),
   imageTone: z.string().max(300).optional(),

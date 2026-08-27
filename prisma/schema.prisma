@@ -55,6 +55,14 @@ model Product {
   stock          Int      @default(100)
   isActive       Boolean  @default(true)
 
+  /// Beauty filter fields (optional — empty until admin fills)
+  /// Skin types: oily | dry | combination | normal | sensitive
+  skinTypesJson    Json     @default("[]")
+  /// Product type / subcategory slug e.g. cleanser, serum, moisturizer
+  productType      String?
+  /// Feature tags e.g. vegan, fragrance-free, k-beauty
+  featureTagsJson  Json     @default("[]")
+
   /// —— Product cost / landed cost (IQD cents not used — whole IQD / USD units) ——
   supplierId           String?
   supplier             Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
@@ -85,6 +93,7 @@ model Product {
   @@index([isActive, isBestseller])
   @@index([supplierId])
   @@index([brandName])
+  @@index([productType])
 }
 
 /// فروع VELORA (الدوام)

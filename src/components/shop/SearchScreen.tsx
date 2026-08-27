@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   brandCountries,
   shopBrands,
@@ -9,77 +9,196 @@ import {
 } from "@/data/shop-brands";
 import { BrandCard } from "@/components/shop/BrandCard";
 import { CompactProductCard } from "@/components/shop/CompactProductCard";
+import {
+  ActiveFilterChips,
+  FilterDrawer,
+  FilterPanel,
+  QuickFilters,
+  ResultCount,
+  SearchBar,
+  SearchEmptyState,
+  SearchSuggestions,
+  SortMenu,
+  useCatalogSearchParams,
+  type SuggestPayload,
+} from "@/components/search";
+import "@/components/search/search-ui.css";
+import {
+  clearRecentSearches,
+  pushRecentSearch,
+  readRecentSearches,
+} from "@/components/search/recent-searches";
+import { popularSearches } from "@/data/popular-searches";
 import { useLocale } from "@/context/LocaleContext";
+import type { CatalogFacets } from "@/lib/catalog-search-params";
+import { serializeCatalogSearchParams } from "@/lib/catalog-search-params";
 import type { Product } from "@/types";
 import { cn } from "@/lib/utils";
 
 export function SearchScreen() {
   const { locale } = useLocale();
   const ar = locale !== "en";
-  const [query, setQuery] = useState("");
+  const {
+    params,
+    replace,
+    clearAll,
+    toggleConcern,
+    toggleSkinType,
+    toggleList,
+    setSort,
+    hasActiveFilters,
+  } = useCatalogSearchParams();
+
+  const [draftQ, setDraftQ] = useState(params.q);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggest, setSuggest] = useState<SuggestPayload | null>({
+    products: [],
+    brands: [],
+    categories: [],
+    popular: popularSearches,
+  });
+  const [recent, setRecent] = useState<string[]>([]);
   const [country, setCountry] = useState<ShopBrandCountryCode | "all">("all");
   const [results, setResults] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
   const [searching, setSearching] = useState(false);
+  const [facets, setFacets] = useState<CatalogFacets | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const q = query.trim();
+    setDraftQ(params.q);
+  }, [params.q]);
+
+  useEffect(() => {
+    setRecent(readRecentSearches());
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/catalog/facets")
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; facets?: CatalogFacets }) => {
+        if (d.ok && d.facets) setFacets(d.facets);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  // Suggestions while typing
+  useEffect(() => {
+    const q = draftQ.trim();
+    if (!suggestOpen) return;
     if (!q) {
-      setResults([]);
-      setSearching(false);
+      setSuggest({
+        products: [],
+        brands: [],
+        categories: [],
+        popular: popularSearches,
+      });
+      setSuggestLoading(false);
       return;
     }
-
-    setSearching(true);
-    const timer = window.setTimeout(() => {
+    setSuggestLoading(true);
+    const t = window.setTimeout(() => {
       void (async () => {
         try {
           const res = await fetch(
-            `/api/catalog/search?q=${encodeURIComponent(q)}`,
+            `/api/catalog/suggest?q=${encodeURIComponent(q)}`,
           );
+          const data = (await res.json()) as SuggestPayload & { ok?: boolean };
+          setSuggest({
+            products: data.products || [],
+            brands: data.brands || [],
+            categories: data.categories || [],
+            popular: data.popular || popularSearches,
+          });
+        } catch {
+          setSuggest({
+            products: [],
+            brands: [],
+            categories: [],
+            popular: popularSearches,
+          });
+        } finally {
+          setSuggestLoading(false);
+        }
+      })();
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [draftQ, suggestOpen]);
+
+  // Results from URL state
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setResults([]);
+      setTotal(0);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const qs = serializeCatalogSearchParams(params).toString();
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/catalog/search?${qs}`);
           const data = (await res.json()) as {
             ok?: boolean;
             products?: Product[];
+            total?: number;
           };
-          setResults(data.ok && Array.isArray(data.products) ? data.products : []);
+          setResults(
+            data.ok && Array.isArray(data.products) ? data.products : [],
+          );
+          setTotal(typeof data.total === "number" ? data.total : 0);
         } catch {
           setResults([]);
+          setTotal(0);
         } finally {
           setSearching(false);
         }
       })();
     }, 280);
+    return () => window.clearTimeout(t);
+  }, [params, hasActiveFilters]);
 
-    return () => window.clearTimeout(timer);
-  }, [query]);
+  const commitSearch = useCallback(
+    (q: string) => {
+      const value = q.trim();
+      if (value) {
+        pushRecentSearch(value);
+        setRecent(readRecentSearches());
+      }
+      setSuggestOpen(false);
+      replace({ q: value, sort: value ? "best-match" : params.sort });
+    },
+    [params.sort, replace],
+  );
 
   const brandsVisible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = draftQ.trim().toLowerCase();
     return shopBrands.filter((b) => {
       if (country !== "all" && b.countryCode !== country) return false;
       if (!q) return true;
       return (
         b.name.toLowerCase().includes(q) ||
-        b.nameAr.includes(query.trim()) ||
-        b.countryAr.includes(query.trim()) ||
+        b.nameAr.includes(draftQ.trim()) ||
+        b.countryAr.includes(draftQ.trim()) ||
         b.country.toLowerCase().includes(q) ||
         b.match.some((m) => m.includes(q))
       );
     });
-  }, [query, country]);
+  }, [draftQ, country]);
 
-  const hasQuery = query.trim().length > 0;
+  const showDiscover = !hasActiveFilters;
 
   return (
-    <div className="relative mx-auto max-w-5xl">
-      {/* Header row */}
-      <div className="relative z-[1] flex items-center gap-3">
+    <div className="vs-root relative mx-auto max-w-5xl">
+      <div className="relative z-[1] flex items-start gap-3">
         <Link
           href="/"
           aria-label={ar ? "رجوع" : "Back"}
           className={cn(
-            "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
             "border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--plum)] shadow-[var(--shadow-md)]",
-            "backdrop-blur-md transition-transform duration-200 hover:scale-[1.03] active:scale-95",
           )}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -93,156 +212,214 @@ export function SearchScreen() {
           </svg>
         </Link>
 
-        <label className="relative block min-w-0 flex-1">
-          <span className="sr-only">
-            {ar ? "ابحثي عن براند" : "Search for a brand"}
-          </span>
-          <span className="pointer-events-none absolute inset-y-0 start-4 flex items-center text-[var(--plum)]/45">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.45" />
-              <path
-                d="M16.2 16.2 21 21"
-                stroke="currentColor"
-                strokeWidth="1.45"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={ar ? "ابحثي عن براند" : "Search for a brand"}
-            className={cn(
-              "w-full rounded-full border border-[var(--border-glass)] bg-[var(--bg-input)] py-3 ps-11 pe-12",
-              "text-[0.92rem] text-[var(--ink)] shadow-[var(--shadow-md)]",
-              "outline-none backdrop-blur-md placeholder:text-[var(--muted)]",
-              "transition-[box-shadow,border-color] duration-200",
-              "focus:border-[var(--plum)]/20 focus:shadow-[var(--ring-focus)]",
-            )}
-            autoComplete="off"
-            inputMode="search"
+        <div className="relative min-w-0 flex-1">
+          <SearchBar
+            ar={ar}
+            value={draftQ}
+            onChange={setDraftQ}
+            onFocus={() => setSuggestOpen(true)}
+            onSubmit={() => commitSearch(draftQ)}
+            onClear={() => {
+              setDraftQ("");
+              if (params.q) replace({ q: "" });
+            }}
+            placeholder={
+              ar
+                ? "ابحثي عن منتج، ماركة، أو نوع بشرة…"
+                : "Search products, brands, or skin type…"
+            }
           />
-          {hasQuery ? (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="absolute inset-y-0 end-3 my-auto h-7 rounded-full px-2.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--plum)]"
-            >
-              {ar ? "مسح" : "Clear"}
-            </button>
-          ) : null}
-        </label>
+          <SearchSuggestions
+            open={suggestOpen}
+            ar={ar}
+            loading={suggestLoading}
+            data={suggest}
+            recent={recent}
+            onPickQuery={(q) => {
+              setDraftQ(q);
+              commitSearch(q);
+            }}
+            onClearRecent={() => {
+              clearRecentSearches();
+              setRecent([]);
+            }}
+            onClose={() => setSuggestOpen(false)}
+          />
+        </div>
       </div>
 
-      {/* Title */}
-      <header className="relative z-[1] mt-10 text-center sm:mt-12">
-        <h1 className="font-display text-[clamp(1.85rem,5vw,2.65rem)] font-bold tracking-[-0.02em] text-[var(--plum)]">
-          {ar ? "البراندات" : "Brands"}
-        </h1>
-        <p className="mx-auto mt-2.5 max-w-md text-[0.92rem] leading-relaxed text-[var(--muted)]">
-          {ar
-            ? "تسوّقي من أفضل العلامات التجارية العالمية"
-            : "Shop the world’s finest beauty houses"}
-        </p>
-        <div className="mx-auto mt-5 flex max-w-[11rem] items-center gap-2" aria-hidden>
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[var(--plum)]/25" />
-          <svg width="10" height="10" viewBox="0 0 12 12" className="text-[var(--plum)]/55">
-            <path
-              d="M6 0.6 6.85 4.2 10.5 5.05 6.85 5.9 6 9.5 5.15 5.9 1.5 5.05 5.15 4.2 6 0.6Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[var(--plum)]/25" />
-        </div>
-      </header>
-
-      {/* Country chips */}
-      <div className="relative z-[1] mt-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {suggestOpen ? (
         <button
           type="button"
-          onClick={() => setCountry("all")}
-          className={cn(
-            "shrink-0 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium transition-all duration-200",
-            country === "all"
-              ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)] shadow-[var(--shadow-md)]"
-              : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)] backdrop-blur-sm hover:bg-[var(--bg-glass-strong)]",
-          )}
-        >
-          {ar ? "الكل" : "All"}
-        </button>
-        {brandCountries.map((c) => (
-          <button
-            key={c.code}
-            type="button"
-            onClick={() => setCountry(c.code)}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium transition-all duration-200",
-              country === c.code
-                ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)] shadow-[var(--shadow-md)]"
-                : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)] backdrop-blur-sm hover:bg-[var(--bg-glass-strong)]",
-            )}
-          >
-            <span className="text-[0.85rem] opacity-90" aria-hidden>
-              {c.flag}
-            </span>
-            <span>{ar ? c.nameAr : c.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Brand grid */}
-      <section className="relative z-[1] mt-8">
-        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5">
-          {brandsVisible.map((b) => (
-            <BrandCard key={b.id} brand={b} locale={ar ? "ar" : "en"} />
-          ))}
-        </div>
-        {brandsVisible.length === 0 ? (
-          <p className="mt-10 text-center text-[0.9rem] text-[var(--muted)]">
-            {ar ? "لا يوجد براند مطابق." : "No matching brands."}
-          </p>
-        ) : (
-          <p className="mt-6 text-center font-latin text-[0.7rem] tracking-[0.12em] text-[var(--muted)]/70 uppercase">
-            {brandsVisible.length} {ar ? "براند" : "brands"}
-          </p>
-        )}
-      </section>
-
-      {hasQuery ? (
-        <section className="relative z-[1] mt-14">
-          <h2 className="font-display text-center text-[1.1rem] font-semibold text-[var(--plum)]">
-            {searching
-              ? ar
-                ? "جارٍ البحث…"
-                : "Searching…"
-              : ar
-                ? `المنتجات · ${results.length}`
-                : `Products · ${results.length}`}
-          </h2>
-          {searching ? (
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] animate-pulse rounded-[1.5rem] bg-[var(--bg-elevated)]"
-                />
-              ))}
-            </div>
-          ) : results.length ? (
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
-              {results.map((product) => (
-                <CompactProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-8 text-center text-[0.9rem] text-[var(--muted)]">
-              {ar
-                ? "لا توجد منتجات. جرّبي كلمة أخرى."
-                : "No products found. Try another word."}
-            </p>
-          )}
-        </section>
+          className="fixed inset-0 z-[30] cursor-default bg-transparent"
+          aria-label="Close suggestions"
+          onClick={() => setSuggestOpen(false)}
+        />
       ) : null}
+
+      {showDiscover ? (
+        <>
+          <header className="relative z-[1] mt-10 text-center sm:mt-12">
+            <h1 className="font-display text-[clamp(1.85rem,5vw,2.65rem)] font-bold tracking-[-0.02em] text-[var(--plum)]">
+              {ar ? "البراندات" : "Brands"}
+            </h1>
+            <p className="mx-auto mt-2.5 max-w-md text-[0.92rem] leading-relaxed text-[var(--muted)]">
+              {ar
+                ? "تسوّقي من أفضل العلامات التجارية العالمية"
+                : "Shop the world’s finest beauty houses"}
+            </p>
+          </header>
+
+          <div className="relative z-[1] mt-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setCountry("all")}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium",
+                country === "all"
+                  ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)]"
+                  : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)]",
+              )}
+            >
+              {ar ? "الكل" : "All"}
+            </button>
+            {brandCountries.map((c) => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => setCountry(c.code)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.75rem] font-medium",
+                  country === c.code
+                    ? "border-[var(--plum)]/20 bg-[var(--btn-bg)] text-[var(--btn-fg)]"
+                    : "border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--ink)]",
+                )}
+              >
+                <span aria-hidden>{c.flag}</span>
+                <span>{ar ? c.nameAr : c.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <section className="relative z-[1] mt-8">
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-5">
+              {brandsVisible.map((b) => (
+                <BrandCard key={b.id} brand={b} locale={ar ? "ar" : "en"} />
+              ))}
+            </div>
+            {brandsVisible.length === 0 ? (
+              <p className="mt-10 text-center text-[0.9rem] text-[var(--muted)]">
+                {ar ? "لا يوجد براند مطابق." : "No matching brands."}
+              </p>
+            ) : (
+              <p className="mt-6 text-center font-latin text-[0.7rem] tracking-[0.12em] text-[var(--muted)]/70 uppercase">
+                {brandsVisible.length} {ar ? "براند" : "brands"}
+              </p>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className="relative z-[1] mt-8">
+          <div className="vs-toolbar">
+            <div className="vs-mobile-filters">
+              <button
+                type="button"
+                className="vs-btn"
+                onClick={() => setDrawerOpen(true)}
+              >
+                {ar ? "فلاتر" : "Filters"}
+              </button>
+            </div>
+            <SortMenu
+              ar={ar}
+              value={params.sort}
+              hasQuery={!!params.q}
+              onChange={setSort}
+            />
+          </div>
+
+          <QuickFilters ar={ar} params={params} onApply={replace} />
+          <ActiveFilterChips
+            ar={ar}
+            params={params}
+            onClearAll={clearAll}
+            onRemove={replace}
+          />
+
+          <div className="vs-layout">
+            <aside className="vs-sidebar">
+              <FilterPanel
+                ar={ar}
+                params={params}
+                facets={facets}
+                onChange={replace}
+                toggleConcern={toggleConcern}
+                toggleSkinType={toggleSkinType}
+                toggleList={toggleList}
+              />
+            </aside>
+
+            <div>
+              <ResultCount ar={ar} total={total} />
+              {searching ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-[3/4] animate-pulse rounded-[1.5rem] bg-[var(--bg-elevated)]"
+                    />
+                  ))}
+                </div>
+              ) : results.length ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {results.map((product) => (
+                    <CompactProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <SearchEmptyState ar={ar} onClear={clearAll} />
+              )}
+
+              {total > params.pageSize ? (
+                <div className="mt-8 flex justify-center gap-2">
+                  <button
+                    type="button"
+                    className="vs-btn"
+                    disabled={params.page <= 1}
+                    onClick={() => replace({ page: params.page - 1 })}
+                  >
+                    {ar ? "السابق" : "Prev"}
+                  </button>
+                  <span className="vs-count self-center">
+                    {params.page}
+                  </span>
+                  <button
+                    type="button"
+                    className="vs-btn"
+                    disabled={params.page * params.pageSize >= total}
+                    onClick={() => replace({ page: params.page + 1 })}
+                  >
+                    {ar ? "التالي" : "Next"}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <FilterDrawer
+        open={drawerOpen}
+        ar={ar}
+        params={params}
+        facets={facets}
+        onClose={() => setDrawerOpen(false)}
+        onChange={replace}
+        onReset={clearAll}
+        toggleConcern={toggleConcern}
+        toggleSkinType={toggleSkinType}
+        toggleList={toggleList}
+      />
     </div>
   );
 }
