@@ -17,8 +17,8 @@ type Props = {
 };
 
 /**
- * Dedicated search focus layer: portal + backdrop + scroll lock.
- * Mounted via portal to document.body so page isolate/overflow cannot bleed brands.
+ * Search focus layer — body portal + scroll lock.
+ * Intentionally avoids history.pushState (Strict Mode remounts caused open/close loops).
  */
 export function SearchFocusLayer({
   open,
@@ -28,7 +28,6 @@ export function SearchFocusLayer({
 }: Props) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const previouslyFocused = useRef<HTMLElement | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -37,11 +36,6 @@ export function SearchFocusLayer({
 
   useEffect(() => {
     if (!open || !mounted) return;
-
-    previouslyFocused.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
 
     const scrollY = window.scrollY;
     const body = document.body;
@@ -55,19 +49,13 @@ export function SearchFocusLayer({
       htmlOverflow: html.style.overflow,
     };
 
-    const scrollbarGap = window.innerWidth - html.clientWidth;
+    const scrollbarGap = Math.max(0, window.innerWidth - html.clientWidth);
     body.style.overflow = "hidden";
     html.style.overflow = "hidden";
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
-    if (scrollbarGap > 0) {
-      body.style.paddingRight = `${scrollbarGap}px`;
-    }
-
-    const historyKey = "velora-search-focus";
-    window.history.pushState({ [historyKey]: true }, "");
-    let closedByPopstate = false;
+    if (scrollbarGap > 0) body.style.paddingRight = `${scrollbarGap}px`;
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -75,24 +63,18 @@ export function SearchFocusLayer({
         onClose();
       }
     };
-    const onPop = () => {
-      closedByPopstate = true;
-      onClose();
-    };
     window.addEventListener("keydown", onKey);
-    window.addEventListener("popstate", onPop);
 
     const t = window.setTimeout(() => {
       const input = panelRef.current?.querySelector<HTMLInputElement>(
         "input[type='search'], input:not([type]), input[type='text']",
       );
       input?.focus({ preventScroll: true });
-    }, 30);
+    }, 40);
 
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("popstate", onPop);
       body.style.overflow = prev.overflow;
       body.style.position = prev.position;
       body.style.top = prev.top;
@@ -100,11 +82,9 @@ export function SearchFocusLayer({
       body.style.paddingRight = prev.paddingRight;
       html.style.overflow = prev.htmlOverflow;
       window.scrollTo(0, scrollY);
-      previouslyFocused.current?.focus?.({ preventScroll: true });
-
-      if (!closedByPopstate && window.history.state?.[historyKey]) {
-        window.history.back();
-      }
+      // Do NOT restore focus to the idle search input — that re-opens the layer.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
     };
   }, [open, onClose, mounted]);
 

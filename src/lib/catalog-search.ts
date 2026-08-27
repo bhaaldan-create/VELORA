@@ -413,18 +413,36 @@ export async function suggestCatalog(qRaw: string): Promise<CatalogSuggestResult
     return { products: [], brands: [], categories: [] };
   }
 
-  const result = await searchCatalog({
-    q,
-    sort: "best-match",
-    concerns: [],
-    skinTypes: [],
-    ingredients: [],
-    features: [],
-    page: 1,
-    pageSize: 6,
+  const qLower = q.toLowerCase();
+
+  // Lightweight product suggest — avoid full advanced search pipeline
+  const rows = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { nameAr: { contains: q, mode: "insensitive" } },
+        { brandName: { contains: q, mode: "insensitive" } },
+        { productType: { contains: q, mode: "insensitive" } },
+      ],
+    },
+    orderBy: [{ isBestseller: "desc" }, { rating: "desc" }],
+    take: 8,
+    select: productCardSelect,
   });
 
-  const qLower = q.toLowerCase();
+  const products = rows
+    .filter(
+      (row) =>
+        !isFragranceProduct({
+          name: row.name,
+          nameAr: row.nameAr,
+          category: row.categorySlug as CategorySlug,
+        } as Product),
+    )
+    .slice(0, 6)
+    .map(mapProductCard);
+
   const brands = shopBrands
     .filter(
       (b) =>
@@ -440,24 +458,23 @@ export async function suggestCatalog(qRaw: string): Promise<CatalogSuggestResult
       href: `/shop?brand=${encodeURIComponent(b.slug)}`,
     }));
 
-  const { getAllCategories } = await import("@/lib/catalog");
-  const cats = await getAllCategories();
-  const categories = cats
+  const categoryDefs: { slug: CategorySlug; name: string; nameAr: string }[] = [
+    { slug: "skincare", name: "Skincare", nameAr: "العناية بالبشرة" },
+    { slug: "body-care", name: "Body Care", nameAr: "العناية بالجسم" },
+    { slug: "hair-care", name: "Hair Care", nameAr: "العناية بالشعر" },
+    { slug: "makeup", name: "Makeup", nameAr: "المكياج" },
+  ];
+  const categories = categoryDefs
     .filter(
       (c) =>
         c.slug.includes(qLower) ||
         c.name.toLowerCase().includes(qLower) ||
         c.nameAr.includes(q),
     )
-    .slice(0, 4)
-    .map((c) => ({
-      slug: c.slug,
-      name: c.name,
-      nameAr: c.nameAr,
-    }));
+    .slice(0, 4);
 
   return {
-    products: result.products,
+    products,
     brands,
     categories,
   };

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { PopularSearch } from "@/data/popular-searches";
 import type { CategorySlug, Product } from "@/types";
 
@@ -15,11 +14,13 @@ type Props = {
   open: boolean;
   ar?: boolean;
   loading?: boolean;
+  /** True when the input has a non-empty query */
+  hasQuery?: boolean;
   data: SuggestPayload | null;
   recent: string[];
   onPickQuery: (q: string) => void;
+  onPickHref: (href: string) => void;
   onClearRecent: () => void;
-  onClose: () => void;
   /** Embedded inside SearchFocusLayer — flow layout, not absolute dropdown */
   embedded?: boolean;
 };
@@ -28,20 +29,22 @@ export function SearchSuggestions({
   open,
   ar = false,
   loading,
+  hasQuery = false,
   data,
   recent,
   onPickQuery,
+  onPickHref,
   onClearRecent,
-  onClose,
   embedded = false,
 }: Props) {
   if (!open) return null;
 
+  const products = data?.products ?? [];
+  const brands = data?.brands ?? [];
+  const categories = data?.categories ?? [];
+  const popular = data?.popular ?? [];
   const hasQueryResults =
-    !!data &&
-    (data.products.length > 0 ||
-      data.brands.length > 0 ||
-      data.categories.length > 0);
+    products.length > 0 || brands.length > 0 || categories.length > 0;
 
   return (
     <div
@@ -57,58 +60,58 @@ export function SearchSuggestions({
 
       {hasQueryResults ? (
         <>
-          {data!.products.length ? (
+          {products.length ? (
             <div className="vs-suggest__group">
               <p className="vs-suggest__title">{ar ? "منتجات" : "Products"}</p>
-              {data!.products.map((p) => (
-                <Link
+              {products.map((p) => (
+                <button
                   key={p.id}
-                  href={`/shop/${p.slug}`}
+                  type="button"
                   className="vs-suggest__item"
-                  onClick={onClose}
+                  onClick={() => onPickHref(`/shop/${p.slug}`)}
                 >
                   <span>{ar ? p.nameAr : p.name}</span>
                   {p.brandName ? (
                     <span className="vs-suggest__meta">{p.brandName}</span>
                   ) : null}
-                </Link>
+                </button>
               ))}
             </div>
           ) : null}
 
-          {data!.brands.length ? (
+          {brands.length ? (
             <div className="vs-suggest__group">
               <p className="vs-suggest__title">{ar ? "ماركات" : "Brands"}</p>
-              {data!.brands.map((b) => (
-                <Link
+              {brands.map((b) => (
+                <button
                   key={b.slug}
-                  href={b.href}
+                  type="button"
                   className="vs-suggest__item"
-                  onClick={onClose}
+                  onClick={() => onPickHref(b.href)}
                 >
                   {ar ? b.nameAr : b.name}
-                </Link>
+                </button>
               ))}
             </div>
           ) : null}
 
-          {data!.categories.length ? (
+          {categories.length ? (
             <div className="vs-suggest__group">
               <p className="vs-suggest__title">{ar ? "تصنيفات" : "Categories"}</p>
-              {data!.categories.map((c) => (
-                <Link
+              {categories.map((c) => (
+                <button
                   key={c.slug}
-                  href={`/shop?category=${c.slug}`}
+                  type="button"
                   className="vs-suggest__item"
-                  onClick={onClose}
+                  onClick={() => onPickHref(`/shop?category=${c.slug}`)}
                 >
                   {ar ? c.nameAr : c.name}
-                </Link>
+                </button>
               ))}
             </div>
           ) : null}
         </>
-      ) : (
+      ) : !loading && !hasQuery ? (
         <>
           {recent.length ? (
             <div className="vs-suggest__group">
@@ -138,25 +141,49 @@ export function SearchSuggestions({
             </div>
           ) : null}
 
-          {data?.popular?.length ? (
+          {popular.length ? (
             <div className="vs-suggest__group">
               <p className="vs-suggest__title">
                 {ar ? "الأكثر بحثًا" : "Popular searches"}
               </p>
-              {data.popular.map((p) => (
-                <Link
+              {popular.map((p) => (
+                <button
                   key={p.id}
-                  href={p.href}
+                  type="button"
                   className="vs-suggest__item"
-                  onClick={onClose}
+                  onClick={() => {
+                    try {
+                      const url = new URL(p.href, "https://velora.local");
+                      const q = url.searchParams.get("q");
+                      if (url.pathname.includes("/search") && q) {
+                        onPickQuery(q);
+                        return;
+                      }
+                    } catch {
+                      /* fall through */
+                    }
+                    onPickHref(p.href);
+                  }}
                 >
                   {ar ? p.labelAr : p.labelEn}
-                </Link>
+                </button>
               ))}
             </div>
           ) : null}
+
+          {!recent.length && !popular.length ? (
+            <p className="vs-suggest__meta" style={{ padding: "0.75rem 0.65rem" }}>
+              {ar
+                ? "ابدئي بالكتابة للبحث عن منتج أو ماركة."
+                : "Start typing to search products or brands."}
+            </p>
+          ) : null}
         </>
-      )}
+      ) : !loading && hasQuery ? (
+        <p className="vs-suggest__meta" style={{ padding: "0.75rem 0.65rem" }}>
+          {ar ? "لا توجد اقتراحات مطابقة." : "No matching suggestions."}
+        </p>
+      ) : null}
     </div>
   );
 }

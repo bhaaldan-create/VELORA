@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   brandCountries,
   shopBrands,
@@ -36,7 +37,15 @@ import { serializeCatalogSearchParams } from "@/lib/catalog-search-params";
 import type { Product } from "@/types";
 import { cn } from "@/lib/utils";
 
+const EMPTY_SUGGEST: SuggestPayload = {
+  products: [],
+  brands: [],
+  categories: [],
+  popular: popularSearches,
+};
+
 export function SearchScreen() {
+  const router = useRouter();
   const { locale } = useLocale();
   const ar = locale !== "en";
   const {
@@ -53,12 +62,7 @@ export function SearchScreen() {
   const [draftQ, setDraftQ] = useState(params.q);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
-  const [suggest, setSuggest] = useState<SuggestPayload | null>({
-    products: [],
-    brands: [],
-    categories: [],
-    popular: popularSearches,
-  });
+  const [suggest, setSuggest] = useState<SuggestPayload>(EMPTY_SUGGEST);
   const [recent, setRecent] = useState<string[]>([]);
   const [country, setCountry] = useState<ShopBrandCountryCode | "all">("all");
   const [results, setResults] = useState<Product[]>([]);
@@ -67,11 +71,20 @@ export function SearchScreen() {
   const [facets, setFacets] = useState<CatalogFacets | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  /** Prevents idle search input from re-opening the layer right after close */
+  const suppressOpenRef = useRef(false);
+
   const closeSearchFocus = useCallback(() => {
+    suppressOpenRef.current = true;
     setSuggestOpen(false);
+    setSuggestLoading(false);
+    window.setTimeout(() => {
+      suppressOpenRef.current = false;
+    }, 400);
   }, []);
 
   const openSearchFocus = useCallback(() => {
+    if (suppressOpenRef.current) return;
     setSuggestOpen(true);
   }, []);
 
@@ -84,58 +97,66 @@ export function SearchScreen() {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/catalog/facets")
+    const ac = new AbortController();
+    void fetch("/api/catalog/facets", { signal: ac.signal })
       .then((r) => r.json())
       .then((d: { ok?: boolean; facets?: CatalogFacets }) => {
         if (d.ok && d.facets) setFacets(d.facets);
       })
       .catch(() => undefined);
+    return () => ac.abort();
   }, []);
 
-  // Suggestions while typing (only when focus layer is open)
+  // Suggestions while typing
   useEffect(() => {
-    const q = draftQ.trim();
     if (!suggestOpen) return;
+
+    const q = draftQ.trim();
     if (!q) {
-      setSuggest({
-        products: [],
-        brands: [],
-        categories: [],
-        popular: popularSearches,
-      });
+      setSuggest(EMPTY_SUGGEST);
       setSuggestLoading(false);
       return;
     }
+
+    const ac = new AbortController();
     setSuggestLoading(true);
     const t = window.setTimeout(() => {
       void (async () => {
         try {
           const res = await fetch(
             `/api/catalog/suggest?q=${encodeURIComponent(q)}`,
+            { signal: ac.signal },
           );
+          if (!res.ok) throw new Error("suggest failed");
           const data = (await res.json()) as SuggestPayload & { ok?: boolean };
+          if (ac.signal.aborted) return;
           setSuggest({
             products: data.products || [],
             brands: data.brands || [],
             categories: data.categories || [],
             popular: data.popular || popularSearches,
           });
-        } catch {
-          setSuggest({
-            products: [],
-            brands: [],
-            categories: [],
-            popular: popularSearches,
-          });
+        } catch (err) {
+          if (ac.signal.aborted) return;
+          setSuggest(EMPTY_SUGGEST);
         } finally {
-          setSuggestLoading(false);
+          if (!ac.signal.aborted) setSuggestLoading(false);
         }
       })();
-    }, 200);
-    return () => window.clearTimeout(t);
+    }, 220);
+
+    return () => {
+      window.clearTimeout(t);
+      ac.abort();
+    };
   }, [draftQ, suggestOpen]);
 
-  // Results from URL state
+  // Results from URL — depend on stable query string, not object identity
+  const searchKey = useMemo(
+    () => serializeCatalogSearchParams(params).toString(),
+    [params],
+  );
+
   useEffect(() => {
     if (!hasActiveFilters) {
       setResults([]);
@@ -143,31 +164,41 @@ export function SearchScreen() {
       setSearching(false);
       return;
     }
+
+    const ac = new AbortController();
     setSearching(true);
-    const qs = serializeCatalogSearchParams(params).toString();
     const t = window.setTimeout(() => {
       void (async () => {
         try {
-          const res = await fetch(`/api/catalog/search?${qs}`);
+          const res = await fetch(`/api/catalog/search?${searchKey}`, {
+            signal: ac.signal,
+          });
+          if (!res.ok) throw new Error("search failed");
           const data = (await res.json()) as {
             ok?: boolean;
             products?: Product[];
             total?: number;
           };
+          if (ac.signal.aborted) return;
           setResults(
             data.ok && Array.isArray(data.products) ? data.products : [],
           );
           setTotal(typeof data.total === "number" ? data.total : 0);
         } catch {
+          if (ac.signal.aborted) return;
           setResults([]);
           setTotal(0);
         } finally {
-          setSearching(false);
+          if (!ac.signal.aborted) setSearching(false);
         }
       })();
-    }, 280);
-    return () => window.clearTimeout(t);
-  }, [params, hasActiveFilters]);
+    }, 200);
+
+    return () => {
+      window.clearTimeout(t);
+      ac.abort();
+    };
+  }, [searchKey, hasActiveFilters]);
 
   const commitSearch = useCallback(
     (q: string) => {
@@ -176,15 +207,21 @@ export function SearchScreen() {
         pushRecentSearch(value);
         setRecent(readRecentSearches());
       }
-      setSuggestOpen(false);
+      closeSearchFocus();
       replace({ q: value, sort: value ? "best-match" : params.sort });
     },
-    [params.sort, replace],
+    [closeSearchFocus, params.sort, replace],
+  );
+
+  const pickHref = useCallback(
+    (href: string) => {
+      closeSearchFocus();
+      router.push(href);
+    },
+    [closeSearchFocus, router],
   );
 
   const brandsVisible = useMemo(() => {
-    // Keep discover grid stable while the focus layer is open (draft typing
-    // should not reshuffle brands under the overlay).
     const q = suggestOpen ? "" : draftQ.trim().toLowerCase();
     return shopBrands.filter((b) => {
       if (country !== "all" && b.countryCode !== country) return false;
@@ -207,10 +244,9 @@ export function SearchScreen() {
 
   return (
     <div className="vs-root relative mx-auto max-w-5xl">
-      {/* Idle search chrome — opens dedicated focus layer */}
       <div
         className="relative flex items-start gap-3"
-        inert={suggestOpen ? true : undefined}
+        {...(suggestOpen ? { inert: true } : {})}
       >
         <Link
           href="/"
@@ -238,7 +274,7 @@ export function SearchScreen() {
             value={draftQ}
             onChange={(v) => {
               setDraftQ(v);
-              if (!suggestOpen) openSearchFocus();
+              openSearchFocus();
             }}
             onFocus={openSearchFocus}
             onPointerDown={openSearchFocus}
@@ -252,11 +288,7 @@ export function SearchScreen() {
         </div>
       </div>
 
-      <SearchFocusLayer
-        open={suggestOpen}
-        ar={ar}
-        onClose={closeSearchFocus}
-      >
+      <SearchFocusLayer open={suggestOpen} ar={ar} onClose={closeSearchFocus}>
         <div className="vs-focus__chrome">
           <button
             type="button"
@@ -294,17 +326,15 @@ export function SearchScreen() {
             embedded
             ar={ar}
             loading={suggestLoading}
+            hasQuery={!!draftQ.trim()}
             data={suggest}
             recent={recent}
-            onPickQuery={(q) => {
-              setDraftQ(q);
-              commitSearch(q);
-            }}
+            onPickQuery={commitSearch}
+            onPickHref={pickHref}
             onClearRecent={() => {
               clearRecentSearches();
               setRecent([]);
             }}
-            onClose={closeSearchFocus}
           />
         </div>
       </SearchFocusLayer>
