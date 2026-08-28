@@ -44,8 +44,6 @@ async function HomeProductRails() {
       <ProductRail
         title="الأكثر مبيعاً"
         titleEn="Bestsellers"
-        subtitle="اختيارات العميلات الأكثر حباً"
-        subtitleEn="The pieces clients reach for most"
         products={bestsellers}
         href="/shop"
         tone="ivory"
@@ -54,8 +52,6 @@ async function HomeProductRails() {
       <ProductRail
         title="وصل حديثاً"
         titleEn="New arrivals"
-        subtitle="قطع جديدة تُضاف للمجموعة"
-        subtitleEn="Fresh edits just added to the house"
         products={newArrivals}
         href="/shop"
         tone="mist"

@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   title: string;
   titleEn: string;
-  subtitle: string;
-  subtitleEn: string;
+  subtitle?: string;
+  subtitleEn?: string;
   products: Product[];
   href?: string;
   tone?: "ivory" | "mist" | "white";
@@ -40,14 +40,16 @@ export function ProductRail({
   return (
     <section className={cn(bg, "overflow-x-clip py-16 sm:py-20 lg:py-24", className)}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mb-10 flex items-end justify-between gap-6 sm:mb-12">
+        <div className="mb-5 flex items-end justify-between gap-6 sm:mb-6">
           <div className="min-w-0 max-w-xl">
-            <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-tight text-[var(--plum)]">
+            <h2 className="font-display text-[clamp(1.65rem,3.4vw,2.2rem)] font-bold tracking-tight text-[var(--plum)]">
               {locale === "en" ? titleEn : title}
             </h2>
-            <p className="mt-2 text-[0.95rem] text-[var(--ink)]/60">
-              {locale === "en" ? subtitleEn : subtitle}
-            </p>
+            {subtitle || subtitleEn ? (
+              <p className="mt-2 text-[0.95rem] text-[var(--ink)]/60">
+                {locale === "en" ? subtitleEn : subtitle}
+              </p>
+            ) : null}
           </div>
           {href ? (
             <Link

@@ -44,10 +44,7 @@ export function GlobalOrigins() {
     <section className="bg-[var(--background)] py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="t1 font-medium tracking-[0.2em] text-[var(--muted)]">
-            الصفحة الرئيسية · اختيار عالمي
-          </p>
-          <h2 className="font-display mt-2 text-[clamp(1.55rem,3.6vw,2.1rem)] font-bold leading-snug text-[var(--plum)]">
+          <h2 className="font-display text-[clamp(1.55rem,3.6vw,2.1rem)] font-bold leading-snug text-[var(--plum)]">
             منتجات من أفضل البراندات حول العالم
           </h2>
           <p className="t3 mt-3 text-[var(--ink)]/70">
