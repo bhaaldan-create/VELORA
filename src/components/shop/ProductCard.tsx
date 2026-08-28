@@ -5,6 +5,7 @@ import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { AddToBagButton } from "@/components/shop/AddToBagButton";
+import { ProductBadge, productOverlayBadgeLabel } from "@/components/shop/ProductBadge";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
@@ -25,16 +26,7 @@ export function ProductCard({
   const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
-  const badge =
-    product.isNew
-      ? locale === "en"
-        ? "New"
-        : "جديد"
-      : product.isBestseller
-        ? locale === "en"
-          ? "Bestseller"
-          : "الأكثر مبيعاً"
-        : null;
+  const badge = productOverlayBadgeLabel(product, locale);
 
   return (
     <article
@@ -54,16 +46,14 @@ export function ProductCard({
         />
 
         {badge ? (
-          <span
+          <ProductBadge
+            label={badge}
+            size="sm"
             className={cn(
-              "absolute z-10 rounded-full bg-[var(--bg-glass-strong)] font-medium tracking-[0.12em] text-[var(--plum)] uppercase backdrop-blur-sm",
-              compactOverlayIcons
-                ? "top-2.5 start-2.5 px-2 py-0.5 text-[9px]"
-                : "top-3 start-3 px-2.5 py-1 text-[10px]",
+              "absolute z-10",
+              compactOverlayIcons ? "top-2.5 start-2.5" : "top-3 start-3",
             )}
-          >
-            {badge}
-          </span>
+          />
         ) : null}
 
         <Link href={`/shop/${product.slug}`} className="block">

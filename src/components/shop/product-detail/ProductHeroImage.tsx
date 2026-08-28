@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { ProductMedia } from "@/components/shop/ProductMedia";
+import { ProductBadge, productDetailBadges } from "@/components/shop/ProductBadge";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import type { Product } from "@/types";
-import { productCopy } from "./copy";
 
 type Props = {
   product: Product;
@@ -12,14 +12,7 @@ type Props = {
 };
 
 export function ProductHeroImage({ product, ar }: Props) {
-  const copy = productCopy(ar);
-  const badges: { key: string; label: string }[] = [];
-  if (product.isBestseller) {
-    badges.push({ key: "best", label: copy.bestSeller });
-  }
-  if (product.isNew) {
-    badges.push({ key: "new", label: copy.newBadge });
-  }
+  const badges = productDetailBadges(product, ar ? "ar" : "en");
 
   return (
     <div className="motion-safe:animate-[velora-fade_0.95s_ease-out_both]">
@@ -40,14 +33,9 @@ export function ProductHeroImage({ product, ar }: Props) {
         />
 
         {badges.length > 0 ? (
-          <div className="absolute start-3.5 top-3.5 z-[2] flex max-w-[68%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
+          <div className="absolute start-3.5 top-3.5 z-[2] flex max-w-[72%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
             {badges.map((b) => (
-              <span
-                key={b.key}
-                className="rounded-full bg-[var(--plum-fill)]/88 px-2.5 py-1 text-[0.62rem] font-medium tracking-[0.06em] text-white backdrop-blur-sm"
-              >
-                {b.label}
-              </span>
+              <ProductBadge key={b.key} label={b.label} size="md" />
             ))}
           </div>
         ) : null}

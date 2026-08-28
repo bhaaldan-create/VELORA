@@ -5,6 +5,7 @@ import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { AddToBagButton } from "@/components/shop/AddToBagButton";
+import { ProductBadge, productOverlayBadgeLabel } from "@/components/shop/ProductBadge";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
@@ -23,6 +24,7 @@ export function CompactProductCard({
   const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
+  const badge = productOverlayBadgeLabel(product, locale);
 
   return (
     <article className={cn("group flex h-full flex-col", className)}>
@@ -41,16 +43,12 @@ export function CompactProductCard({
             className="transition-transform duration-500 group-hover:scale-[1.03]"
             sizes="(max-width: 768px) 42vw, 18vw"
           />
-          {product.isNew || product.isBestseller ? (
-            <span className="absolute top-2 start-2 rounded-full bg-[var(--bg-glass-strong)] px-2 py-0.5 font-latin text-[9px] font-semibold tracking-[0.08em] text-[var(--plum)] uppercase backdrop-blur-sm">
-              {product.isNew
-                ? locale === "en"
-                  ? "New"
-                  : "جديد"
-                : locale === "en"
-                  ? "Best"
-                  : "مميز"}
-            </span>
+          {badge ? (
+            <ProductBadge
+              label={badge}
+              size="sm"
+              className="absolute top-2 start-2 z-10"
+            />
           ) : null}
         </Link>
       </div>
