@@ -4,6 +4,12 @@
 # Xcode: ios/App/App.xcodeproj — scheme: App — bundle: beauty.velora.app
 # Capacitor: SPM (لا CocoaPods) — webDir: mobile-www
 #
+# توقيع iOS: تلقائي عبر تكامل App Store Connect (اسم التكامل: codemagic)
+# + app-store-connect fetch-signing-files --create أثناء البناء.
+# لا تستخدم environment.ios_signing هنا — يتطلب profiles مسبقة في
+# Codemagic → Code signing identities ويسبب:
+# "No matching profiles found for bundle identifier ..."
+#
 # قبل أول build: راجع scripts/CODEMAGIC-SETUP.md
 
 workflows:
@@ -12,17 +18,13 @@ workflows:
     max_build_duration: 120
     instance_type: mac_mini_m2
 
-  # غيّر الاسم إلى alias التكامل في Codemagic → Team settings → Integrations
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: Codemagic VELORA
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: beauty.velora.app
-
       vars:
         BUNDLE_ID: beauty.velora.app
+        # distribution_type: app_store (يُطبَّق في fetch-signing-files --type IOS_APP_STORE)
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         VELORA_MOBILE_URL: https://velorabeautyiq.me
@@ -30,11 +32,12 @@ workflows:
         # عيّن في Codemagic UI (Environment variables):
         # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
+        # CERTIFICATE_PRIVATE_KEY (موصى به) — مفتاح RSA لإنشاء/مطابقة شهادة Distribution
+        #   ضعه في مجموعة env (مثلاً ios_signing) إن فشل --create بدون مفتاح
 
       node: 20
       xcode: latest
 
-    # لا يُشغّل build تلقائياً عند push — ابدئي يدوياً من Codemagic
     triggering:
       events:
         - tag
@@ -51,7 +54,6 @@ workflows:
       - name: Build web application
         script: |
           set -e
-          # package.json → prisma generate && prisma migrate deploy && next build
           if [ -z "$DATABASE_URL" ]; then
             echo "ERROR: DATABASE_URL is not set in Codemagic environment variables."
             exit 1
@@ -63,6 +65,33 @@ workflows:
           set -e
           export VELORA_MOBILE_URL="${VELORA_MOBILE_URL}"
           npm run mobile:sync
+
+      - name: Set up keychain for code signing
+        script: |
+          set -e
+          keychain initialize
+
+      - name: Fetch signing files from Apple Developer Portal
+        script: |
+          set -e
+          CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
+          if [ -n "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
+            printf '%s\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
+            chmod 600 "$CERT_KEY_PATH"
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --certificate-key=@file:"$CERT_KEY_PATH" \
+              --create
+          else
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --create
+          fi
+
+      - name: Add certificates to keychain
+        script: |
+          set -e
+          keychain add-certificates
 
       - name: Set up code signing settings on Xcode project
         script: |
