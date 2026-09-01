@@ -1,0 +1,99 @@
+# VELORA — Capacitor iOS → App Store Connect / TestFlight
+#
+# المشروع: Next.js + Capacitor (غلاف أصلي يفتح https://velorabeautyiq.me)
+# Xcode: ios/App/App.xcodeproj — scheme: App — bundle: beauty.velora.app
+# Capacitor: SPM (لا CocoaPods) — webDir: mobile-www
+#
+# قبل أول build: راجع scripts/CODEMAGIC-SETUP.md
+
+workflows:
+  velora-ios-testflight:
+    name: VELORA iOS → TestFlight
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+  # غيّر الاسم إلى alias التكامل في Codemagic → Team settings → Integrations
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: beauty.velora.app
+
+      vars:
+        BUNDLE_ID: beauty.velora.app
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+        VELORA_MOBILE_URL: https://velorabeautyiq.me
+        NODE_OPTIONS: --max-old-space-size=4096
+        # عيّن في Codemagic UI (Environment variables):
+        # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
+        # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
+
+      node: 20
+      xcode: latest
+
+    # لا يُشغّل build تلقائياً عند push — ابدئي يدوياً من Codemagic
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "release/*"
+          include: true
+
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          set -e
+          npm ci
+
+      - name: Build web application
+        script: |
+          set -e
+          # package.json → prisma generate && prisma migrate deploy && next build
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set in Codemagic environment variables."
+            exit 1
+          fi
+          npm run build
+
+      - name: Sync Capacitor with iOS
+        script: |
+          set -e
+          export VELORA_MOBILE_URL="${VELORA_MOBILE_URL}"
+          npm run mobile:sync
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          set -e
+          xcode-project use-profiles
+
+      - name: Increment build number
+        script: |
+          set -e
+          cd ios/App
+          if [ -n "$APP_STORE_APP_ID" ]; then
+            LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID")
+            agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+          else
+            echo "APP_STORE_APP_ID not set — using Codemagic BUILD_NUMBER ($BUILD_NUMBER)"
+            agvtool new-version -all "$BUILD_NUMBER"
+          fi
+
+      - name: Build ipa for distribution
+        script: |
+          set -e
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
