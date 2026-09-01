@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>VELORA</string>
+        <string>VELORA Beauty</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -47,6 +47,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>beauty.velora.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>beauty.velora.app</string>
+			</array>
+		</dict>
+	</array>
 	<!-- يسمح بفتح خادم التطوير المحلي عبر HTTP (LAN) أثناء التطوير -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

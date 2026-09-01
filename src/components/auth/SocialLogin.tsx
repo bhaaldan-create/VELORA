@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 import { authCopy } from "@/components/auth/auth-copy";
 import { safeNext } from "@/components/auth/auth-utils";
 import { useLocale } from "@/context/LocaleContext";
+import { OAUTH_MOBILE_RETURN_PATH } from "@/lib/oauth";
 
 function GoogleIcon() {
   return (
@@ -85,7 +87,28 @@ export function SocialLogin({
       return;
     }
     setLoading(provider);
-    const url = `/api/auth/oauth/${provider}?next=${encodeURIComponent(nextPath)}`;
+
+    const isNative = Capacitor.isNativePlatform();
+    const oauthNext = isNative
+      ? OAUTH_MOBILE_RETURN_PATH
+      : nextPath;
+    const url = `/api/auth/oauth/${provider}?next=${encodeURIComponent(oauthNext)}`;
+
+    if (isNative) {
+      void (async () => {
+        try {
+          const { Browser } = await import("@capacitor/browser");
+          const absolute = `${window.location.origin}${url}`;
+          await Browser.open({ url: absolute, presentationStyle: "popover" });
+        } catch {
+          window.location.assign(url);
+        } finally {
+          setLoading(null);
+        }
+      })();
+      return;
+    }
+
     window.location.assign(url);
   }
 

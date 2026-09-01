@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   buildConsultQuery,
   type LarsaPathDef,
@@ -9,15 +9,17 @@ import { LarsaLobby } from "@/components/advisor/LarsaLobby";
 import { LarsaConsult } from "@/components/advisor/LarsaConsult";
 import { LarsaAnalyzing } from "@/components/advisor/LarsaAnalyzing";
 import { LarsaResults } from "@/components/advisor/LarsaResults";
+import { LarsaChat } from "@/components/advisor/LarsaChat";
 import type { RecommendedProduct } from "@/components/advisor/ProductRecommendationCards";
 
-type Phase = "lobby" | "consult" | "analyzing" | "results";
+type Phase = "lobby" | "consult" | "analyzing" | "results" | "chat";
 
 type ResultState = {
   products: RecommendedProduct[];
   ritualSteps: string[];
   ritualNote: string;
   understood: string[];
+  introLine?: string | null;
 };
 
 export function LarsaExperience() {
@@ -28,6 +30,8 @@ export function LarsaExperience() {
   > | null>(null);
   const [result, setResult] = useState<ResultState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [chatPrompt, setChatPrompt] = useState<string | undefined>();
+  const chatKey = useRef(0);
 
   const reset = () => {
     setPhase("lobby");
@@ -35,6 +39,13 @@ export function LarsaExperience() {
     setPendingQuery(null);
     setResult(null);
     setError(null);
+    setChatPrompt(undefined);
+  };
+
+  const openChat = (prompt?: string) => {
+    setChatPrompt(prompt);
+    chatKey.current += 1;
+    setPhase("chat");
   };
 
   const startPath = (p: LarsaPathDef) => {
@@ -82,6 +93,7 @@ export function LarsaExperience() {
           ritualSteps: data.ritualSteps ?? [],
           ritualNote: data.ritualNote ?? "",
           understood: data.understood ?? pendingQuery.tags.slice(0, 5),
+          introLine: data.introLine ?? null,
         });
       }
     } catch {
@@ -97,7 +109,23 @@ export function LarsaExperience() {
   }, [pendingQuery]);
 
   if (phase === "lobby") {
-    return <LarsaLobby onSelect={startPath} />;
+    return (
+      <LarsaLobby
+        onSelect={startPath}
+        onOpenChat={() => openChat()}
+        onQuickPrompt={(prompt) => openChat(prompt)}
+      />
+    );
+  }
+
+  if (phase === "chat") {
+    return (
+      <LarsaChat
+        key={chatKey.current}
+        initialPrompt={chatPrompt}
+        onBack={reset}
+      />
+    );
   }
 
   if (phase === "consult" && path) {
@@ -131,11 +159,18 @@ export function LarsaExperience() {
           ritualSteps={result?.ritualSteps ?? []}
           ritualNote={result?.ritualNote}
           understood={result?.understood ?? []}
+          introLine={result?.introLine}
           onRestart={reset}
         />
       </div>
     );
   }
 
-  return <LarsaLobby onSelect={startPath} />;
+  return (
+    <LarsaLobby
+      onSelect={startPath}
+      onOpenChat={() => openChat()}
+      onQuickPrompt={(prompt) => openChat(prompt)}
+    />
+  );
 }

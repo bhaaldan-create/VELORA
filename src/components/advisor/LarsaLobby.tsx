@@ -2,11 +2,20 @@
 
 import Image from "next/image";
 import { LARSA_PATHS } from "@/data/larsa-consultation";
+import { LARSA_EXPLORE_TOPICS } from "@/data/larsa-knowledge";
 import { LarsaPathIcon } from "@/components/advisor/LarsaIcons";
 import { cn } from "@/lib/utils";
 import type { LarsaPathDef } from "@/data/larsa-consultation";
 
-export function LarsaLobby({ onSelect }: { onSelect: (path: LarsaPathDef) => void }) {
+export function LarsaLobby({
+  onSelect,
+  onOpenChat,
+  onQuickPrompt,
+}: {
+  onSelect: (path: LarsaPathDef) => void;
+  onOpenChat: () => void;
+  onQuickPrompt?: (prompt: string) => void;
+}) {
   return (
     <div
       dir="rtl"
@@ -45,7 +54,29 @@ export function LarsaLobby({ onSelect }: { onSelect: (path: LarsaPathDef) => voi
           <p className="larsa-hero-invite mt-6 text-[0.95rem] font-medium text-[var(--larsa-plum)] sm:mt-7">
             كيف يمكنني مساعدتكِ اليوم؟
           </p>
+
+          <button
+            type="button"
+            onClick={onOpenChat}
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--larsa-plum)]/25 bg-white px-6 py-3 text-[0.9rem] font-medium text-[var(--larsa-plum)] shadow-sm transition hover:border-[var(--larsa-plum)]/45 hover:bg-[var(--larsa-lavender)]/40"
+          >
+            <span className="font-latin text-[11px] tracking-[0.18em]">CHAT</span>
+            <span>تحدّثي مع لارسا مباشرة</span>
+          </button>
         </header>
+
+        <div className="mt-6 flex flex-wrap justify-center gap-2 sm:mt-8">
+          {LARSA_EXPLORE_TOPICS.slice(0, 6).map((topic) => (
+            <button
+              key={topic.id}
+              type="button"
+              onClick={() => (onQuickPrompt ? onQuickPrompt(topic.prompt) : onOpenChat())}
+              className="rounded-full bg-white px-3.5 py-2 text-[12px] text-[var(--larsa-plum-soft)] ring-1 ring-[var(--larsa-border)] transition hover:bg-[var(--larsa-lavender)]/50 hover:text-[var(--larsa-plum)]"
+            >
+              {topic.titleAr}
+            </button>
+          ))}
+        </div>
 
         <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
           {LARSA_PATHS.map((path) => (

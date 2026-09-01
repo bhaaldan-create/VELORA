@@ -23,6 +23,11 @@
 # misc
 .DS_Store
 *.pem
+*.p8
+AuthKey_*.p8
+/secrets/*.p8
+!/secrets/.gitkeep
+!/secrets/README.md
 
 # debug
 npm-debug.log*

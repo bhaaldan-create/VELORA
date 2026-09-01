@@ -1,6 +1,26 @@
 import { prisma } from "@/lib/db";
 import type { OAuthProfile, OAuthProvider } from "@/lib/oauth";
 
+type CustomerAuthSlice = {
+  passwordHash: string | null;
+  authProvider: string;
+  googleId: string | null;
+  appleId: string | null;
+};
+
+function resolveAuthProvider(
+  existing: CustomerAuthSlice,
+  newProvider: OAuthProvider,
+): string {
+  const willHaveGoogle =
+    Boolean(existing.googleId) || newProvider === "google";
+  const willHaveApple = Boolean(existing.appleId) || newProvider === "apple";
+
+  if (existing.passwordHash) return "linked";
+  if (willHaveGoogle && willHaveApple) return "linked";
+  return newProvider;
+}
+
 /**
  * إيجاد أو إنشاء زبون من ملف OAuth، مع ربط الحساب إن وُجد نفس البريد.
  */
@@ -15,15 +35,17 @@ export async function upsertCustomerFromOAuth(profile: OAuthProfile) {
         : { appleId: profile.providerUserId },
   });
   if (byProvider) {
-    if (byProvider.fullName !== profile.fullName && profile.fullName) {
+    const linkedProvider = resolveAuthProvider(byProvider, profile.provider);
+    const needsUpdate =
+      (byProvider.fullName !== profile.fullName && profile.fullName) ||
+      byProvider.authProvider !== linkedProvider;
+
+    if (needsUpdate) {
       return prisma.customer.update({
         where: { id: byProvider.id },
         data: {
           fullName: byProvider.fullName || profile.fullName,
-          authProvider:
-            byProvider.passwordHash && byProvider.authProvider === "password"
-              ? "linked"
-              : profile.provider,
+          authProvider: linkedProvider,
         },
       });
     }
@@ -34,11 +56,12 @@ export async function upsertCustomerFromOAuth(profile: OAuthProfile) {
     where: { email: profile.email },
   });
   if (byEmail) {
+    const linkedProvider = resolveAuthProvider(byEmail, profile.provider);
     return prisma.customer.update({
       where: { id: byEmail.id },
       data: {
         [providerIdField]: profile.providerUserId,
-        authProvider: byEmail.passwordHash ? "linked" : profile.provider,
+        authProvider: linkedProvider,
         fullName: byEmail.fullName || profile.fullName,
       },
     });

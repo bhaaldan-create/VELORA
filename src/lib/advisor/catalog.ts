@@ -1,12 +1,12 @@
 import {
-  getAllProducts,
+  getAdvisorProducts,
   resolveProductsByIdsOrSlugs as resolveFromDb,
 } from "@/lib/catalog";
 import type { CategorySlug, Product, SkinConcern } from "@/types";
 
 /** كتالوج مضغوط للنموذج — من قاعدة البيانات */
 export async function getCatalogForPrompt() {
-  const products = await getAllProducts();
+  const products = await getAdvisorProducts();
   return products.map((p) => ({
     id: p.id,
     slug: p.slug,
@@ -16,6 +16,9 @@ export async function getCatalogForPrompt() {
     priceIQD: p.price,
     size: p.size,
     concerns: p.concerns,
+    skinTypes: p.skinTypes ?? [],
+    productType: p.productType,
+    featureTags: (p.featureTags ?? []).slice(0, 6),
     benefitsAr: p.benefitsAr.slice(0, 4),
     ingredients: p.ingredients.slice(0, 8),
     descriptionAr: p.descriptionAr.slice(0, 160),
@@ -37,7 +40,7 @@ export type CatalogSearchInput = {
 export async function searchCatalogProducts(
   input: CatalogSearchInput,
 ): Promise<Product[]> {
-  const all = await getAllProducts();
+  const all = await getAdvisorProducts();
   const q = (input.query || "").trim().toLowerCase();
   const limit = Math.min(Math.max(input.limit ?? 8, 1), 12);
 
@@ -57,7 +60,7 @@ export async function searchCatalogProducts(
     }
     if (q) {
       const hay =
-        `${p.name} ${p.nameAr} ${p.descriptionAr} ${p.benefitsAr.join(" ")} ${p.ingredients.join(" ")} ${p.category}`.toLowerCase();
+        `${p.name} ${p.nameAr} ${p.descriptionAr} ${p.benefitsAr.join(" ")} ${p.ingredients.join(" ")} ${(p.featureTags ?? []).join(" ")} ${(p.skinTypes ?? []).join(" ")} ${p.productType ?? ""} ${p.category}`.toLowerCase();
       if (!hay.includes(q) && !q.split(/\s+/).some((w) => w.length > 2 && hay.includes(w))) {
         return false;
       }

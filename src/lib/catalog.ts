@@ -3,7 +3,9 @@ import { prisma } from "@/lib/db";
 import {
   mapCategory,
   mapProduct,
+  mapProductAdvisor,
   mapProductCard,
+  productAdvisorSelect,
   productCardSelect,
 } from "@/lib/catalog-mapper";
 import { isFragranceProduct } from "@/lib/product-brand";
@@ -57,6 +59,22 @@ export async function getAllProducts(): Promise<Product[]> {
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
     ["catalog-all-products-card-v4"],
+    catalogCache,
+  )();
+}
+
+/** كتالوج غني للمستشار — فوائد، مكوّنات، أوصاف للمطابقة والـ AI */
+export async function getAdvisorProducts(): Promise<Product[]> {
+  return unstable_cache(
+    async () => {
+      const rows = await prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: [{ isBestseller: "desc" }, { nameAr: "asc" }],
+        select: productAdvisorSelect,
+      });
+      return withoutFragranceProducts(rows.map(mapProductAdvisor));
+    },
+    ["catalog-advisor-products-v1"],
     catalogCache,
   )();
 }

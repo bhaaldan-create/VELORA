@@ -10,6 +10,8 @@ import {
   type OAuthProvider,
 } from "@/lib/oauth";
 
+export const runtime = "nodejs";
+
 function parseProvider(raw: string): OAuthProvider | null {
   if (raw === "google" || raw === "apple") return raw;
   return null;

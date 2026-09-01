@@ -30,6 +30,39 @@ export function storefrontProductImageUrl(
   return imageUrl;
 }
 
+/** حقول المستشار — كتالوج غني للتوصية والـ AI بدون جلب الصفحة كاملة */
+export const productAdvisorSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  nameAr: true,
+  categorySlug: true,
+  price: true,
+  discountPercent: true,
+  currency: true,
+  size: true,
+  isBestseller: true,
+  isNew: true,
+  rating: true,
+  reviews: true,
+  imageTone: true,
+  imageUrl: true,
+  brandName: true,
+  concernsJson: true,
+  skinTypesJson: true,
+  productType: true,
+  featureTagsJson: true,
+  stock: true,
+  descriptionAr: true,
+  benefitsJson: true,
+  benefitsArJson: true,
+  ingredientsJson: true,
+} as const;
+
+export type ProductAdvisorRow = Prisma.ProductGetPayload<{
+  select: typeof productAdvisorSelect;
+}>;
+
 /** حقول القائمة فقط — بدون أوصاف/مكونات ثقيلة (تسريع التنقل) */
 export const productCardSelect = {
   id: true,
@@ -68,6 +101,44 @@ export function mapCategory(row: DbCategory): Category {
     descriptionAr: row.descriptionAr,
     tagline: row.tagline,
     taglineAr: row.taglineAr,
+  };
+}
+
+/** نسخة غنية للمستشار — أوصاف ومكوّنات للمطابقة الذكية */
+export function mapProductAdvisor(row: ProductAdvisorRow): Product {
+  const discountPercent = row.discountPercent || 0;
+  const base = row.price;
+  const sale = salePriceFromBase(base, discountPercent);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    category: row.categorySlug as CategorySlug,
+    price: sale,
+    originalPrice: discountPercent > 0 ? base : undefined,
+    discountPercent: discountPercent > 0 ? discountPercent : undefined,
+    currency: (row.currency as Currency) || "IQD",
+    description: "",
+    descriptionAr: row.descriptionAr || "",
+    benefits: asStringArray(row.benefitsJson),
+    benefitsAr: asStringArray(row.benefitsArJson),
+    ingredients: asStringArray(row.ingredientsJson),
+    concerns: asStringArray<SkinConcern>(row.concernsJson),
+    skinTypes: asStringArray<SkinType>(row.skinTypesJson),
+    productType: row.productType || null,
+    featureTags: asStringArray(row.featureTagsJson),
+    size: row.size,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    rating: row.rating,
+    reviews: row.reviews,
+    imageTone: row.imageTone,
+    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
+    brandName: row.brandName || null,
+    brandLogoUrl: null,
+    stock: row.stock,
   };
 }
 

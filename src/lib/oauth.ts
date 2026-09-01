@@ -5,6 +5,10 @@
 
 import { SignJWT, importPKCS8 } from "jose";
 import { createCustomerSessionToken } from "@/lib/customer-auth";
+import {
+  isApplePrivateKeyAvailable,
+  loadApplePrivateKeyPem,
+} from "@/lib/apple-key";
 
 export type OAuthProvider = "google" | "apple";
 
@@ -26,6 +30,10 @@ export function oauthCallbackUrl(provider: OAuthProvider) {
   return `${getSiteOrigin()}/api/auth/oauth/${provider}/callback`;
 }
 
+/** Return URL المطلوب في Apple Developer (Services ID) */
+export const APPLE_WEB_OAUTH_CALLBACK_URL =
+  "https://velorabeautyiq.me/api/auth/oauth/apple/callback";
+
 export function isGoogleOAuthConfigured() {
   return Boolean(
     process.env.GOOGLE_OAUTH_CLIENT_ID?.trim() &&
@@ -38,7 +46,7 @@ export function isAppleOAuthConfigured() {
     process.env.APPLE_CLIENT_ID?.trim() &&
       process.env.APPLE_TEAM_ID?.trim() &&
       process.env.APPLE_KEY_ID?.trim() &&
-      process.env.APPLE_PRIVATE_KEY?.trim(),
+      isApplePrivateKeyAvailable(),
   );
 }
 
@@ -94,6 +102,35 @@ export function safeOAuthNext(raw: string | null | undefined) {
   if (!raw.startsWith("/") || raw.startsWith("//")) return "/account";
   if (raw.startsWith("/admin")) return "/account";
   return raw;
+}
+
+/** مسار العودة بعد OAuth داخل تطبيق Capacitor */
+export const OAUTH_MOBILE_RETURN_PATH = "/auth/oauth/mobile-return";
+
+export function isMobileOAuthReturn(nextPath: string) {
+  return nextPath === OAUTH_MOBILE_RETURN_PATH;
+}
+
+/** تذكرة قصيرة العمر لنقل الجلسة من متصفح OAuth إلى WebView */
+export async function createMobileOAuthTicket(customerId: string) {
+  const exp = Date.now() + 2 * 60 * 1000;
+  const payload = `${customerId}.${exp}`;
+  const sig = await hmacSign(payload, oauthSecret());
+  return `${payload}.${sig}`;
+}
+
+export async function verifyMobileOAuthTicket(ticket: string | null | undefined) {
+  if (!ticket) return null;
+  const parts = ticket.split(".");
+  if (parts.length !== 3) return null;
+  const [customerId, expRaw, sig] = parts;
+  if (!customerId || !expRaw || !sig) return null;
+  const exp = Number(expRaw);
+  if (!Number.isFinite(exp) || Date.now() > exp) return null;
+  const payload = `${customerId}.${expRaw}`;
+  const ok = await hmacVerify(payload, sig, oauthSecret());
+  if (!ok) return null;
+  return customerId;
 }
 
 /** حالة CSRF موقّعة: next|nonce|exp|sig */
@@ -221,25 +258,15 @@ async function exchangeGoogleCode(code: string): Promise<OAuthProfile> {
   };
 }
 
-function normalizeApplePrivateKey(raw: string) {
-  let key = raw.trim();
-  if (
-    (key.startsWith('"') && key.endsWith('"')) ||
-    (key.startsWith("'") && key.endsWith("'"))
-  ) {
-    key = key.slice(1, -1);
-  }
-  return key.replace(/\\n/g, "\n");
-}
-
 async function createAppleClientSecret() {
   const teamId = process.env.APPLE_TEAM_ID!.trim();
   const clientId = process.env.APPLE_CLIENT_ID!.trim();
   const keyId = process.env.APPLE_KEY_ID!.trim();
-  const privateKey = await importPKCS8(
-    normalizeApplePrivateKey(process.env.APPLE_PRIVATE_KEY!),
-    "ES256",
-  );
+  const pem = loadApplePrivateKeyPem();
+  if (!pem) {
+    throw new Error("Apple private key غير متوفر — راجع APPLE_PRIVATE_KEY_PATH.");
+  }
+  const privateKey = await importPKCS8(pem, "ES256");
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({})
     .setProtectedHeader({ alg: "ES256", kid: keyId })

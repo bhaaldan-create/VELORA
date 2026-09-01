@@ -44,6 +44,7 @@ export function LarsaResults({
   ritualNote,
   understood,
   pathTitle,
+  introLine,
   onRestart,
 }: {
   products: RecommendedProduct[];
@@ -51,6 +52,7 @@ export function LarsaResults({
   ritualNote?: string;
   understood: string[];
   pathTitle: string;
+  introLine?: string | null;
   onRestart: () => void;
 }) {
   const { addItem } = useCart();
@@ -80,7 +82,7 @@ export function LarsaResults({
             </span>
           </div>
           <h1 className="font-display mt-5 text-[clamp(1.5rem,3.5vw,2.1rem)] font-semibold text-[var(--larsa-plum)]">
-            لقيت لكِ مجموعة منتجات أشوفها مناسبة لاحتياجاتكِ
+            {introLine ?? "لقيت لكِ مجموعة منتجات أشوفها مناسبة لاحتياجاتكِ"}
           </h1>
           <p className="mt-3 max-w-lg text-[0.95rem] text-[var(--larsa-plum-soft)]">
             بناءً على إجاباتكِ في «{pathTitle}» — رتّبت لكِ روتيناً واضحاً من منتجات VELORA فقط.
@@ -160,9 +162,8 @@ export function LarsaResults({
                     </h3>
                   </Link>
                   <p className="mt-2 text-[0.875rem] leading-relaxed text-[var(--larsa-plum-soft)]">
-                    وهذا المنتج تحديداً اخترته لكِ لأن{" "}
-                    {item.benefitsAr[0] ?? "يناسب احتياجكِ الحالي"}
-                    {item.benefitsAr[1] ? `، و${item.benefitsAr[1]}` : ""}.
+                    {item.whyAr ??
+                      `وهذا المنتج تحديداً اخترته لكِ لأن ${item.benefitsAr[0] ?? "يناسب احتياجكِ الحالي"}${item.benefitsAr[1] ? `، و${item.benefitsAr[1]}` : ""}.`}
                   </p>
                   <div className="mt-auto space-y-3 pt-4">
                     <ProductPrice

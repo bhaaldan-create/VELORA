@@ -6,14 +6,18 @@ import {
 } from "@/lib/customer-auth";
 import { upsertCustomerFromOAuth } from "@/lib/oauth-customers";
 import {
+  createMobileOAuthTicket,
   createSessionCookieValue,
   exchangeOAuthCode,
+  isMobileOAuthReturn,
   OAUTH_STATE_COOKIE,
   oauthStateCookieOptions,
   safeOAuthNext,
   verifyOAuthState,
   type OAuthProvider,
 } from "@/lib/oauth";
+
+export const runtime = "nodejs";
 
 function parseProvider(raw: string): OAuthProvider | null {
   if (raw === "google" || raw === "apple") return raw;
@@ -88,7 +92,23 @@ async function finishOAuth(
     const customer = await upsertCustomerFromOAuth(profile);
     const sessionToken = await createSessionCookieValue(customer.id);
     const origin = new URL(req.url).origin;
-    const res = NextResponse.redirect(`${origin}${safeOAuthNext(nextPath)}`);
+    const finalNext = safeOAuthNext(nextPath);
+
+    if (isMobileOAuthReturn(finalNext)) {
+      const ticket = await createMobileOAuthTicket(customer.id);
+      const accountNext = safeOAuthNext("/account");
+      const res = NextResponse.redirect(
+        `${origin}/auth/oauth/mobile-return?ticket=${encodeURIComponent(ticket)}&next=${encodeURIComponent(accountNext)}`,
+      );
+      res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
+      res.cookies.set(OAUTH_STATE_COOKIE, "", {
+        ...oauthStateCookieOptions(0),
+        maxAge: 0,
+      });
+      return res;
+    }
+
+    const res = NextResponse.redirect(`${origin}${finalNext}`);
     res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
     res.cookies.set(OAUTH_STATE_COOKIE, "", {
       ...oauthStateCookieOptions(0),

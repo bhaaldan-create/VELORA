@@ -4,6 +4,7 @@ import { IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
 import localFont from "next/font/local";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { MobileOAuthBridge } from "@/components/auth/MobileOAuthBridge";
 import { NativeAppShell } from "@/components/layout/NativeAppShell";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { PrimaryBottomNav } from "@/components/layout/PrimaryBottomNav";
@@ -134,6 +135,7 @@ export default function RootLayout({
             <NavigationProgress />
           </Suspense>
           <NativeAppShell />
+          <MobileOAuthBridge />
           <Header />
           <SiteMain>{children}</SiteMain>
           <Footer />

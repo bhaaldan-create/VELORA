@@ -32,6 +32,8 @@ export type RecommendedProduct = {
   reviews?: number;
   isBestseller?: boolean;
   isNew?: boolean;
+  /** سبب اختيار لارسا — من الـ AI */
+  whyAr?: string | null;
 };
 
 function toProduct(item: RecommendedProduct): Product {
