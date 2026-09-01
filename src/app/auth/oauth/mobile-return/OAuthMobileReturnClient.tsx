@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { mobileOAuthCompleteUrl } from "@/lib/oauth-mobile-bridge";
-import { safeOAuthNext } from "@/lib/oauth";
+import { safeOAuthNext } from "@/lib/oauth-paths";
 
 /** احتياطي لجلسات OAuth القديمة — يتحقق من الجلسة أو يستبدل التذكرة */
 export default function OAuthMobileReturnPage() {

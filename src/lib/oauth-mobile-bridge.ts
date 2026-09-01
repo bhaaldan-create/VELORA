@@ -1,4 +1,4 @@
-import { safeOAuthNext } from "@/lib/oauth";
+import { safeOAuthNext } from "@/lib/oauth-paths";
 
 /** يطابق CFBundleURLSchemes في ios/App/App/Info.plist */
 export const OAUTH_APP_URL_SCHEME = "beauty.velora.app";
