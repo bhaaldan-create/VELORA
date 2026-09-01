@@ -6,7 +6,6 @@ import {
 } from "@/lib/customer-auth";
 import { upsertCustomerFromOAuth } from "@/lib/oauth-customers";
 import {
-  createMobileOAuthTicket,
   createSessionCookieValue,
   exchangeOAuthCode,
   isMobileOAuthReturn,
@@ -95,11 +94,8 @@ async function finishOAuth(
     const finalNext = safeOAuthNext(nextPath);
 
     if (isMobileOAuthReturn(finalNext)) {
-      const ticket = await createMobileOAuthTicket(customer.id);
       const accountNext = safeOAuthNext("/account");
-      const res = NextResponse.redirect(
-        `${origin}/auth/oauth/mobile-return?ticket=${encodeURIComponent(ticket)}&next=${encodeURIComponent(accountNext)}`,
-      );
+      const res = NextResponse.redirect(`${origin}${accountNext}`);
       res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
       res.cookies.set(OAUTH_STATE_COOKIE, "", {
         ...oauthStateCookieOptions(0),
