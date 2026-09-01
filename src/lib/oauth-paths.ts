@@ -7,9 +7,15 @@ export function safeOAuthNext(raw: string | null | undefined) {
   return raw;
 }
 
-/** مسار العودة بعد OAuth داخل تطبيق Capacitor */
+/** جسر الجلسة بعد OAuth — يفعّل الكوكي عبر fetch من نفس المصدر */
+export const OAUTH_SESSION_BRIDGE_PATH = "/auth/oauth/session-bridge";
+
+/** مسار قديم — يُحوَّل تلقائياً إلى session-bridge */
 export const OAUTH_MOBILE_RETURN_PATH = "/auth/oauth/mobile-return";
 
-export function isMobileOAuthReturn(nextPath: string) {
-  return nextPath === OAUTH_MOBILE_RETURN_PATH;
+export function isOAuthSessionBridge(nextPath: string) {
+  const base = nextPath.split("?")[0] ?? nextPath;
+  return (
+    base === OAUTH_SESSION_BRIDGE_PATH || base === OAUTH_MOBILE_RETURN_PATH
+  );
 }

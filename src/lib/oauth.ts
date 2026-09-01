@@ -11,13 +11,15 @@ import {
 } from "@/lib/apple-key";
 import {
   OAUTH_MOBILE_RETURN_PATH,
-  isMobileOAuthReturn,
+  OAUTH_SESSION_BRIDGE_PATH,
+  isOAuthSessionBridge,
   safeOAuthNext,
 } from "@/lib/oauth-paths";
 
 export {
   OAUTH_MOBILE_RETURN_PATH,
-  isMobileOAuthReturn,
+  OAUTH_SESSION_BRIDGE_PATH,
+  isOAuthSessionBridge,
   safeOAuthNext,
 } from "@/lib/oauth-paths";
 
@@ -155,13 +157,44 @@ export async function verifyOAuthState(state: string | null | undefined) {
 }
 
 export function oauthStateCookieOptions(maxAge = 600) {
+  const secure = process.env.NODE_ENV === "production";
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure,
+    // none يسمح بإرسال كوكي الحالة عند form_post من appleid.apple.com
+    sameSite: (secure ? "none" : "lax") as "none" | "lax",
     path: "/",
     maxAge,
   };
+}
+
+export function mapOAuthUserError(
+  provider: OAuthProvider,
+  raw: string | null | undefined,
+): string {
+  if (!raw) return "تعذّر إكمال تسجيل الدخول.";
+  if (raw === "access_denied") return "تم إلغاء تسجيل الدخول.";
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("registration") ||
+    lower.includes("incomplete") ||
+    lower.includes("not completed")
+  ) {
+    return "حساب Apple غير مكتمل — افتحي إعدادات iPhone → Apple ID وأكملي البريد والاسم ثم أعيدي المحاولة.";
+  }
+  if (lower.includes("redirect_uri") || lower.includes("redirect")) {
+    return "خطأ في إعداد Apple — Return URL غير مطابق في Apple Developer.";
+  }
+  if (lower.includes("invalid_client")) {
+    return "خطأ في مفاتيح Apple — راجع Services ID والمفتاح (.p8) على Vercel.";
+  }
+  if (lower.includes("invalid_grant") || lower.includes("expired")) {
+    return "انتهت صلاحية رمز Apple. أعيدي المحاولة من صفحة الدخول.";
+  }
+  if (provider === "apple" && raw.length > 0 && raw.length < 120) {
+    return raw;
+  }
+  return "تعذّر إكمال تسجيل الدخول.";
 }
 
 export async function buildGoogleAuthUrl(state: string) {

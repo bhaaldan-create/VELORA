@@ -2,46 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { mobileOAuthCompleteUrl } from "@/lib/oauth-mobile-bridge";
 import { safeOAuthNext } from "@/lib/oauth-paths";
 
-/** احتياطي لجلسات OAuth القديمة — يتحقق من الجلسة أو يستبدل التذكرة */
+/** توافق مع الروابط القديمة — يوجّه إلى session-bridge */
 export default function OAuthMobileReturnPage() {
   const search = useSearchParams();
   const router = useRouter();
   const [message, setMessage] = useState("جارٍ إكمال تسجيل الدخول…");
 
   useEffect(() => {
-    const ticket = search.get("ticket")?.trim();
+    const ticket = search.get("ticket");
     const next = safeOAuthNext(search.get("next"));
-
-    async function finish() {
-      try {
-        const meRes = await fetch("/api/auth/me", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const me = (await meRes.json()) as {
-          ok?: boolean;
-          customer?: { id: string } | null;
-        };
-        if (me.customer) {
-          router.replace(next);
-          return;
-        }
-
-        if (ticket) {
-          window.location.replace(mobileOAuthCompleteUrl(ticket, next));
-          return;
-        }
-
-        setMessage("تعذّر إكمال تسجيل الدخول. أعيدي المحاولة من صفحة الدخول.");
-      } catch {
-        setMessage("تعذّر إكمال تسجيل الدخول. أعيدي المحاولة.");
-      }
-    }
-
-    void finish();
+    const params = new URLSearchParams();
+    if (ticket) params.set("ticket", ticket);
+    params.set("next", next);
+    router.replace(`/auth/oauth/session-bridge?${params.toString()}`);
   }, [search, router]);
 
   return (

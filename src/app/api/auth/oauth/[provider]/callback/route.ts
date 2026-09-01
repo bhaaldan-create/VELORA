@@ -6,9 +6,10 @@ import {
 } from "@/lib/customer-auth";
 import { upsertCustomerFromOAuth } from "@/lib/oauth-customers";
 import {
+  createMobileOAuthTicket,
   createSessionCookieValue,
   exchangeOAuthCode,
-  isMobileOAuthReturn,
+  mapOAuthUserError,
   OAUTH_STATE_COOKIE,
   oauthStateCookieOptions,
   safeOAuthNext,
@@ -50,17 +51,11 @@ async function finishOAuth(
 
   if (input.error) {
     return NextResponse.redirect(
-      loginErrorUrl(
-        req,
-        input.error === "access_denied"
-          ? "تم إلغاء تسجيل الدخول."
-          : "تعذّر إكمال تسجيل الدخول.",
-        nextPath,
-      ),
+      loginErrorUrl(req, mapOAuthUserError(provider, input.error), nextPath),
     );
   }
 
-  if (!verified || !input.state) {
+  if (!verified) {
     return NextResponse.redirect(
       loginErrorUrl(
         req,
@@ -70,7 +65,21 @@ async function finishOAuth(
     );
   }
 
-  if (cookieState && cookieState !== input.state) {
+  if (!input.state && !cookieState) {
+    return NextResponse.redirect(
+      loginErrorUrl(
+        req,
+        "انتهت صلاحية جلسة الدخول. أعيدي المحاولة.",
+        nextPath,
+      ),
+    );
+  }
+
+  if (
+    cookieState &&
+    input.state &&
+    cookieState !== input.state
+  ) {
     return NextResponse.redirect(
       loginErrorUrl(req, "طلب غير صالح. أعيدي المحاولة.", nextPath),
     );
@@ -92,19 +101,15 @@ async function finishOAuth(
     const sessionToken = await createSessionCookieValue(customer.id);
     const origin = new URL(req.url).origin;
     const finalNext = safeOAuthNext(nextPath);
+    const ticket = await createMobileOAuthTicket(customer.id);
+    const bridgeParams = new URLSearchParams({
+      ticket,
+      next: finalNext,
+    });
 
-    if (isMobileOAuthReturn(finalNext)) {
-      const accountNext = safeOAuthNext("/account");
-      const res = NextResponse.redirect(`${origin}${accountNext}`);
-      res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
-      res.cookies.set(OAUTH_STATE_COOKIE, "", {
-        ...oauthStateCookieOptions(0),
-        maxAge: 0,
-      });
-      return res;
-    }
-
-    const res = NextResponse.redirect(`${origin}${finalNext}`);
+    const res = NextResponse.redirect(
+      `${origin}/auth/oauth/session-bridge?${bridgeParams.toString()}`,
+    );
     res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
     res.cookies.set(OAUTH_STATE_COOKIE, "", {
       ...oauthStateCookieOptions(0),
@@ -113,14 +118,10 @@ async function finishOAuth(
     return res;
   } catch (error) {
     console.error(`[oauth/${provider}/callback]`, error);
+    const raw =
+      error instanceof Error ? error.message : "تعذّر إكمال تسجيل الدخول.";
     return NextResponse.redirect(
-      loginErrorUrl(
-        req,
-        error instanceof Error
-          ? error.message
-          : "تعذّر إكمال تسجيل الدخول عبر الحساب الاجتماعي.",
-        nextPath,
-      ),
+      loginErrorUrl(req, mapOAuthUserError(provider, raw), nextPath),
     );
   }
 }
