@@ -26,6 +26,7 @@ workflows:
         - velora
       vars:
         BUNDLE_ID: beauty.velora.app
+        APPLE_TEAM_ID: UC7FV2YW74
         # distribution_type: app_store (يُطبَّق في fetch-signing-files --type IOS_APP_STORE)
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
@@ -33,7 +34,8 @@ workflows:
         NODE_OPTIONS: --max-old-space-size=4096
         # عيّن في Codemagic UI → مجموعة velora (Secret — لا تضع القيم في Git):
         # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
-        # CERTIFICATE_PRIVATE_KEY — مطلوب لـ fetch-signing-files --create (مفتاح RSA Distribution)
+        # CERTIFICATE_PRIVATE_KEY — مطلوب (مفتاح RSA كامل BEGIN/END)
+        # إن فشل التكامل: أضيفي أيضاً APP_STORE_CONNECT_ISSUER_ID، APP_STORE_CONNECT_KEY_IDENTIFIER، APP_STORE_CONNECT_PRIVATE_KEY
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
 
       # Capacitor CLI 8.4+ يتطلب Node >= 22 (bin/capacitor يفشل على Node 20)
@@ -73,22 +75,41 @@ workflows:
           set -e
           keychain initialize
 
+      - name: Verify Apple signing prerequisites
+        script: |
+          set -e
+          echo "=== Apple signing prerequisites (values hidden) ==="
+          if [ -n "${CERTIFICATE_PRIVATE_KEY:-}" ]; then echo "CERTIFICATE_PRIVATE_KEY: set"; else echo "CERTIFICATE_PRIVATE_KEY: MISSING"; fi
+          if [ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ]; then echo "APP_STORE_CONNECT_ISSUER_ID: set"; else echo "APP_STORE_CONNECT_ISSUER_ID: missing (needs integration Codemagic VELORA or velora group)"; fi
+          if [ -n "${APP_STORE_CONNECT_KEY_IDENTIFIER:-}" ]; then echo "APP_STORE_CONNECT_KEY_IDENTIFIER: set"; else echo "APP_STORE_CONNECT_KEY_IDENTIFIER: missing"; fi
+          if [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then echo "APP_STORE_CONNECT_PRIVATE_KEY: set"; else echo "APP_STORE_CONNECT_PRIVATE_KEY: missing"; fi
+          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic (group: velora, Secret)."
+            exit 1
+          fi
+          if [ -z "${APP_STORE_CONNECT_ISSUER_ID:-}" ] || [ -z "${APP_STORE_CONNECT_KEY_IDENTIFIER:-}" ] || [ -z "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
+            echo "ERROR: App Store Connect API credentials are not available to the build."
+            echo "Fix: Codemagic Team settings → Integrations → Developer Portal → key name must match yaml: Codemagic VELORA"
+            echo "Or add APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY to group velora."
+            exit 1
+          fi
+
       - name: Fetch signing files from Apple Developer Portal
         script: |
           set -e
-          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
-            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic (group: velora, Secret)."
-            echo "Generate on your machine: openssl genrsa -out ios_distribution_key.pem 2048"
-            echo "Paste the full PEM (BEGIN/END lines) into Codemagic — never commit it to Git."
-            exit 1
-          fi
           CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
-          printf '%s\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
+          # Codemagic secrets may store PEM with literal \n — %b decodes them
+          printf '%b\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
           chmod 600 "$CERT_KEY_PATH"
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+          if ! app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key=@file:"$CERT_KEY_PATH" \
-            --create
+            --create; then
+            echo "fetch-signing-files --create failed — retrying fetch without --create (use existing profile/cert)..."
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --certificate-key=@file:"$CERT_KEY_PATH"
+          fi
 
       - name: Add certificates to keychain
         script: |
