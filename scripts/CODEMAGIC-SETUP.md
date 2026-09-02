@@ -29,35 +29,33 @@
 ## 2) App Store Connect API Key
 
 1. [App Store Connect](https://appstoreconnect.apple.com) → **Users and Access** → **Integrations** → **App Store Connect API**
-2. **+** → Key name: `Codemagic` → Access: **App Manager**
-3. حمّلي `.p8` — **مرة واحدة فقط**
+2. انسخي **Issuer ID** من أعلى الصفحة (UUID مثل `7d852fa2-8afd-47ca-9d37-3ed8e66d7b6d`) — **ليس** Team ID `UC7FV2YW74`
+3. **+** → Key name: `Codemagic` → Access: **App Manager** → **Generate**
+4. حمّلي `.p8` — **مرة واحدة فقط** — سجّلي **Key ID**
 
-في Codemagic:
+### أضيفي في Codemagic → مجموعة `velora` (Secret لكل متغير)
 
-1. **Team settings** → **Integrations** → **App Store Connect**
-2. أضيفي: Issuer ID، Key ID، `.p8`
-3. احفظي **alias** التكامل (مثلاً `codemagic`)
-4. في `codemagic.yaml` غيّري `integrations.app_store_connect` إن كان الاسم مختلفاً
+| المتغير | القيمة |
+|---------|--------|
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID من أعلى صفحة API |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | محتوى ملف `.p8` كاملاً (من `-----BEGIN PRIVATE KEY-----` إلى `-----END PRIVATE KEY-----`) |
+
+**لا** تستخدم مفتاح Sign in with Apple من Apple Developer → Keys.
+
+(اختياري) **Team settings** → **Integrations** → **Developer Portal** باسم **`Codemagic VELORA`** — احتياطي فقط؛ **المتغيرات أعلاه أهم**.
 
 ---
 
-## 3) iOS Code Signing في Codemagic
+## 3) iOS Code Signing
 
-**Team settings** → **Integrations** → **Developer Portal** → **Manage keys**
-
-- اسم التكامل: **`Codemagic VELORA`** (يجب أن يطابق `codemagic.yaml`)
-- Issuer ID من **App Store Connect API** (UUID أعلى الصفحة — ليس Team ID فقط)
-- Key ID + ملف `.p8` من **App Store Connect API** (Access: App Manager)
-- **لا** تستخدم مفتاح Sign in with Apple (.p8) هنا
-
-`codemagic.yaml` يستخدم أثناء البناء:
+`codemagic.yaml` يطابق [نموذج Codemagic الرسمي](https://github.com/codemagic-ci-cd/codemagic-sample-projects/blob/main/ios/ios-automatic-code-signing-demo-project/codemagic.yaml):
 
 ```bash
-app-store-connect fetch-signing-files beauty.velora.app \
-  --type IOS_APP_STORE \
-  --certificate-key=@file:... \
-  --create
+app-store-connect fetch-signing-files beauty.velora.app --type IOS_APP_STORE --create
 ```
+
+يقرأ `CERTIFICATE_PRIVATE_KEY` و`APP_STORE_CONNECT_*` من مجموعة **`velora`**.
 
 ---
 
@@ -65,10 +63,12 @@ app-store-connect fetch-signing-files beauty.velora.app \
 
 | المتغير | مطلوب | ملاحظة |
 |---------|--------|--------|
-| `DATABASE_URL` | **نعم** | نفس Neon المستخدم في Vercel — `npm run build` يشغّل `prisma migrate deploy` |
-| `CERTIFICATE_PRIVATE_KEY` | **نعم** | مفتاح RSA PEM كامل — انظر أدناه |
-| `APP_STORE_APP_ID` | موصى به | الرقم من App Store Connect → App → App Information |
-| `VELORA_MOBILE_URL` | مضبوط في yaml | `https://velorabeautyiq.me` |
+| `DATABASE_URL` | **نعم** | نفس Neon المستخدم في Vercel |
+| `APP_STORE_CONNECT_ISSUER_ID` | **نعم** | من App Store Connect API |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | **نعم** | Key ID |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | **نعم** | محتوى `.p8` كامل |
+| `CERTIFICATE_PRIVATE_KEY` | **نعم** | مفتاح RSA PEM — انظر أدناه |
+| `APP_STORE_APP_ID` | موصى به | الرقم من App Store Connect → App Information |
 
 ### `CERTIFICATE_PRIVATE_KEY` (مرة واحدة)
 
@@ -78,7 +78,11 @@ app-store-connect fetch-signing-files beauty.velora.app \
 powershell -File scripts/generate-ios-distribution-key.ps1
 ```
 
-انسخي **كل** محتوى الملف (من `-----BEGIN RSA PRIVATE KEY-----` إلى `-----END RSA PRIVATE KEY-----`) إلى Codemagic → مجموعة **`velora`** → **Secret**.
+انسخي **كل** محتوى الملف إلى Codemagic → مجموعة **`velora`** → **Secret**.
+
+### إذا فشل `--create` (3 شهادات Distribution)
+
+Apple يسمح بـ **3** شهادات Distribution فقط. من [Apple Developer → Certificates](https://developer.apple.com/account/resources/certificates/list) احذفي شهادة Distribution قديمة ثم أعدي البناء.
 
 **تحذير:** `npm run build` يطبّق migrations على قاعدة الإنتاج إن كان `DATABASE_URL` يشير لها — نفس سلوك Vercel.
 
