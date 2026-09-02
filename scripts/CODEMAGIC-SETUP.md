@@ -12,7 +12,7 @@
 | Xcode scheme | `App` |
 | Capacitor `webDir` | `mobile-www` |
 | الإنتاج | `VELORA_MOBILE_URL=https://velorabeautyiq.me` |
-| iOS signing | SPM — **لا** CocoaPods / `pod install` |
+| iOS signing | **Codemagic Managed Code Signing** (`environment.ios_signing`) |
 
 التطبيق يفتح الموقع المنشور؛ `npm run build` يتحقق من سلامة المشروع لكن المحتوى يُحمّل من Vercel.
 
@@ -26,69 +26,72 @@
 
 ---
 
-## 2) App Store Connect API Key
+## 2) App Store Connect API Key (Codemagic UI فقط)
 
 1. [App Store Connect](https://appstoreconnect.apple.com) → **Users and Access** → **Integrations** → **App Store Connect API**
-2. انسخي **Issuer ID** من أعلى الصفحة (UUID مثل `7d852fa2-8afd-47ca-9d37-3ed8e66d7b6d`) — **ليس** Team ID `UC7FV2YW74`
-3. **+** → Key name: `Codemagic` → Access: **App Manager** → **Generate**
-4. حمّلي `.p8` — **مرة واحدة فقط** — سجّلي **Key ID**
+2. **+** → Key name: `Codemagic VELORA` → Access: **App Manager** → **Generate**
+3. حمّلي `.p8` — **مرة واحدة فقط**
 
-### أضيفي في Codemagic → مجموعة `velora` (Secret لكل متغير)
+في Codemagic:
 
-| المتغير | القيمة |
-|---------|--------|
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID من أعلى صفحة API |
-| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID |
-| `APP_STORE_CONNECT_PRIVATE_KEY` | محتوى ملف `.p8` كاملاً (من `-----BEGIN PRIVATE KEY-----` إلى `-----END PRIVATE KEY-----`) |
+**Team settings** → **Integrations** → **Developer Portal** → **Manage keys**
 
-**لا** تستخدم مفتاح Sign in with Apple من Apple Developer → Keys.
+- الاسم: **`Codemagic VELORA`** (يطابق `integrations.app_store_connect` في yaml)
+- Issuer ID + Key ID + ملف `.p8` من **App Store Connect API**
+- **لا** تستخدم مفتاح Sign in with Apple
 
-(اختياري) **Team settings** → **Integrations** → **Developer Portal** باسم **`Codemagic VELORA`** — احتياطي فقط؛ **المتغيرات أعلاه أهم**.
+**لا تضيفي** `CERTIFICATE_PRIVATE_KEY` أو `APP_STORE_CONNECT_*` إلى yaml أو Git — التكامل في UI كافٍ للـ Managed Signing.
 
 ---
 
-## 3) iOS Code Signing
+## 3) iOS Code Signing Identities (Codemagic UI)
 
-`codemagic.yaml` يطابق [نموذج Codemagic الرسمي](https://github.com/codemagic-ci-cd/codemagic-sample-projects/blob/main/ios/ios-automatic-code-signing-demo-project/codemagic.yaml):
+**Team settings** → **codemagic.yaml settings** → **Code signing identities**
 
-```bash
-app-store-connect fetch-signing-files beauty.velora.app --type IOS_APP_STORE --create
+### iOS certificates
+
+- **Generate certificate** → **Apple Distribution**
+- API key: **Codemagic VELORA**
+- Reference name: **`velora-distribution`**
+
+### iOS provisioning profiles
+
+- **Fetch profiles** → App Store → **`beauty.velora.app`**
+- Reference name: **`velora_app_store`**
+
+---
+
+## 4) `codemagic.yaml` — Managed Signing
+
+```yaml
+environment:
+  groups:
+    - velora
+  ios_signing:
+    distribution_type: app_store
+    bundle_identifier: beauty.velora.app
+    provisioning_profiles:
+      - velora_app_store
+    certificates:
+      - velora-distribution
 ```
 
-يقرأ `CERTIFICATE_PRIVATE_KEY` و`APP_STORE_CONNECT_*` من مجموعة **`velora`**.
+**لا** يوجد في workflow: `fetch-signing-files`، `keychain initialize`، `CERTIFICATE_PRIVATE_KEY`.
 
 ---
 
-## 4) متغيرات البيئة (Codemagic → Application → Environment variables)
+## 5) متغيرات البيئة (مجموعة `velora`)
 
 | المتغير | مطلوب | ملاحظة |
 |---------|--------|--------|
 | `DATABASE_URL` | **نعم** | نفس Neon المستخدم في Vercel |
-| `APP_STORE_CONNECT_ISSUER_ID` | **نعم** | من App Store Connect API |
-| `APP_STORE_CONNECT_KEY_IDENTIFIER` | **نعم** | Key ID |
-| `APP_STORE_CONNECT_PRIVATE_KEY` | **نعم** | محتوى `.p8` كامل |
-| `CERTIFICATE_PRIVATE_KEY` | **نعم** | مفتاح RSA PEM — انظر أدناه |
 | `APP_STORE_APP_ID` | موصى به | الرقم من App Store Connect → App Information |
-
-### `CERTIFICATE_PRIVATE_KEY` (مرة واحدة)
-
-من Windows في مجلد المشروع:
-
-```powershell
-powershell -File scripts/generate-ios-distribution-key.ps1
-```
-
-انسخي **كل** محتوى الملف إلى Codemagic → مجموعة **`velora`** → **Secret**.
-
-### إذا فشل `--create` (3 شهادات Distribution)
-
-Apple يسمح بـ **3** شهادات Distribution فقط. من [Apple Developer → Certificates](https://developer.apple.com/account/resources/certificates/list) احذفي شهادة Distribution قديمة ثم أعدي البناء.
 
 **تحذير:** `npm run build` يطبّق migrations على قاعدة الإنتاج إن كان `DATABASE_URL` يشير لها — نفس سلوك Vercel.
 
 ---
 
-## 5) App Store Connect — التطبيق
+## 6) App Store Connect — التطبيق
 
 إن لم يُنشأ بعد:
 
@@ -100,39 +103,33 @@ Apple يسمح بـ **3** شهادات Distribution فقط. من [Apple Develope
 
 ---
 
-## 6) تشغيل Build (يدوياً)
+## 7) تشغيل Build
 
-الـ workflow **لا يُشغّل تلقائياً** عند push إلى `master` — فقط عند tag `release/*`.
+الـ workflow **لا يُشغّل تلقائياً** عند push — فقط عند tag `release/*`.
 
-**للتجربة الأولى:**
+**Start new build:**
 
-1. Codemagic → التطبيق → **Start new build**
-2. Workflow: **VELORA iOS → TestFlight**
-3. Branch: `master`
-4. **Start build**
+1. Workflow: **VELORA iOS → TestFlight**
+2. Branch: **`cursor/ios-managed-code-signing`** (حتى يُدمج في `master`)
+3. **Start build**
 
-أو ادفعي tag:
-
-```bash
-git tag release/1.0.0
-git push origin release/1.0.0
-```
+> إذا ظهرت خطوة **Verify Apple Developer Portal API access** أو **CERTIFICATE_PRIVATE_KEY**، فالبناء يعمل من فرع/`master` قديم — اختاري الفرع أعلاه.
 
 ---
 
-## 7) ترتيب الخطوات في الـ pipeline
+## 8) ترتيب الخطوات في الـ pipeline
 
 1. `npm ci`
 2. `npm run build` (prisma + next build)
-3. `npm run mobile:sync` مع `VELORA_MOBILE_URL`
-4. `xcode-project use-profiles`
-5. زيادة build number
-6. `xcode-project build-ipa` على `ios/App/App.xcodeproj` / scheme `App`
+3. `npx cap sync ios`
+4. Increment build number
+5. `xcode-project use-profiles`
+6. `xcode-project build-ipa`
 7. رفع IPA إلى **TestFlight**
 
 ---
 
-## 8) بعد نجاح الرفع
+## 9) بعد نجاح الرفع
 
 1. App Store Connect → **TestFlight** → انتظري معالجة البناء (15–45 دقيقة)
 2. ثبّتي **TestFlight** على iPhone
@@ -140,15 +137,15 @@ git push origin release/1.0.0
 
 ---
 
-## 9) أخطاء شائعة
+## 10) أخطاء شائعة
 
 | الخطأ | الحل |
 |--------|------|
-| `DATABASE_URL is not set` | أضيفي المتغير في Codemagic |
-| Signing / provisioning | راجع Code signing identities لـ `beauty.velora.app` |
+| `DATABASE_URL is not set` | أضيفي المتغير في مجموعة `velora` |
+| `CERTIFICATE_PRIVATE_KEY is not set` | البناء من فرع قديم — استخدمي `cursor/ios-managed-code-signing` |
+| `No matching profiles found` | تأكدي من `velora_app_store` + `velora-distribution` في Code signing identities |
 | Scheme not found | تأكدي من `App.xcscheme` في `xcshareddata/xcschemes` |
-| Integration name | طابق `app_store_connect` alias في yaml |
-| Privacy Policy | Apple ترفض بدون `https://velorabeautyiq.me/privacy` |
+| Integration name | طابق `app_store_connect: Codemagic VELORA` |
 
 ---
 

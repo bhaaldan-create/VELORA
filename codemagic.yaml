@@ -4,8 +4,9 @@
 # Xcode: ios/App/App.xcodeproj — scheme: App — bundle: beauty.velora.app
 # Capacitor: SPM (لا CocoaPods) — webDir: mobile-www
 #
-# توقيع iOS: Codemagic Managed Code Signing (environment.ios_signing)
-# ارفعي/ولّدي الشهادة والـ profile من Codemagic UI → Code signing identities
+# توقيع iOS: Codemagic Managed Code Signing فقط (environment.ios_signing)
+# لا fetch-signing-files ولا CERTIFICATE_PRIVATE_KEY ولا keychain scripts في هذا workflow
+# الشهادة والـ profile من Codemagic UI → Code signing identities
 # قبل أول build: راجع scripts/CODEMAGIC-SETUP.md
 
 workflows:
