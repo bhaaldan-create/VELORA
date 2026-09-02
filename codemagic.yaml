@@ -77,28 +77,30 @@ workflows:
 
       - name: Fetch signing files from Apple Developer Portal
         script: |
-          set -e
-          # API auth comes from integrations.app_store_connect (Codemagic VELORA) —
-          # do not require APP_STORE_CONNECT_* env vars to be visible in the shell.
+          set -euo pipefail
           if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
-            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic (group: velora, Secret)."
-            echo "Generate: openssl genrsa -out ios_distribution_key.pem 2048"
-            echo "Paste full PEM (BEGIN/END) into Codemagic — never commit it to Git."
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic group 'velora' (Secret)."
             exit 1
           fi
+          # Normalize PEM: Codemagic UI sometimes stores literal \n sequences
           CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
-          # Secrets may store PEM with literal \n — %b decodes them
-          printf '%b\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
+          python3 - <<'PY'
+          import os, pathlib
+          raw = os.environ["CERTIFICATE_PRIVATE_KEY"]
+          text = raw.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\r\n", "\n").strip() + "\n"
+          path = pathlib.Path(os.environ["CM_BUILD_DIR"]) / "ios_distribution_key.pem"
+          path.write_text(text, encoding="utf-8")
+          head = text.splitlines()[0] if text.splitlines() else ""
+          print(f"certificate key written ({len(text)} bytes), header={head!r}")
+          if "PRIVATE KEY" not in head:
+              raise SystemExit("ERROR: CERTIFICATE_PRIVATE_KEY does not look like a PEM private key")
+          PY
           chmod 600 "$CERT_KEY_PATH"
-          if ! app-store-connect fetch-signing-files "$BUNDLE_ID" \
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key=@file:"$CERT_KEY_PATH" \
-            --create; then
-            echo "fetch-signing-files --create failed — retrying fetch without --create..."
-            app-store-connect fetch-signing-files "$BUNDLE_ID" \
-              --type IOS_APP_STORE \
-              --certificate-key=@file:"$CERT_KEY_PATH"
-          fi
+            --create \
+            --verbose
 
       - name: Add certificates to keychain
         script: |
