@@ -43,19 +43,20 @@
 
 ## 3) iOS Code Signing في Codemagic
 
-**Team settings** → **Code signing identities** → **iOS**
+**Team settings** → **Integrations** → **Developer Portal** → **Manage keys**
 
-- **Apple Developer Portal integration** (أو رفع شهادة Distribution + Profile يدوياً)
-- Bundle ID: `beauty.velora.app`
-- Profile type: **App Store** (distribution)
-- تأكدي أن App ID يتضمن **Sign in with Apple** (موجود في `App.entitlements`)
+- اسم التكامل: **`Codemagic VELORA`** (يجب أن يطابق `codemagic.yaml`)
+- Issuer ID من **App Store Connect API** (UUID أعلى الصفحة — ليس Team ID فقط)
+- Key ID + ملف `.p8` من **App Store Connect API** (Access: App Manager)
+- **لا** تستخدم مفتاح Sign in with Apple (.p8) هنا
 
-`codemagic.yaml` يستخدم:
+`codemagic.yaml` يستخدم أثناء البناء:
 
-```yaml
-ios_signing:
-  distribution_type: app_store
-  bundle_identifier: beauty.velora.app
+```bash
+app-store-connect fetch-signing-files beauty.velora.app \
+  --type IOS_APP_STORE \
+  --certificate-key=@file:... \
+  --create
 ```
 
 ---
@@ -65,9 +66,19 @@ ios_signing:
 | المتغير | مطلوب | ملاحظة |
 |---------|--------|--------|
 | `DATABASE_URL` | **نعم** | نفس Neon المستخدم في Vercel — `npm run build` يشغّل `prisma migrate deploy` |
+| `CERTIFICATE_PRIVATE_KEY` | **نعم** | مفتاح RSA PEM كامل — انظر أدناه |
 | `APP_STORE_APP_ID` | موصى به | الرقم من App Store Connect → App → App Information |
 | `VELORA_MOBILE_URL` | مضبوط في yaml | `https://velorabeautyiq.me` |
-| `CUSTOMER_SESSION_SECRET` | لـ build فقط إن فشل Next | عادة غير مطلوب للـ iOS shell |
+
+### `CERTIFICATE_PRIVATE_KEY` (مرة واحدة)
+
+من Windows في مجلد المشروع:
+
+```powershell
+powershell -File scripts/generate-ios-distribution-key.ps1
+```
+
+انسخي **كل** محتوى الملف (من `-----BEGIN RSA PRIVATE KEY-----` إلى `-----END RSA PRIVATE KEY-----`) إلى Codemagic → مجموعة **`velora`** → **Secret**.
 
 **تحذير:** `npm run build` يطبّق migrations على قاعدة الإنتاج إن كان `DATABASE_URL` يشير لها — نفس سلوك Vercel.
 

@@ -19,7 +19,7 @@ workflows:
     instance_type: mac_mini_m2
 
     integrations:
-      app_store_connect: Codemagic VELORA
+      app_store_connect: "Codemagic VELORA"
 
     environment:
       groups:
@@ -80,27 +80,38 @@ workflows:
           set -euo pipefail
           if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
             echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic group 'velora' (Secret)."
+            echo "Run: powershell -File scripts/generate-ios-distribution-key.ps1"
             exit 1
           fi
-          # Normalize PEM: Codemagic UI sometimes stores literal \n sequences
           CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
-          python3 - <<'PY'
-          import os, pathlib
-          raw = os.environ["CERTIFICATE_PRIVATE_KEY"]
-          text = raw.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\r\n", "\n").strip() + "\n"
-          path = pathlib.Path(os.environ["CM_BUILD_DIR"]) / "ios_distribution_key.pem"
-          path.write_text(text, encoding="utf-8")
-          head = text.splitlines()[0] if text.splitlines() else ""
-          print(f"certificate key written ({len(text)} bytes), header={head!r}")
-          if "PRIVATE KEY" not in head:
-              raise SystemExit("ERROR: CERTIFICATE_PRIVATE_KEY does not look like a PEM private key")
-          PY
+          RSA_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key_rsa.pem"
+          # Codemagic secrets may store literal \n — %b decodes them
+          printf '%b' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
           chmod 600 "$CERT_KEY_PATH"
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --certificate-key=@file:"$CERT_KEY_PATH" \
-            --create \
-            --verbose
+          if ! openssl pkey -in "$CERT_KEY_PATH" -noout 2>/dev/null; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not a valid PEM private key."
+            exit 1
+          fi
+          # Apple/Codemagic expect RSA PEM; convert PKCS#8 if needed
+          if grep -q "BEGIN PRIVATE KEY" "$CERT_KEY_PATH" && ! grep -q "BEGIN RSA PRIVATE KEY" "$CERT_KEY_PATH"; then
+            echo "Converting PKCS#8 private key to RSA PEM for Apple signing..."
+            openssl rsa -in "$CERT_KEY_PATH" -out "$RSA_KEY_PATH" 2>/dev/null
+            CERT_KEY_PATH="$RSA_KEY_PATH"
+            chmod 600 "$CERT_KEY_PATH"
+          fi
+          echo "Using certificate key: $(head -n 1 "$CERT_KEY_PATH")"
+          fetch_signing() {
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --certificate-key=@file:"$CERT_KEY_PATH" \
+              "$@"
+          }
+          if ! fetch_signing --create --verbose; then
+            echo "WARN: fetch-signing-files --create failed."
+            echo "Common causes: invalid App Store Connect API key, 3 Distribution certs limit, or missing App ID."
+            echo "Retrying fetch without --create (use existing Apple cert/profile)..."
+            fetch_signing --verbose
+          fi
 
       - name: Add certificates to keychain
         script: |
