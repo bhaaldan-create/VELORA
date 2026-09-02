@@ -4,12 +4,8 @@
 # Xcode: ios/App/App.xcodeproj — scheme: App — bundle: beauty.velora.app
 # Capacitor: SPM (لا CocoaPods) — webDir: mobile-www
 #
-# توقيع iOS: تلقائي عبر تكامل App Store Connect (اسم التكامل: codemagic)
-# + app-store-connect fetch-signing-files --create أثناء البناء.
-# لا تستخدم environment.ios_signing هنا — يتطلب profiles مسبقة في
-# Codemagic → Code signing identities ويسبب:
-# "No matching profiles found for bundle identifier ..."
-#
+# توقيع iOS: Codemagic Managed Code Signing (environment.ios_signing)
+# ارفعي/ولّدي الشهادة والـ profile من Codemagic UI → Code signing identities
 # قبل أول build: راجع scripts/CODEMAGIC-SETUP.md
 
 workflows:
@@ -24,22 +20,22 @@ workflows:
     environment:
       groups:
         - velora
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: beauty.velora.app
+        provisioning_profiles:
+          - velora_app_store
+        certificates:
+          - velora-distribution
       vars:
-        BUNDLE_ID: beauty.velora.app
         APPLE_TEAM_ID: UC7FV2YW74
-        # distribution_type: app_store (يُطبَّق في fetch-signing-files --type IOS_APP_STORE)
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         VELORA_MOBILE_URL: https://velorabeautyiq.me
         NODE_OPTIONS: --max-old-space-size=4096
         # عيّن في Codemagic UI → مجموعة velora (Secret — لا تضع القيم في Git):
         # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
-        # CERTIFICATE_PRIVATE_KEY — مطلوب (RSA PEM كامل BEGIN/END)
-        # APP_STORE_CONNECT_ISSUER_ID — Issuer ID من App Store Connect API
-        # APP_STORE_CONNECT_KEY_IDENTIFIER — Key ID من App Store Connect API
-        # APP_STORE_CONNECT_PRIVATE_KEY — محتوى ملف .p8 كاملاً (App Store Connect API)
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
-        # integrations.app_store_connect احتياطي فقط إن وُجدت متغيرات API أعلاه
 
       # Capacitor CLI 8.4+ يتطلب Node >= 22 (bin/capacitor يفشل على Node 20)
       node: 22
@@ -73,93 +69,6 @@ workflows:
           export VELORA_MOBILE_URL="${VELORA_MOBILE_URL}"
           npx cap sync ios
 
-      - name: Set up keychain for code signing
-        script: |
-          set -e
-          keychain initialize
-
-      - name: Verify Apple Developer Portal API access
-        script: |
-          set -euo pipefail
-          echo "=== Apple signing preflight ==="
-          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
-            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic group 'velora' (Secret)."
-            echo "Run: powershell -File scripts/generate-ios-distribution-key.ps1"
-            exit 1
-          fi
-          if [ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ] && [ -n "${APP_STORE_CONNECT_KEY_IDENTIFIER:-}" ] && [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
-            echo "Auth mode: APP_STORE_CONNECT_* environment variables"
-            app-store-connect bundle-ids get "$BUNDLE_ID" \
-              --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-              --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-              --private-key @env:APP_STORE_CONNECT_PRIVATE_KEY
-          else
-            echo "Auth mode: integrations.app_store_connect (Codemagic VELORA)"
-            echo "TIP: Add APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY to group velora if this fails."
-            app-store-connect bundle-ids get "$BUNDLE_ID"
-          fi
-          echo "Apple API access OK for bundle $BUNDLE_ID"
-
-      - name: Fetch signing files from Apple Developer Portal
-        script: |
-          set -euo pipefail
-          CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
-          RSA_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key_rsa.pem"
-          P8_KEY_PATH="$CM_BUILD_DIR/app_store_connect_api.p8"
-          # Codemagic secrets may store literal \n — %b decodes them
-          printf '%b' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
-          chmod 600 "$CERT_KEY_PATH"
-          if ! openssl pkey -in "$CERT_KEY_PATH" -noout 2>/dev/null; then
-            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not a valid PEM private key."
-            exit 1
-          fi
-          if grep -q "^-----BEGIN PRIVATE KEY-----" "$CERT_KEY_PATH"; then
-            echo "Converting PKCS#8 private key to RSA PEM for Apple signing..."
-            openssl rsa -in "$CERT_KEY_PATH" -out "$RSA_KEY_PATH"
-            CERT_KEY_PATH="$RSA_KEY_PATH"
-            chmod 600 "$CERT_KEY_PATH"
-          fi
-          export CERTIFICATE_PRIVATE_KEY
-          CERTIFICATE_PRIVATE_KEY="$(cat "$CERT_KEY_PATH")"
-          export CERTIFICATE_PRIVATE_KEY
-          echo "Certificate key header: $(head -n 1 "$CERT_KEY_PATH")"
-          API_ARGS=()
-          if [ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ] && [ -n "${APP_STORE_CONNECT_KEY_IDENTIFIER:-}" ] && [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
-            printf '%b' "$APP_STORE_CONNECT_PRIVATE_KEY" > "$P8_KEY_PATH"
-            chmod 600 "$P8_KEY_PATH"
-            export APP_STORE_CONNECT_PRIVATE_KEY
-            APP_STORE_CONNECT_PRIVATE_KEY="$(cat "$P8_KEY_PATH")"
-            export APP_STORE_CONNECT_PRIVATE_KEY
-            API_ARGS=(
-              --issuer-id "$APP_STORE_CONNECT_ISSUER_ID"
-              --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER"
-              --private-key @env:APP_STORE_CONNECT_PRIVATE_KEY
-            )
-          fi
-          fetch_signing() {
-            app-store-connect fetch-signing-files "$BUNDLE_ID" \
-              --type IOS_APP_STORE \
-              --platform IOS \
-              "${API_ARGS[@]}" \
-              "$@"
-          }
-          if ! fetch_signing --create --delete-stale-profiles --verbose; then
-            echo "WARN: fetch-signing-files --create failed."
-            echo "If you hit the 3 Distribution certificates limit, revoke an old cert in Apple Developer Portal."
-            echo "Retrying fetch without --create (existing Apple cert/profile)..."
-            fetch_signing --delete-stale-profiles --verbose
-          fi
-
-      - name: Add certificates to keychain
-        script: |
-          set -e
-          keychain add-certificates
-
-      - name: Set up code signing settings on Xcode project
-        script: |
-          set -e
-          xcode-project use-profiles
-
       - name: Increment build number
         script: |
           set -e
@@ -171,6 +80,11 @@ workflows:
             echo "APP_STORE_APP_ID not set — using Codemagic BUILD_NUMBER ($BUILD_NUMBER)"
             agvtool new-version -all "$BUILD_NUMBER"
           fi
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          set -e
+          xcode-project use-profiles
 
       - name: Build ipa for distribution
         script: |
