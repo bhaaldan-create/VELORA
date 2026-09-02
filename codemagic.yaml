@@ -36,7 +36,8 @@ workflows:
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
         # CERTIFICATE_PRIVATE_KEY (موصى به) — مفتاح RSA لإنشاء/مطابقة شهادة Distribution
 
-      node: 20
+      # Capacitor CLI 8.4+ يتطلب Node >= 22 (bin/capacitor يفشل على Node 20)
+      node: 22
       xcode: latest
 
     triggering:
@@ -65,7 +66,7 @@ workflows:
         script: |
           set -e
           export VELORA_MOBILE_URL="${VELORA_MOBILE_URL}"
-          npm run mobile:sync
+          npx cap sync ios
 
       - name: Set up keychain for code signing
         script: |
