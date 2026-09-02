@@ -33,8 +33,8 @@ workflows:
         NODE_OPTIONS: --max-old-space-size=4096
         # عيّن في Codemagic UI → مجموعة velora (Secret — لا تضع القيم في Git):
         # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
+        # CERTIFICATE_PRIVATE_KEY — مطلوب لـ fetch-signing-files --create (مفتاح RSA Distribution)
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
-        # CERTIFICATE_PRIVATE_KEY (موصى به) — مفتاح RSA لإنشاء/مطابقة شهادة Distribution
 
       # Capacitor CLI 8.4+ يتطلب Node >= 22 (bin/capacitor يفشل على Node 20)
       node: 22
@@ -76,19 +76,19 @@ workflows:
       - name: Fetch signing files from Apple Developer Portal
         script: |
           set -e
-          CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
-          if [ -n "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
-            printf '%s\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
-            chmod 600 "$CERT_KEY_PATH"
-            app-store-connect fetch-signing-files "$BUNDLE_ID" \
-              --type IOS_APP_STORE \
-              --certificate-key=@file:"$CERT_KEY_PATH" \
-              --create
-          else
-            app-store-connect fetch-signing-files "$BUNDLE_ID" \
-              --type IOS_APP_STORE \
-              --create
+          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is not set in Codemagic (group: velora, Secret)."
+            echo "Generate on your machine: openssl genrsa -out ios_distribution_key.pem 2048"
+            echo "Paste the full PEM (BEGIN/END lines) into Codemagic — never commit it to Git."
+            exit 1
           fi
+          CERT_KEY_PATH="$CM_BUILD_DIR/ios_distribution_key.pem"
+          printf '%s\n' "$CERTIFICATE_PRIVATE_KEY" > "$CERT_KEY_PATH"
+          chmod 600 "$CERT_KEY_PATH"
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:"$CERT_KEY_PATH" \
+            --create
 
       - name: Add certificates to keychain
         script: |
