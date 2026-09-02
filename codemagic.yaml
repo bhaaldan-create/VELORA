@@ -24,10 +24,6 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: beauty.velora.app
-        provisioning_profiles:
-          - velora_app_store
-        certificates:
-          - velora-distribution
       vars:
         APPLE_TEAM_ID: UC7FV2YW74
         XCODE_PROJECT: ios/App/App.xcodeproj
