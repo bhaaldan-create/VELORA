@@ -22,6 +22,8 @@ workflows:
       app_store_connect: Codemagic VELORA
 
     environment:
+      groups:
+        - velora
       vars:
         BUNDLE_ID: beauty.velora.app
         # distribution_type: app_store (يُطبَّق في fetch-signing-files --type IOS_APP_STORE)
@@ -29,11 +31,10 @@ workflows:
         XCODE_SCHEME: App
         VELORA_MOBILE_URL: https://velorabeautyiq.me
         NODE_OPTIONS: --max-old-space-size=4096
-        # عيّن في Codemagic UI (Environment variables):
+        # عيّن في Codemagic UI → مجموعة velora (Secret — لا تضع القيم في Git):
         # DATABASE_URL — مطلوب لـ npm run build (prisma migrate deploy)
         # APP_STORE_APP_ID — الرقم من App Store Connect → App Information
         # CERTIFICATE_PRIVATE_KEY (موصى به) — مفتاح RSA لإنشاء/مطابقة شهادة Distribution
-        #   ضعه في مجموعة env (مثلاً ios_signing) إن فشل --create بدون مفتاح
 
       node: 20
       xcode: latest
