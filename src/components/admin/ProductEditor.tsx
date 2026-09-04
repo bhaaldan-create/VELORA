@@ -30,6 +30,7 @@ import {
   ADMIN_CATEGORY_LABELS,
   type AdminProductDetail,
 } from "@/lib/admin-product-types";
+import { shopBrands } from "@/data/shop-brands";
 import { DISCOUNT_OPTIONS, salePriceFromBase } from "@/lib/pricing";
 import { formatPrice } from "@/lib/utils";
 import type { CategorySlug } from "@/types";
@@ -301,14 +302,11 @@ export function ProductEditor({
     setLeaveOpen(true);
   }
 
-  function validate(): boolean {
+  function validate(): Record<string, string> {
     const next: Record<string, string> = {};
     if (!draft.nameAr.trim()) next.nameAr = "الاسم بالعربية مطلوب.";
     if (!draft.name.trim()) next.name = "الاسم بالإنجليزية مطلوب.";
     if (!draft.size.trim()) next.size = "الحجم مطلوب.";
-    if (!draft.brandName.trim()) {
-      next.brandName = "اختاري براند من قائمة براندات المتجر.";
-    }
     const price = Number(draft.price);
     if (!Number.isFinite(price) || price < 0 || !Number.isInteger(price)) {
       next.price = "السعر يجب أن يكون رقماً صحيحاً غير سالب.";
@@ -326,12 +324,30 @@ export function ProductEditor({
     if (!draft.descriptionAr.trim()) {
       next.descriptionAr = "وصف المنتج مطلوب.";
     }
+    // Brand optional on edit (many legacy products have none) — if set, must be official
+    if (draft.brandName.trim()) {
+      const known = shopBrands.some((b) => b.name === draft.brandName.trim());
+      if (!known) {
+        next.brandName = "اختاري براند من قائمة براندات المتجر الرسمية.";
+      }
+    }
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
   }
 
   async function saveAll() {
-    if (saving || !validate()) return;
+    if (saving) return;
+    const validation = validate();
+    if (Object.keys(validation).length > 0) {
+      const first = Object.values(validation)[0] || "راجعي الحقول المطلوبة.";
+      toast.error(first);
+      if (validation.brandName) {
+        document
+          .getElementById("admin-product-brand")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
     setSaving(true);
     try {
       let price = Math.round(Number(draft.price));
@@ -344,6 +360,11 @@ export function ProductEditor({
       } else if (!draft.specialOffer && discountPercent > 0) {
         // keep discount chips as source of truth unless specialOffer off means clear
       }
+
+      const finite = (raw: string, fallback = 0) => {
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : fallback;
+      };
 
       const res = await fetch("/api/admin/products", {
         method: "PATCH",
@@ -371,14 +392,15 @@ export function ProductEditor({
           featureTags: draft.featureTags,
           supplierId: draft.supplierId.trim() || null,
           costCurrency: draft.costCurrency,
-          costExchangeRate: draft.costCurrency === "IQD" ? 1 : Number(draft.costExchangeRate),
-          purchasePrice: Number(draft.purchasePrice),
-          shippingCostIqd: Number(draft.shippingCostIqd),
-          customsCostIqd: Number(draft.customsCostIqd),
-          brokerageCostIqd: Number(draft.brokerageCostIqd),
-          handlingCostIqd: Number(draft.handlingCostIqd),
-          otherCostIqd: Number(draft.otherCostIqd),
-          minMarginPct: Number(draft.minMarginPct),
+          costExchangeRate:
+            draft.costCurrency === "IQD" ? 1 : finite(draft.costExchangeRate, 1),
+          purchasePrice: finite(draft.purchasePrice),
+          shippingCostIqd: finite(draft.shippingCostIqd),
+          customsCostIqd: finite(draft.customsCostIqd),
+          brokerageCostIqd: finite(draft.brokerageCostIqd),
+          handlingCostIqd: finite(draft.handlingCostIqd),
+          otherCostIqd: finite(draft.otherCostIqd),
+          minMarginPct: finite(draft.minMarginPct),
         }),
       });
       const json = (await res.json()) as {
@@ -768,13 +790,15 @@ export function ProductEditor({
           <div className="space-y-4">
             <Field
               label="اسم العلامة"
-              hint="من براندات المتجر الرسمية — نفس قائمة البحث والفلاتر"
+              hint="من براندات المتجر الرسمية — نفس قائمة البحث والفلاتر (اختياري للمنتجات القديمة)"
               error={errors.brandName}
             >
-              <AdminBrandSelect
-                value={draft.brandName}
-                onChange={(brandName) => patchDraft({ brandName })}
-              />
+              <div id="admin-product-brand">
+                <AdminBrandSelect
+                  value={draft.brandName}
+                  onChange={(brandName) => patchDraft({ brandName })}
+                />
+              </div>
             </Field>
 
             <div>

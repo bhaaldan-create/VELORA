@@ -230,8 +230,11 @@ export async function PATCH(req: Request) {
     const parsed = patchSchema.safeParse(body);
 
     if (!parsed.success) {
+      const first =
+        Object.values(parsed.error.flatten().fieldErrors).flat()[0] ||
+        "بيانات التحديث غير صحيحة.";
       return Response.json(
-        { ok: false, error: "بيانات التحديث غير صحيحة." },
+        { ok: false, error: String(first) },
         { status: 400 },
       );
     }
