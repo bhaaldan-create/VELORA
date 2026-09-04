@@ -17,14 +17,17 @@ import { cn } from "@/lib/utils";
 
 /** Soft readability wash — confined to the copy zone, never a heavy vignette. */
 function overlayStyle(level: HomeHeroSlide["overlay"]) {
+  // Bottom black lift for copy legibility + light side fade
+  const bottomLift =
+    "linear-gradient(to top, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.32) 22%, rgba(0,0,0,0.10) 48%, transparent 72%)";
   if (level === "none") {
-    return "linear-gradient(to top right, rgba(28,18,36,0.28) 0%, rgba(28,18,36,0.10) 26%, transparent 48%)";
+    return `${bottomLift}, linear-gradient(to top right, rgba(0,0,0,0.18) 0%, transparent 42%)`;
   }
   if (level === "strong") {
-    return "linear-gradient(to top right, rgba(28,18,36,0.40) 0%, rgba(28,18,36,0.16) 30%, transparent 54%)";
+    return `${bottomLift}, linear-gradient(to top right, rgba(0,0,0,0.28) 0%, transparent 48%)`;
   }
   // soft / medium
-  return "linear-gradient(to top right, rgba(28,18,36,0.34) 0%, rgba(28,18,36,0.12) 28%, transparent 50%)";
+  return `${bottomLift}, linear-gradient(to top right, rgba(0,0,0,0.22) 0%, transparent 45%)`;
 }
 
 function alignClass(align: HomeHeroSlide["textAlign"] | undefined) {

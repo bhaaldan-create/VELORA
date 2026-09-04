@@ -786,8 +786,8 @@ html[data-locale="en"] .font-display {
   line-height: 1.28;
   letter-spacing: -0.01em;
   text-wrap: balance;
-  /* Soft premium lift only — no hard black outline */
-  text-shadow: 0 1px 2px rgba(28, 18, 36, 0.18), 0 4px 18px rgba(28, 18, 36, 0.14);
+  /* Soft lift on type; main readability comes from bottom gradient */
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.28);
 }
 
 [dir="rtl"] .home-hero-headline {
@@ -796,13 +796,13 @@ html[data-locale="en"] .font-display {
 }
 
 .home-hero-sub {
-  margin: clamp(0.55rem, 1.4vw, 0.8rem) 0 0;
+  margin: clamp(0.28rem, 0.8vw, 0.42rem) 0 0;
   max-width: 36em;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.94);
   font-size: clamp(0.8rem, 0.72rem + 0.35vw, 0.95rem);
   font-weight: 400;
   line-height: 1.65;
-  text-shadow: 0 1px 8px rgba(28, 18, 36, 0.12);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.22);
 }
 
 [dir="rtl"] .home-hero-sub {
