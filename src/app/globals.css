@@ -796,7 +796,7 @@ html[data-locale="en"] .font-display {
 }
 
 .home-hero-sub {
-  margin: clamp(0.28rem, 0.8vw, 0.42rem) 0 0;
+  margin: clamp(0.1rem, 0.35vw, 0.2rem) 0 0;
   max-width: 36em;
   color: rgba(255, 255, 255, 0.94);
   font-size: clamp(0.8rem, 0.72rem + 0.35vw, 0.95rem);
