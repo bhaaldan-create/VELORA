@@ -15,16 +15,39 @@ import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import type { HomeHeroConfig, HomeHeroSlide } from "@/lib/home/types";
 import { cn } from "@/lib/utils";
 
+/** Soft readability wash — confined to the copy zone, never a heavy vignette. */
 function overlayStyle(level: HomeHeroSlide["overlay"]) {
-  // Soft bottom-left readability wash — keeps the hero image clear elsewhere
   if (level === "none") {
-    return "linear-gradient(to top right, rgba(12,8,16,0.42) 0%, rgba(12,8,16,0.18) 28%, transparent 52%)";
+    return "linear-gradient(to top right, rgba(28,18,36,0.28) 0%, rgba(28,18,36,0.10) 26%, transparent 48%)";
   }
   if (level === "strong") {
-    return "linear-gradient(to top right, rgba(12,8,16,0.55) 0%, rgba(12,8,16,0.28) 32%, transparent 58%)";
+    return "linear-gradient(to top right, rgba(28,18,36,0.40) 0%, rgba(28,18,36,0.16) 30%, transparent 54%)";
   }
-  // soft / medium (default)
-  return "linear-gradient(to top right, rgba(12,8,16,0.48) 0%, rgba(12,8,16,0.22) 30%, transparent 55%)";
+  // soft / medium
+  return "linear-gradient(to top right, rgba(28,18,36,0.34) 0%, rgba(28,18,36,0.12) 28%, transparent 50%)";
+}
+
+function alignClass(align: HomeHeroSlide["textAlign"] | undefined) {
+  if (align === "center") {
+    return {
+      shell: "items-end justify-center text-center",
+      content: "items-center text-center",
+      max: "max-w-[min(92%,28rem)] sm:max-w-[min(70%,30rem)]",
+    };
+  }
+  if (align === "end") {
+    return {
+      shell: "items-end justify-end text-end",
+      content: "items-end text-end",
+      max: "max-w-[min(88%,26rem)] sm:max-w-[min(54%,28rem)] md:max-w-[min(46%,30rem)]",
+    };
+  }
+  // start (default) — logical start follows RTL/LTR via dir on content
+  return {
+    shell: "items-end justify-start text-start",
+    content: "items-stretch text-start",
+    max: "max-w-[min(88%,26rem)] sm:max-w-[min(54%,28rem)] md:max-w-[min(46%,30rem)]",
+  };
 }
 
 function HeroSlidePicture({
@@ -80,7 +103,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
   const list = slides.length ? slides : config.slides.slice(0, 1);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [entered, setEntered] = useState(false);
+  const [entered, setEntered] = useState(true);
   const dragRef = useRef<{ x: number; active: boolean }>({ x: 0, active: false });
   const autoplayMs = config.autoplayMs || 5500;
 
@@ -94,10 +117,6 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
     },
     [list.length],
   );
-
-  useEffect(() => {
-    setEntered(true);
-  }, []);
 
   useEffect(() => {
     if (paused || list.length < 2) return;
@@ -135,6 +154,7 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
   }
 
   const slide = list[index]!;
+  const align = alignClass(slide.textAlign);
 
   return (
     <section
@@ -192,54 +212,48 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
               <div
                 className="absolute inset-0"
                 style={{ background: overlayStyle(s.overlay) }}
+                aria-hidden
               />
             </div>
           );
         })}
 
-        {/* Text — bottom-left, white copy with soft shadow */}
-        <div className="relative z-10 flex h-full min-h-[inherit] items-end justify-start px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-10 md:px-10">
+        {/* Unified copy composition — Headline → Subheadline → CTA */}
+        <div
+          className={cn(
+            "relative z-10 flex h-full min-h-[inherit]",
+            align.shell,
+            "home-hero-safe",
+          )}
+        >
           <div
             dir={dir}
             className={cn(
-              "max-w-[85%] sm:max-w-[52%] md:max-w-[44%] transition-all duration-700 ease-out",
-              entered
-                ? "translate-y-0 opacity-100"
-                : "translate-y-3 opacity-0",
+              "home-hero-content flex w-full flex-col",
+              align.content,
+              align.max,
+              "transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              entered ? "translate-y-0 opacity-100" : "translate-y-2.5 opacity-0",
             )}
           >
-            <h1
-              className="font-display text-[clamp(1.35rem,4.8vw,2.15rem)] font-black leading-[1.35] tracking-tight text-white"
-              style={{
-                textShadow:
-                  "0 1px 0 rgba(0,0,0,0.85), 0 2px 4px rgba(0,0,0,0.65), 0 6px 18px rgba(0,0,0,0.55), 0 0 28px rgba(0,0,0,0.35)",
-              }}
-            >
+            <h1 className="home-hero-headline font-display">
               {ar ? slide.headlineAr : slide.headlineEn}
             </h1>
-            <p
-              className="mt-2 text-[0.82rem] leading-[1.7] text-white sm:mt-2.5 sm:text-[0.9rem]"
-              style={{
-                textShadow:
-                  "0 1px 0 rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.6), 0 5px 14px rgba(0,0,0,0.45)",
-              }}
-            >
+            <p className="home-hero-sub">
               {ar ? slide.bodyAr : slide.bodyEn}
             </p>
             <div
               className={cn(
-                "mt-3 sm:mt-3.5 transition-all delay-100 duration-700 ease-out",
-                entered
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-2 opacity-0",
+                "home-hero-cta-wrap transition-[opacity,transform] delay-75 duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                entered ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
               )}
             >
               <Link
                 href={slide.href || "/shop"}
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--ivory-fixed)] px-5 py-2.5 text-[0.8rem] font-medium text-[var(--ink-deep)] shadow-[0_8px_24px_rgba(0,0,0,0.28)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="home-hero-cta"
               >
-                {ar ? slide.ctaAr : slide.ctaEn}
-                <span aria-hidden className="text-[0.75rem] opacity-90">
+                <span>{ar ? slide.ctaAr : slide.ctaEn}</span>
+                <span className="home-hero-cta-arrow" aria-hidden>
                   {ar ? "←" : "→"}
                 </span>
               </Link>
@@ -263,8 +277,8 @@ export function HeroCarousel({ config }: { config: HomeHeroConfig }) {
                 className={cn(
                   "rounded-full transition-all duration-300",
                   i === index
-                    ? "h-2 w-5 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.35)]"
-                    : "h-2 w-2 bg-white/45 hover:bg-white/70",
+                    ? "h-1.5 w-5 bg-white/95"
+                    : "h-1.5 w-1.5 bg-white/40 hover:bg-white/65",
                 )}
                 onClick={() => {
                   setPaused(true);
