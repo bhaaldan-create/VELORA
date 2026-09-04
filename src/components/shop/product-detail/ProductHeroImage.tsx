@@ -65,14 +65,14 @@ export function ProductBrandLogo({
       className="mt-5 flex flex-col items-center motion-safe:animate-[velora-rise_0.7s_0.12s_ease-out_both] sm:mt-6"
       dir="ltr"
     >
-      <div className="mb-3.5 h-px w-10 bg-[var(--plum)]/15" aria-hidden />
-      <div className="relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[240px]">
+      <div className="mb-4 h-px w-11 bg-[var(--plum)]/15" aria-hidden />
+      <div className="relative flex h-10 max-w-[min(100%,280px)] items-center justify-center sm:h-11 sm:max-w-[320px] md:h-12 md:max-w-[340px]">
         {useNative ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={brandLogoUrl}
             alt={brandName ? `${brandName} logo` : "Brand logo"}
-            className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
+            className="h-auto max-h-10 w-auto max-w-full object-contain object-center sm:max-h-11 md:max-h-12"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
               if (process.env.NODE_ENV === "development") {
@@ -84,9 +84,9 @@ export function ProductBrandLogo({
           <Image
             src={brandLogoUrl}
             alt={brandName ? `${brandName} logo` : "Brand logo"}
-            width={240}
-            height={40}
-            className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
+            width={340}
+            height={48}
+            className="h-auto max-h-10 w-auto max-w-full object-contain object-center sm:max-h-11 md:max-h-12"
           />
         )}
       </div>
