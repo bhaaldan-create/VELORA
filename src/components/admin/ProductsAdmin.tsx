@@ -134,7 +134,6 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
   }, [page, visibility, section, brand, debouncedQ]);
 
   useEffect(() => {
-    // Debounced remote fetch — setState happens after network, not as a sync cascade.
     const handle = window.setTimeout(() => {
       void load();
     }, 0);
@@ -186,6 +185,18 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  if (showCreate) {
+    return (
+      <ProductCreateForm
+        onCreated={prependProduct}
+        onCancel={() => setShowCreate(false)}
+        defaultCategorySlug={
+          section === "all" ? undefined : activeSection.slug ?? undefined
+        }
+      />
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -201,10 +212,10 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
         </div>
         <button
           type="button"
-          onClick={() => setShowCreate((v) => !v)}
+          onClick={() => setShowCreate(true)}
           className="inline-flex h-9 items-center rounded-[8px] bg-[var(--admin-plum)] px-3.5 text-[13px] font-medium text-white"
         >
-          {showCreate ? "إغلاق النموذج" : "إضافة منتج"}
+          إضافة منتج
         </button>
       </div>
 
@@ -236,16 +247,6 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
           );
         })}
       </div>
-
-      {showCreate ? (
-        <ProductCreateForm
-          onCreated={prependProduct}
-          onCancel={() => setShowCreate(false)}
-          defaultCategorySlug={
-            section === "all" ? undefined : activeSection.slug ?? undefined
-          }
-        />
-      ) : null}
 
       <div className="flex gap-2 overflow-x-auto admin-scroll pb-1">
         {filters.map((f) => (

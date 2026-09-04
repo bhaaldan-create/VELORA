@@ -21,10 +21,21 @@ import {
   Link2,
   List,
   MoreHorizontal,
+  Package,
   Trash2,
   X,
 } from "lucide-react";
 import { AdminBrandSelect } from "@/components/admin/AdminBrandSelect";
+import { CategorySelector } from "@/components/admin/product-form/CategorySelector";
+import { ImageDropzone } from "@/components/admin/product-form/ImageDropzone";
+import {
+  FormField,
+  FormSection,
+  PreviewCard,
+  StickyFormActions,
+  modernInputClass,
+  modernTextareaClass,
+} from "@/components/admin/product-form/primitives";
 import { useAdminToast } from "@/components/admin/ui/Toast";
 import {
   ADMIN_CATEGORY_LABELS,
@@ -34,13 +45,6 @@ import { shopBrands } from "@/data/shop-brands";
 import { DISCOUNT_OPTIONS, salePriceFromBase } from "@/lib/pricing";
 import { formatPrice } from "@/lib/utils";
 import type { CategorySlug } from "@/types";
-
-const CATEGORIES: { slug: CategorySlug; label: string }[] = [
-  { slug: "skincare", label: "العناية بالبشرة" },
-  { slug: "body-care", label: "العناية بالجسم" },
-  { slug: "hair-care", label: "العناية بالشعر" },
-  { slug: "makeup", label: "المكياج" },
-];
 
 type Draft = {
   name: string;
@@ -122,21 +126,19 @@ function SectionCard({
   title,
   children,
   action,
+  subtitle,
+  icon,
 }: {
   title: string;
   children: ReactNode;
   action?: ReactNode;
+  subtitle?: string;
+  icon?: typeof Package;
 }) {
   return (
-    <section className="rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 shadow-[var(--admin-shadow)] sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--admin-text)]">
-          {title}
-        </h2>
-        {action}
-      </div>
+    <FormSection title={title} subtitle={subtitle} icon={icon} action={action}>
       {children}
-    </section>
+    </FormSection>
   );
 }
 
@@ -152,27 +154,13 @@ function Field({
   hint?: string;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[12px] font-medium text-[var(--admin-text-secondary)]">
-        {label}
-      </span>
+    <FormField label={label} error={error} hint={hint}>
       {children}
-      {hint ? (
-        <span className="mt-1 block text-[11px] text-[var(--admin-text-muted)]">
-          {hint}
-        </span>
-      ) : null}
-      {error ? (
-        <span className="mt-1 block text-[12px] text-[var(--admin-danger)]">
-          {error}
-        </span>
-      ) : null}
-    </label>
+    </FormField>
   );
 }
 
-const inputClass =
-  "h-10 w-full rounded-[10px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3 text-[13.5px] text-[var(--admin-text)] outline-none transition placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-plum-soft)] focus:bg-white disabled:opacity-50";
+const inputClass = modernInputClass;
 
 export function ProductEditor({
   initialProduct,
@@ -691,9 +679,21 @@ export function ProductEditor({
         </div>
       </header>
 
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.36fr)] lg:items-start lg:gap-6">
+        <div className="space-y-5">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-6">
         {/* Media */}
-        <SectionCard title="صور المنتج">
+        <SectionCard
+          title="صور المنتج"
+          subtitle="اسحبي الصورة أو ارفعيها مباشرة"
+          icon={ImagePlus}
+        >
+          <ImageDropzone
+            previewUrl={product.imageUrl}
+            busy={imageBusy}
+            onFile={(f) => void uploadImage(f)}
+            onRemove={() => void removeImage()}
+          />
           <input
             ref={fileRef}
             type="file"
@@ -701,82 +701,13 @@ export function ProductEditor({
             className="hidden"
             onChange={onFileChange}
           />
-          {product.imageUrl ? (
-            <div className="space-y-3">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={product.imageUrl}
-                  alt={draft.nameAr}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    const wrap = e.currentTarget.parentElement;
-                    e.currentTarget.style.display = "none";
-                    if (wrap && !wrap.querySelector("[data-image-unavailable]")) {
-                      const msg = document.createElement("div");
-                      msg.dataset.imageUnavailable = "1";
-                      msg.className =
-                        "flex h-full items-center justify-center px-4 text-center text-[13px] text-[var(--admin-text-muted)]";
-                      msg.textContent = "صورة غير متاحة — استبدليها برفع جديد";
-                      wrap.appendChild(msg);
-                    }
-                  }}
-                />
-                <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-plum)] backdrop-blur">
-                  الصورة الرئيسية
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={imageBusy}
-                  onClick={() => fileRef.current?.click()}
-                  className="inline-flex h-9 items-center rounded-[10px] border border-[var(--admin-border)] bg-white px-3 text-[12.5px] font-medium disabled:opacity-40"
-                >
-                  {imageBusy ? "جارٍ الرفع…" : "تغيير الصورة"}
-                </button>
-                <button
-                  type="button"
-                  disabled={imageBusy}
-                  onClick={() => void removeImage()}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--admin-danger)]/20 bg-[var(--admin-danger-bg)] px-3 text-[12.5px] font-medium text-[var(--admin-danger)] disabled:opacity-40"
-                >
-                  <Trash2 className="size-3.5" strokeWidth={1.7} />
-                  حذف الصورة
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <div className="size-14 overflow-hidden rounded-[10px] border-2 border-[var(--admin-plum)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={product.imageUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              disabled={imageBusy}
-              onClick={() => fileRef.current?.click()}
-              className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-3 rounded-[14px] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-bg-elevated)] px-6 text-center transition hover:border-[var(--admin-plum-soft)]"
-            >
-              <span className="flex size-12 items-center justify-center rounded-full bg-white text-[var(--admin-plum)] shadow-[var(--admin-shadow)]">
-                <ImagePlus className="size-5" strokeWidth={1.6} />
-              </span>
-              <span className="text-[14px] font-medium text-[var(--admin-text)]">
-                لا توجد صورة للمنتج
-              </span>
-              <span className="text-[12.5px] text-[var(--admin-text-muted)]">
-                {imageBusy ? "جارٍ الرفع…" : "+ إضافة صورة"}
-              </span>
-            </button>
-          )}
         </SectionCard>
 
-        <SectionCard title="معلومات العلامة التجارية">
+        <SectionCard
+          title="البراند والعلامة"
+          subtitle="من براندات المتجر الرسمية"
+          icon={Package}
+        >
           <input
             ref={brandFileRef}
             type="file"
@@ -790,7 +721,7 @@ export function ProductEditor({
           <div className="space-y-4">
             <Field
               label="اسم العلامة"
-              hint="من براندات المتجر الرسمية — نفس قائمة البحث والفلاتر (اختياري للمنتجات القديمة)"
+              hint="نفس قائمة البحث والفلاتر — اختياري للمنتجات القديمة"
               error={errors.brandName}
             >
               <div id="admin-product-brand">
@@ -802,58 +733,29 @@ export function ProductEditor({
             </Field>
 
             <div>
-              <p className="mb-1.5 text-[12px] font-medium text-[var(--admin-text-secondary)]">
+              <p className="mb-2 text-[12px] font-medium text-[var(--admin-text-secondary)]">
                 شعار العلامة
               </p>
-              {product.brandLogoUrl ? (
-                <div className="space-y-3">
-                  <div className="flex h-24 items-center justify-center rounded-[14px] border border-[var(--admin-border)] bg-white px-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.brandLogoUrl}
-                      alt={draft.brandName || "Brand logo"}
-                      className="max-h-16 w-auto max-w-full object-contain"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={brandBusy}
-                      onClick={() => brandFileRef.current?.click()}
-                      className="inline-flex h-9 items-center rounded-[10px] border border-[var(--admin-border)] bg-white px-3 text-[12.5px] font-medium disabled:opacity-40"
-                    >
-                      {brandBusy ? "جارٍ الرفع…" : "استبدال الشعار"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={brandBusy}
-                      onClick={() => void removeBrandLogo()}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--admin-danger)]/20 bg-[var(--admin-danger-bg)] px-3 text-[12.5px] font-medium text-[var(--admin-danger)] disabled:opacity-40"
-                    >
-                      <Trash2 className="size-3.5" strokeWidth={1.7} />
-                      حذف الشعار
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={brandBusy}
-                  onClick={() => brandFileRef.current?.click()}
-                  className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-bg-elevated)] text-center transition hover:border-[var(--admin-plum-soft)]"
-                >
-                  <ImagePlus className="size-5 text-[var(--admin-plum)]" strokeWidth={1.6} />
-                  <span className="text-[12.5px] text-[var(--admin-text-muted)]">
-                    {brandBusy ? "جارٍ الرفع…" : "رفع شعار العلامة"}
-                  </span>
-                </button>
-              )}
+              <ImageDropzone
+                compact
+                aspectClass="aspect-[5/3]"
+                previewUrl={product.brandLogoUrl}
+                busy={brandBusy}
+                onFile={(f) => void uploadBrandLogo(f)}
+                onRemove={() => void removeBrandLogo()}
+                hint="PNG شفاف مفضّل"
+              />
             </div>
           </div>
         </SectionCard>
+      </div>
 
         {/* Basic info */}
-        <SectionCard title="معلومات المنتج">
+        <SectionCard
+          title="معلومات المنتج"
+          subtitle="الأسماء والتصنيف والرابط"
+          icon={Package}
+        >
           <div className="grid gap-3.5 sm:grid-cols-2">
             <Field label="الاسم بالعربية" error={errors.nameAr}>
               <input
@@ -880,21 +782,6 @@ export function ProductEditor({
                 placeholder="100ml"
               />
             </Field>
-            <Field label="الفئة">
-              <select
-                className={inputClass}
-                value={draft.categorySlug}
-                onChange={(e) =>
-                  patchDraft({ categorySlug: e.target.value })
-                }
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
             <Field label="SKU" hint="معرّف الرابط في المتجر">
               <input
                 className={inputClass}
@@ -903,6 +790,14 @@ export function ProductEditor({
                 onChange={(e) => patchDraft({ slug: e.target.value })}
               />
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="الفئة">
+                <CategorySelector
+                  value={draft.categorySlug}
+                  onChange={(slug) => patchDraft({ categorySlug: slug })}
+                />
+              </Field>
+            </div>
             <Field label="المعرّف" hint="ثابت — للمرجع الداخلي فقط">
               <input
                 className={`${inputClass} opacity-70`}
@@ -914,7 +809,6 @@ export function ProductEditor({
             </Field>
           </div>
         </SectionCard>
-      </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         {/* Pricing */}
@@ -1201,22 +1095,22 @@ export function ProductEditor({
               value={draft.descriptionAr}
               onChange={(e) => patchDraft({ descriptionAr: e.target.value })}
               style={{ textAlign: descAlign }}
-              className="w-full resize-y rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3.5 py-3 text-[13.5px] leading-7 text-[var(--admin-text)] outline-none focus:border-[var(--admin-plum-soft)] focus:bg-white"
-              placeholder="اكتبي وصفاً أنيقاً للمنتج…"
-            />
-          </Field>
-          <div className="mt-3">
-            <Field label="الوصف بالإنجليزية (اختياري)">
-              <textarea
-                rows={3}
-                dir="ltr"
-                maxLength={2000}
-                value={draft.description}
-                onChange={(e) => patchDraft({ description: e.target.value })}
-                className="w-full resize-y rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3.5 py-3 text-[13px] leading-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-plum-soft)] focus:bg-white"
-              />
-            </Field>
-          </div>
+                  className={`${modernTextareaClass} leading-7`}
+                  placeholder="اكتبي وصفاً أنيقاً للمنتج…"
+                />
+              </Field>
+              <div className="mt-3">
+                <Field label="الوصف بالإنجليزية (اختياري)">
+                  <textarea
+                    rows={3}
+                    dir="ltr"
+                    maxLength={2000}
+                    value={draft.description}
+                    onChange={(e) => patchDraft({ description: e.target.value })}
+                    className={modernTextareaClass}
+                  />
+                </Field>
+              </div>
         </SectionCard>
       </div>
 
@@ -1467,20 +1361,32 @@ export function ProductEditor({
           </button>
         </SectionCard>
       </div>
+        </div>
 
-      {/* Sticky save bar */}
-      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-[var(--admin-border)] bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/85 lg:bottom-0">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <p className="text-[12.5px] text-[var(--admin-text-secondary)]">
-            {dirty
-              ? "لديك تغييرات غير محفوظة"
-              : "جميع التغييرات محفوظة"}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="hidden lg:sticky lg:top-4 lg:block">
+          <PreviewCard
+            imageUrl={product.imageUrl}
+            titleAr={draft.nameAr}
+            titleEn={draft.name}
+            brand={draft.brandName}
+            category={categoryLabel}
+            priceLabel={formatPrice(previewSale)}
+            stock={draft.stock || "0"}
+            published={draft.isActive}
+          />
+        </div>
+      </div>
+
+      <StickyFormActions
+        note={
+          dirty ? "لديك تغييرات غير محفوظة" : "جميع التغييرات محفوظة"
+        }
+        right={
+          <>
             <button
               type="button"
               onClick={() => setPreviewOpen(true)}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--admin-border)] bg-white px-3 text-[13px] font-medium sm:flex-none"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[12px] border border-[var(--admin-border)] bg-white px-3 text-[13px] font-medium sm:flex-none"
             >
               <Eye className="size-3.5" strokeWidth={1.7} />
               معاينة
@@ -1489,21 +1395,21 @@ export function ProductEditor({
               type="button"
               disabled={saving || !draft.isActive}
               onClick={() => patchDraft({ isActive: false })}
-              className="inline-flex h-10 flex-1 items-center justify-center rounded-[10px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3 text-[13px] font-medium text-[var(--admin-text-secondary)] disabled:opacity-40 sm:flex-none"
+              className="inline-flex h-11 flex-1 items-center justify-center rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface-soft)] px-3 text-[13px] font-medium text-[var(--admin-text-secondary)] disabled:opacity-40 sm:flex-none"
             >
-              إخفاء المنتج
+              إخفاء
             </button>
             <button
               type="button"
               disabled={saving || !dirty}
               onClick={() => void saveAll()}
-              className="inline-flex h-10 flex-[1.4] items-center justify-center rounded-[10px] bg-[var(--admin-plum)] px-4 text-[13px] font-medium text-white disabled:opacity-40 sm:flex-none sm:min-w-[9.5rem]"
+              className="inline-flex h-11 flex-[1.4] items-center justify-center rounded-[12px] bg-[var(--admin-plum)] px-4 text-[13px] font-medium text-white disabled:opacity-40 sm:flex-none sm:min-w-[9.5rem]"
             >
               {saving ? "جارٍ الحفظ…" : "حفظ التغييرات"}
             </button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Preview modal */}
       {previewOpen ? (
