@@ -584,7 +584,22 @@ export function productMatchesBrand(
   productName: string,
   productNameAr: string,
   brand: ShopBrand,
+  productBrandName?: string | null,
 ) {
-  const hay = `${productName} ${productNameAr}`.toLowerCase();
-  return brand.match.some((m) => hay.includes(m.toLowerCase()));
+  const hay = `${productName} ${productNameAr} ${productBrandName || ""}`.toLowerCase();
+  return (
+    brand.match.some((m) => hay.includes(m.toLowerCase())) ||
+    hay.includes(brand.name.toLowerCase())
+  );
+}
+
+/** Resolve shop brand from stored Product.brandName (official English name or match token). */
+export function getShopBrandByProductBrandName(brandName: string | null | undefined) {
+  if (!brandName?.trim()) return null;
+  const lower = brandName.trim().toLowerCase();
+  return (
+    shopBrands.find((b) => b.name.toLowerCase() === lower) ||
+    shopBrands.find((b) => b.match.some((m) => lower.includes(m.toLowerCase()))) ||
+    null
+  );
 }

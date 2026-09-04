@@ -39,9 +39,17 @@ export function PromoBanner({ config }: { config: HomePromoConfig }) {
               <img
                 src={config.imageUrl}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="absolute inset-0 h-full w-full object-cover object-left"
                 style={{
                   objectPosition: config.objectPosition || "left center",
+                }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.opacity = "0";
+                  if (process.env.NODE_ENV === "development") {
+                    console.warn("[PromoBanner] image failed", config.imageUrl);
+                  }
                 }}
               />
             ) : (

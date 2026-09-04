@@ -17,17 +17,32 @@ function asStringArray<T = string>(value: Prisma.JsonValue): T[] {
 
 /**
  * لا نمرّر data-URL داخل RSC/JSON — يحجّم الكتالوج عشرات الميغابايت.
- * الصور تُخدم عبر /api/media/product/[id] عند الحاجة.
+ * المسارات المحلية والـ data تُخدم عبر /api/media/product/[id].
+ * روابط Blob/HTTPS تُمرَّر كما هي.
  */
 export function storefrontProductImageUrl(
   productId: string,
   imageUrl: string | null | undefined,
+  cacheBust?: number | string,
 ): string | null {
-  if (!imageUrl) return null;
-  if (imageUrl.startsWith("data:")) {
-    return `/api/media/product/${encodeURIComponent(productId)}`;
-  }
-  return imageUrl;
+  if (!imageUrl?.trim()) return null;
+  const url = imageUrl.trim();
+  if (url.startsWith("https://") || url.startsWith("http://")) return url;
+  const q = cacheBust !== undefined && cacheBust !== "" ? `?v=${encodeURIComponent(String(cacheBust))}` : "";
+  return `/api/media/product/${encodeURIComponent(productId)}${q}`;
+}
+
+export function storefrontBrandLogoUrl(
+  productId: string,
+  brandLogoUrl: string | null | undefined,
+  cacheBust?: number | string,
+): string | null {
+  if (!brandLogoUrl?.trim()) return null;
+  const url = brandLogoUrl.trim();
+  if (url.startsWith("https://") || url.startsWith("http://")) return url;
+  const params = new URLSearchParams({ kind: "brandLogo" });
+  if (cacheBust !== undefined && cacheBust !== "") params.set("v", String(cacheBust));
+  return `/api/media/product/${encodeURIComponent(productId)}?${params}`;
 }
 
 /** حقول المستشار — كتالوج غني للتوصية والـ AI بدون جلب الصفحة كاملة */
@@ -213,9 +228,7 @@ export function mapProduct(row: DbProduct): Product {
     imageTone: row.imageTone,
     imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
     brandName: row.brandName || null,
-    // لا نضمّن شعارات data-URL في HTML الصفحة
-    brandLogoUrl:
-      brandLogo && !brandLogo.startsWith("data:") ? brandLogo : null,
+    brandLogoUrl: storefrontBrandLogoUrl(row.id, brandLogo),
     stock: row.stock,
   };
 }

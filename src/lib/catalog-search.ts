@@ -72,16 +72,22 @@ function buildWhere(params: CatalogSearchParams): Prisma.ProductWhereInput {
         b.name.toLowerCase() === params.brand!.toLowerCase(),
     );
     if (brandMeta) {
-      const tokens = [
-        brandMeta.name,
-        ...brandMeta.match,
-      ].filter(Boolean);
+      const tokens = [brandMeta.name, ...brandMeta.match].filter(Boolean);
       and.push({
-        OR: tokens.flatMap((token) => [
-          { brandName: { contains: token, mode: "insensitive" as const } },
-          { name: { contains: token, mode: "insensitive" as const } },
-          { nameAr: { contains: token, mode: "insensitive" as const } },
-        ]),
+        OR: [
+          // Prefer exact official Product.brandName (Admin SSOT)
+          {
+            brandName: {
+              equals: brandMeta.name,
+              mode: "insensitive" as const,
+            },
+          },
+          ...tokens.flatMap((token) => [
+            { brandName: { contains: token, mode: "insensitive" as const } },
+            { name: { contains: token, mode: "insensitive" as const } },
+            { nameAr: { contains: token, mode: "insensitive" as const } },
+          ]),
+        ],
       });
     } else {
       and.push({

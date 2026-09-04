@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductBadge, productDetailBadges } from "@/components/shop/ProductBadge";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
+import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import type { Product } from "@/types";
 
 type Props = {
@@ -57,7 +58,7 @@ export function ProductBrandLogo({
   brandLogoUrl?: string | null;
 }) {
   if (!brandLogoUrl) return null;
-  const isData = brandLogoUrl.startsWith("data:");
+  const useNative = shouldUseNativeImageElement(brandLogoUrl);
 
   return (
     <div
@@ -66,14 +67,28 @@ export function ProductBrandLogo({
     >
       <div className="mb-3.5 h-px w-10 bg-[var(--plum)]/15" aria-hidden />
       <div className="relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[240px]">
-        <Image
-          src={brandLogoUrl}
-          alt={brandName ? `${brandName} logo` : "Brand logo"}
-          width={240}
-          height={40}
-          unoptimized={isData}
-          className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
-        />
+        {useNative ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={brandLogoUrl}
+            alt={brandName ? `${brandName} logo` : "Brand logo"}
+            className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+              if (process.env.NODE_ENV === "development") {
+                console.warn("[ProductBrandLogo] failed", brandLogoUrl);
+              }
+            }}
+          />
+        ) : (
+          <Image
+            src={brandLogoUrl}
+            alt={brandName ? `${brandName} logo` : "Brand logo"}
+            width={240}
+            height={40}
+            className="h-8 w-auto max-h-9 max-w-full object-contain object-center sm:h-9"
+          />
+        )}
       </div>
     </div>
   );

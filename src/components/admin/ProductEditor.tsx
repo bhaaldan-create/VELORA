@@ -24,6 +24,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { AdminBrandSelect } from "@/components/admin/AdminBrandSelect";
 import { useAdminToast } from "@/components/admin/ui/Toast";
 import {
   ADMIN_CATEGORY_LABELS,
@@ -305,6 +306,9 @@ export function ProductEditor({
     if (!draft.nameAr.trim()) next.nameAr = "الاسم بالعربية مطلوب.";
     if (!draft.name.trim()) next.name = "الاسم بالإنجليزية مطلوب.";
     if (!draft.size.trim()) next.size = "الحجم مطلوب.";
+    if (!draft.brandName.trim()) {
+      next.brandName = "اختاري براند من قائمة براندات المتجر.";
+    }
     const price = Number(draft.price);
     if (!Number.isFinite(price) || price < 0 || !Number.isInteger(price)) {
       next.price = "السعر يجب أن يكون رقماً صحيحاً غير سالب.";
@@ -671,7 +675,7 @@ export function ProductEditor({
           <input
             ref={fileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             className="hidden"
             onChange={onFileChange}
           />
@@ -683,6 +687,18 @@ export function ProductEditor({
                   src={product.imageUrl}
                   alt={draft.nameAr}
                   className="h-full w-full object-cover"
+                  onError={(e) => {
+                    const wrap = e.currentTarget.parentElement;
+                    e.currentTarget.style.display = "none";
+                    if (wrap && !wrap.querySelector("[data-image-unavailable]")) {
+                      const msg = document.createElement("div");
+                      msg.dataset.imageUnavailable = "1";
+                      msg.className =
+                        "flex h-full items-center justify-center px-4 text-center text-[13px] text-[var(--admin-text-muted)]";
+                      msg.textContent = "صورة غير متاحة — استبدليها برفع جديد";
+                      wrap.appendChild(msg);
+                    }
+                  }}
                 />
                 <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-plum)] backdrop-blur">
                   الصورة الرئيسية
@@ -742,7 +758,7 @@ export function ProductEditor({
           <input
             ref={brandFileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0] || null;
@@ -752,14 +768,12 @@ export function ProductEditor({
           <div className="space-y-4">
             <Field
               label="اسم العلامة"
-              hint="مثل L’Oréal Paris أو La Roche-Posay — اختياري"
+              hint="من براندات المتجر الرسمية — نفس قائمة البحث والفلاتر"
+              error={errors.brandName}
             >
-              <input
-                className={inputClass}
-                dir="ltr"
+              <AdminBrandSelect
                 value={draft.brandName}
-                onChange={(e) => patchDraft({ brandName: e.target.value })}
-                placeholder="Brand name"
+                onChange={(brandName) => patchDraft({ brandName })}
               />
             </Field>
 

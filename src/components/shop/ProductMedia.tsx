@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
+import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -17,7 +19,7 @@ type Props = {
 /**
  * صورة المنتج داخل مساحة ثابتة (aspect).
  * Full-bleed: تملأ الحاوية بالكامل بدون padding أو خلفية ثيم ظاهرة حولها.
- * object-cover + object-center يملآن الإطار لأي نسبة أبعاد؛ القصّ يكون طفيفاً على الحواف فقط.
+ * /api/media و data: تستخدم <img> الأصلي — محسّن next/image لا يدعمها.
  */
 export function ProductMedia({
   name,
@@ -28,8 +30,13 @@ export function ProductMedia({
   sizes = "(max-width: 768px) 50vw, 25vw",
   priority = false,
 }: Props) {
-  if (imageUrl) {
-    const isDataUrl = imageUrl.startsWith("data:");
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const src = imageUrl?.trim() || "";
+  const showImage = Boolean(src) && !failed;
+
+  if (showImage) {
+    const useNative = shouldUseNativeImageElement(src);
     return (
       <div
         className={cn(
@@ -38,15 +45,55 @@ export function ProductMedia({
           className,
         )}
       >
-        <Image
-          src={imageUrl}
-          alt={name}
-          fill
-          sizes={sizes}
-          priority={priority}
-          unoptimized={isDataUrl}
-          className="absolute inset-0 h-full w-full max-w-none object-cover object-center"
-        />
+        {!loaded ? (
+          <div
+            className="absolute inset-0 animate-pulse"
+            style={{ background: imageTone }}
+            aria-hidden
+          />
+        ) : null}
+        {useNative ? (
+          // eslint-disable-next-line @next/next/no-img-element -- /api/media & data URLs
+          <img
+            src={src}
+            alt={name}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "auto"}
+            onLoad={() => setLoaded(true)}
+            onError={() => {
+              setFailed(true);
+              setLoaded(true);
+              if (process.env.NODE_ENV === "development") {
+                console.warn("[ProductMedia] image failed", { name, src });
+              }
+            }}
+            className={cn(
+              "absolute inset-0 h-full w-full max-w-none object-cover object-center transition-opacity duration-300",
+              loaded ? "opacity-100" : "opacity-0",
+            )}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={name}
+            fill
+            sizes={sizes}
+            priority={priority}
+            onLoad={() => setLoaded(true)}
+            onError={() => {
+              setFailed(true);
+              setLoaded(true);
+              if (process.env.NODE_ENV === "development") {
+                console.warn("[ProductMedia] image failed", { name, src });
+              }
+            }}
+            className={cn(
+              "absolute inset-0 h-full w-full max-w-none object-cover object-center transition-opacity duration-300",
+              loaded ? "opacity-100" : "opacity-0",
+            )}
+          />
+        )}
       </div>
     );
   }

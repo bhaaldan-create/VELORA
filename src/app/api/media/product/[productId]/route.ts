@@ -20,25 +20,16 @@ function parseDataUrl(url: string): { mime: string; buffer: Buffer } | null {
   }
 }
 
-export async function GET(
-  _req: Request,
-  ctx: { params: Promise<{ productId: string }> },
-) {
-  const { productId } = await ctx.params;
-  const id = decodeURIComponent(productId || "").trim();
-  if (!id) {
-    return new Response("Not found", { status: 404 });
-  }
+function mimeFromExt(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === ".png") return "image/png";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".gif") return "image/gif";
+  if (ext === ".avif") return "image/avif";
+  return "image/jpeg";
+}
 
-  const row = await prisma.product.findFirst({
-    where: { id, isActive: true },
-    select: { imageUrl: true },
-  });
-  const stored = row?.imageUrl?.trim();
-  if (!stored) {
-    return new Response("Not found", { status: 404 });
-  }
-
+async function serveStored(stored: string): Promise<Response> {
   if (stored.startsWith("data:")) {
     const parsed = parseDataUrl(stored);
     if (!parsed) {
@@ -53,23 +44,19 @@ export async function GET(
     });
   }
 
-  if (stored.startsWith("/uploads/") || stored.startsWith("/products/")) {
+  if (
+    stored.startsWith("/uploads/") ||
+    stored.startsWith("/products/") ||
+    stored.startsWith("/brands/") ||
+    stored.startsWith("/brand/")
+  ) {
     try {
       const filePath = path.join(process.cwd(), "public", stored);
       const buffer = await readFile(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      const mime =
-        ext === ".png"
-          ? "image/png"
-          : ext === ".webp"
-            ? "image/webp"
-            : ext === ".gif"
-              ? "image/gif"
-              : "image/jpeg";
       return new Response(new Uint8Array(buffer), {
         status: 200,
         headers: {
-          "Content-Type": mime,
+          "Content-Type": mimeFromExt(filePath),
           "Cache-Control": MEDIA_IMMUTABLE_CACHE_CONTROL,
         },
       });
@@ -83,4 +70,35 @@ export async function GET(
   }
 
   return new Response("Not found", { status: 404 });
+}
+
+export async function GET(
+  req: Request,
+  ctx: { params: Promise<{ productId: string }> },
+) {
+  const { productId } = await ctx.params;
+  const id = decodeURIComponent(productId || "").trim();
+  if (!id) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const url = new URL(req.url);
+  const kind = url.searchParams.get("kind") === "brandLogo" ? "brandLogo" : "product";
+
+  // Serve even for inactive products — admin preview + soft-hidden catalog need images.
+  const row = await prisma.product.findFirst({
+    where: { id },
+    select: { imageUrl: true, brandLogoUrl: true },
+  });
+
+  const stored =
+    kind === "brandLogo"
+      ? row?.brandLogoUrl?.trim()
+      : row?.imageUrl?.trim();
+
+  if (!stored) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  return serveStored(stored);
 }

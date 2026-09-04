@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { AdminBrandSelect } from "@/components/admin/AdminBrandSelect";
 import type { AdminProduct } from "@/lib/admin-product-types";
 import { DISCOUNT_OPTIONS } from "@/lib/pricing";
 import type { CategorySlug, SkinConcern } from "@/types";
@@ -102,6 +103,10 @@ export function ProductCreateForm({
       setError("اسم المنتج بالعربية والإنجليزية مطلوب.");
       return;
     }
+    if (!form.brandName.trim()) {
+      setError("اختاري براند من قائمة براندات المتجر.");
+      return;
+    }
     if (!Number.isFinite(price) || price < 0 || !Number.isInteger(price)) {
       setError("السعر يجب أن يكون رقماً صحيحاً غير سالب.");
       return;
@@ -179,9 +184,13 @@ export function ProductCreateForm({
           product?: AdminProduct;
           error?: string;
         };
-        if (imgRes.ok && imgJson.ok && imgJson.product) {
-          product = imgJson.product;
+        if (!imgRes.ok || !imgJson.ok || !imgJson.product) {
+          throw new Error(
+            imgJson.error ||
+              "تم إنشاء المنتج لكن فشل رفع الصورة. افتحي المنتج وأعيدي رفع الصورة.",
+          );
         }
+        product = imgJson.product;
       }
 
       if (brandFile) {
@@ -198,9 +207,13 @@ export function ProductCreateForm({
           product?: AdminProduct;
           error?: string;
         };
-        if (imgRes.ok && imgJson.ok && imgJson.product) {
-          product = imgJson.product;
+        if (!imgRes.ok || !imgJson.ok || !imgJson.product) {
+          throw new Error(
+            imgJson.error ||
+              "تم إنشاء المنتج لكن فشل رفع شعار العلامة. افتحي المنتج وأعيدي الرفع.",
+          );
         }
+        product = imgJson.product;
       }
 
       onCreated(product);
@@ -281,13 +294,11 @@ export function ProductCreateForm({
             ))}
           </select>
         </Field>
-        <Field label="اسم العلامة التجارية (اختياري)">
-          <input
+        <Field label="البراند">
+          <AdminBrandSelect
+            required
             value={form.brandName}
-            onChange={(e) => set("brandName", e.target.value)}
-            className={inputClass}
-            dir="ltr"
-            placeholder="L’Oréal Paris"
+            onChange={(brandName) => set("brandName", brandName)}
           />
         </Field>
         <Field label="الحجم / العبوة">
@@ -478,7 +489,7 @@ export function ProductCreateForm({
         <label className="t2 text-[var(--muted)]">صورة المنتج (اختياري)</label>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/avif"
           className="t3 mt-2 block w-full"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
@@ -493,7 +504,7 @@ export function ProductCreateForm({
         </label>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/avif"
           className="t3 mt-2 block w-full"
           onChange={(e) => setBrandFile(e.target.files?.[0] || null)}
         />

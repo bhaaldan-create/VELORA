@@ -9,5 +9,6 @@ export const ADMIN_IMAGE_MIME = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/avif",
   "image/jpg",
 ]);

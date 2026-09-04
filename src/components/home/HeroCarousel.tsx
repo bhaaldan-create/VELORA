@@ -43,7 +43,21 @@ function HeroSlidePicture({
   if (shouldUseNativeImageElement(src)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className={className} style={style} />
+      <img
+        src={src}
+        alt=""
+        className={className}
+        style={style}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={priority ? "high" : "auto"}
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+          if (process.env.NODE_ENV === "development") {
+            console.warn("[HeroSlidePicture] image failed", src);
+          }
+        }}
+      />
     );
   }
   return (

@@ -4,10 +4,12 @@ import {
   MAX_ADMIN_IMAGE_BYTES,
   MAX_ADMIN_IMAGE_ERROR,
 } from "@/lib/admin/image-limits";
+import { resolveStoredImageForClient } from "@/lib/admin/media-url";
 import {
   isUploadBlob,
   persistAdminImage,
   resolveUploadMime,
+  sniffImageMime,
 } from "@/lib/admin/persist-image";
 import { salePriceFromBase } from "@/lib/pricing";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
@@ -35,6 +37,7 @@ function mapRow(row: {
   updatedAt: Date;
 }): AdminProduct {
   const discountPercent = row.discountPercent || 0;
+  const bust = row.updatedAt.getTime();
   return {
     id: row.id,
     slug: row.slug,
@@ -49,9 +52,14 @@ function mapRow(row: {
     isBestseller: row.isBestseller,
     isNew: row.isNew,
     size: row.size,
-    imageUrl: row.imageUrl,
+    imageUrl: resolveStoredImageForClient(row.imageUrl, row.id, "product", bust),
     brandName: row.brandName,
-    brandLogoUrl: row.brandLogoUrl,
+    brandLogoUrl: resolveStoredImageForClient(
+      row.brandLogoUrl,
+      row.id,
+      "brandLogo",
+      bust,
+    ),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -70,13 +78,17 @@ export async function POST(req: Request) {
       return Response.json({ ok: false, error: "أرفقي ملف صورة." }, { status: 400 });
     }
 
-    const mime = resolveUploadMime({
+    const declaredMime = resolveUploadMime({
       type: file.type,
       name: "name" in file ? String((file as File).name || "") : "",
     });
-    if (!mime) {
+    if (!declaredMime) {
       return Response.json(
-        { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
+        {
+          ok: false,
+          error:
+            "الصيغة المسموحة: JPG أو PNG أو WebP أو AVIF. تحقق من نوع الملف ثم أعيدي المحاولة.",
+        },
         { status: 400 },
       );
     }
@@ -94,9 +106,20 @@ export async function POST(req: Request) {
 
     const isBrandLogo = kind === "brandLogo";
     const buffer = Buffer.from(await file.arrayBuffer());
+    const sniffed = sniffImageMime(buffer);
+    if (!sniffed) {
+      return Response.json(
+        {
+          ok: false,
+          error: "الملف تالف أو ليس صورة صالحة. جرّبي JPG أو PNG أو WebP.",
+        },
+        { status: 400 },
+      );
+    }
+
     const persisted = await persistAdminImage({
       buffer,
-      mime,
+      mime: sniffed,
       folder: isBrandLogo ? "brands" : "products",
       basename: isBrandLogo ? `${id}-brand` : id,
     });
@@ -109,12 +132,27 @@ export async function POST(req: Request) {
     });
 
     revalidateStorefront({ slug: row.slug });
-    return Response.json({ ok: true, product: mapRow(row) });
+    return Response.json({
+      ok: true,
+      product: mapRow(row),
+      storage: persisted.storage,
+    });
   } catch (error) {
     console.error("[admin/products/image] POST failed", error);
     const detail =
       error instanceof Error ? error.message : "تعذّر رفع الصورة.";
-    return Response.json({ ok: false, error: detail }, { status: 500 });
+    return Response.json(
+      {
+        ok: false,
+        error:
+          detail.includes("تعذّر") ||
+          detail.includes("الصورة") ||
+          detail.includes("الملف")
+            ? detail
+            : "فشل رفع الصورة. تحقق من حجم الملف أو نوعه ثم حاول مرة أخرى.",
+      },
+      { status: 500 },
+    );
   }
 }
 

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import {
-  countAdminProductStats,
   createAdminProduct,
   deleteAdminProduct,
   getAdminProductById,
-  listAdminProducts,
+  listAdminProductsPage,
   updateAdminProduct,
 } from "@/lib/admin-products";
 import { DISCOUNT_OPTIONS } from "@/lib/pricing";
+import { shopBrands, getShopBrandByProductBrandName } from "@/data/shop-brands";
 
 const categoryEnum = z.enum([
   "skincare",
@@ -43,6 +43,22 @@ const stringListRequired = z
   .transform((arr) => arr.map((s) => s.trim()).filter(Boolean))
   .refine((arr) => arr.length >= 1, { message: "قائمة فارغة" });
 
+const shopBrandNames = new Set(shopBrands.map((b) => b.name));
+
+const brandNameSchema = z
+  .string()
+  .trim()
+  .max(120)
+  .nullable()
+  .optional()
+  .transform((v) => {
+    if (v == null) return v;
+    const trimmed = v.trim();
+    if (!trimmed) return null;
+    const resolved = getShopBrandByProductBrandName(trimmed);
+    return resolved ? resolved.name : trimmed;
+  });
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = (searchParams.get("id") || "").trim();
@@ -57,25 +73,41 @@ export async function GET(req: Request) {
     return Response.json({ ok: true, product });
   }
 
-  const q = (searchParams.get("q") || "").trim().toLowerCase();
-  const visibility = searchParams.get("visibility") || "all";
+  const q = (searchParams.get("q") || "").trim();
+  const visibility = (searchParams.get("visibility") || "all") as
+    | "all"
+    | "active"
+    | "hidden"
+    | "low"
+    | "out"
+    | "sale";
+  const category = (searchParams.get("category") || "").trim() || null;
+  const brand = (searchParams.get("brand") || "").trim() || null;
+  const page = Math.max(1, Number(searchParams.get("page") || 1) || 1);
+  const pageSize = Math.min(
+    100,
+    Math.max(1, Number(searchParams.get("pageSize") || 24) || 24),
+  );
 
-  const all = await listAdminProducts();
-  const stats = countAdminProductStats(all);
-
-  const products = all.filter((p) => {
-    if (visibility === "active" && !p.isActive) return false;
-    if (visibility === "hidden" && p.isActive) return false;
-    if (visibility === "low" && !(p.stock > 0 && p.stock <= 10)) return false;
-    if (visibility === "out" && p.stock > 0) return false;
-    if (visibility === "sale" && p.discountPercent <= 0) return false;
-    if (!q) return true;
-    const hay =
-      `${p.id} ${p.slug} ${p.name} ${p.nameAr} ${p.categorySlug}`.toLowerCase();
-    return hay.includes(q);
+  const result = await listAdminProductsPage({
+    q,
+    visibility,
+    category,
+    brand,
+    page,
+    pageSize,
   });
 
-  return Response.json({ ok: true, stats, products });
+  return Response.json({
+    ok: true,
+    ...result,
+    brands: shopBrands.map((b) => ({
+      id: b.id,
+      slug: b.slug,
+      name: b.name,
+      nameAr: b.nameAr,
+    })),
+  });
 }
 
 const createSchema = z.object({
@@ -108,6 +140,7 @@ const createSchema = z.object({
   reviews: z.number().int().nonnegative().optional(),
   imageTone: z.string().max(300).optional(),
   slug: z.string().max(120).optional(),
+  brandName: brandNameSchema,
 });
 
 export async function POST(req: Request) {
@@ -126,7 +159,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const product = await createAdminProduct(parsed.data);
+    const data = parsed.data;
+    if (!data.brandName || !shopBrandNames.has(data.brandName)) {
+      return Response.json(
+        {
+          ok: false,
+          error: "اختاري براند من قائمة براندات المتجر الرسمية.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const product = await createAdminProduct(data);
     return Response.json({ ok: true, product }, { status: 201 });
   } catch (error) {
     console.error("[admin/products] POST failed", error);
@@ -167,6 +211,7 @@ const patchSchema = z.object({
   reviews: z.number().int().nonnegative().optional(),
   imageTone: z.string().max(300).optional(),
   slug: z.string().max(120).optional(),
+  brandName: brandNameSchema,
   supplierId: z.string().nullable().optional(),
   costCurrency: z.enum(["IQD", "USD"]).optional(),
   costExchangeRate: z.number().nonnegative().optional(),
@@ -197,6 +242,25 @@ export async function PATCH(req: Request) {
         { ok: false, error: "لا يوجد حقل للتحديث." },
         { status: 400 },
       );
+    }
+
+    if (
+      data.brandName !== undefined &&
+      data.brandName !== null &&
+      data.brandName !== "" &&
+      !shopBrandNames.has(data.brandName)
+    ) {
+      // Legacy free-text brands: allow only if unchanged; otherwise require official list
+      const existing = await getAdminProductById(id);
+      if (!existing || existing.brandName !== data.brandName) {
+        return Response.json(
+          {
+            ok: false,
+            error: "اختاري براند من قائمة براندات المتجر الرسمية.",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const product = await updateAdminProduct(id, data);

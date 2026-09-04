@@ -1,5 +1,34 @@
 /** روابط عرض صور مخزّنة كـ data URL في DB — تبقي ردود JSON خفيفة. */
 
+export function productMediaUrl(
+  productId: string,
+  kind: "product" | "brandLogo" = "product",
+  cacheBust?: number | string,
+): string {
+  const q = new URLSearchParams();
+  if (kind === "brandLogo") q.set("kind", "brandLogo");
+  if (cacheBust !== undefined && cacheBust !== "") q.set("v", String(cacheBust));
+  const query = q.toString();
+  const base = `/api/media/product/${encodeURIComponent(productId)}`;
+  return query ? `${base}?${query}` : base;
+}
+
+/**
+ * Display URL for admin/storefront — never ship raw data: URLs in JSON.
+ * Keeps https (Blob/CDN) as-is; rewrites data:/local paths through media proxy.
+ */
+export function resolveStoredImageForClient(
+  stored: string | null | undefined,
+  productId: string,
+  kind: "product" | "brandLogo" = "product",
+  cacheBust?: number | string,
+): string | null {
+  if (!stored?.trim()) return null;
+  const url = stored.trim();
+  if (url.startsWith("https://") || url.startsWith("http://")) return url;
+  return productMediaUrl(productId, kind, cacheBust);
+}
+
 export function heroSlideMediaUrl(
   slideId: string,
   variant: "desktop" | "mobile",

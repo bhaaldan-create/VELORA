@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
     if (!mime) {
       return Response.json(
-        { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP." },
+        { ok: false, error: "الصيغة المسموحة: JPG أو PNG أو WebP أو AVIF." },
         { status: 400 },
       );
     }

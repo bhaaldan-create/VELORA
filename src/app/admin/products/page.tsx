@@ -1,16 +1,13 @@
 import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProductsAdmin } from "@/components/admin/ProductsAdmin";
-import {
-  countAdminProductStats,
-  listAdminProducts,
-} from "@/lib/admin-products";
+import { listAdminProductsPage } from "@/lib/admin-products";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  const products = await listAdminProducts();
-  const stats = countAdminProductStats(products);
+  // First page only — never load full catalog / image blobs into RSC props
+  const first = await listAdminProductsPage({ page: 1, pageSize: 24 });
 
   return (
     <AdminShell
@@ -25,7 +22,10 @@ export default async function AdminProductsPage() {
           </p>
         }
       >
-        <ProductsAdmin initialProducts={products} initialStats={stats} />
+        <ProductsAdmin
+          initialProducts={first.products}
+          initialStats={first.stats}
+        />
       </Suspense>
     </AdminShell>
   );

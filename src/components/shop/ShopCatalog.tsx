@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getShopBrand } from "@/data/shop-brands";
+import { getShopBrand, productMatchesBrand } from "@/data/shop-brands";
 import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
 import { CompactProductCard } from "@/components/shop/CompactProductCard";
 import {
@@ -117,13 +117,9 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
     if (advanced && remote) return remote;
     let result = products;
     if (brandMeta) {
-      result = result.filter((p) => {
-        const hay = `${p.name} ${p.nameAr} ${p.brandName || ""}`.toLowerCase();
-        return (
-          brandMeta.match.some((m) => hay.includes(m)) ||
-          hay.includes(brandMeta.name.toLowerCase())
-        );
-      });
+      result = result.filter((p) =>
+        productMatchesBrand(p.name, p.nameAr, brandMeta, p.brandName),
+      );
     } else if (params.brand) {
       const b = params.brand.toLowerCase();
       result = result.filter(

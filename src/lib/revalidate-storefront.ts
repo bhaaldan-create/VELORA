@@ -14,10 +14,13 @@ export function revalidateStorefront(options: CatalogRevalidateOptions = {}) {
   revalidateTag(CACHE_TAGS.catalog, REVALIDATE_NOW);
   revalidateTag(CACHE_TAGS.products, REVALIDATE_NOW);
   revalidateTag(CACHE_TAGS.categories, REVALIDATE_NOW);
+  revalidateTag(CACHE_TAGS.home, REVALIDATE_NOW);
 
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/search");
+  // Layout covers nested shop URLs; tags cover unstable_cache product lists.
+  revalidatePath("/shop", "layout");
 
   const slug = options.slug?.trim();
   const oldSlug = options.oldSlug?.trim();

@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
   const { locale } = useLocale();
   const ar = locale !== "en";
-  const list = cards.filter((c) => c.enabled && c.imageUrl).slice(0, 4);
-  const visible = list.length ? list : cards.slice(0, 2);
+  const list = cards.filter((c) => c.enabled && c.imageUrl?.trim()).slice(0, 4);
+  const visible = list.length ? list : [];
+
+  if (!visible.length) return null;
 
   return (
     <section className="bg-[var(--background)] py-8 sm:py-10">
@@ -48,9 +50,18 @@ export function CategoryShowcase({ cards }: { cards: HomeCategoryCard[] }) {
                   <img
                     src={card.imageUrl}
                     alt=""
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={i === 0 ? "high" : "auto"}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     style={{
                       objectPosition: card.objectPosition || "center center",
+                    }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.opacity = "0";
+                      if (process.env.NODE_ENV === "development") {
+                        console.warn("[CategoryShowcase] image failed", card.id, card.imageUrl);
+                      }
                     }}
                   />
                 ) : (
