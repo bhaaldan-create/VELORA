@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { prisma } from "@/lib/db";
 import {
   MEDIA_CACHE_CONTROL,
@@ -30,52 +29,17 @@ function mimeFromExt(filePath: string): string {
   return "image/jpeg";
 }
 
-function parseWidth(raw: string | null): number | null {
-  if (!raw) return null;
-  const n = Number.parseInt(raw, 10);
-  if (!Number.isFinite(n) || n < 32) return null;
-  return Math.min(n, 1200);
-}
-
-async function maybeResize(
-  buffer: Buffer,
-  mime: string,
-  width: number | null,
-): Promise<{ buffer: Buffer; mime: string }> {
-  if (!width) return { buffer, mime };
-  if (mime.includes("svg") || mime.includes("gif")) return { buffer, mime };
-  try {
-    const out = await sharp(buffer)
-      .rotate()
-      .resize({
-        width,
-        withoutEnlargement: true,
-        fit: "inside",
-      })
-      .webp({ quality: 78 })
-      .toBuffer();
-    return { buffer: out, mime: "image/webp" };
-  } catch {
-    return { buffer, mime };
-  }
-}
-
-async function serveStored(
-  stored: string,
-  width: number | null,
-): Promise<Response> {
+async function serveStored(stored: string): Promise<Response> {
   if (stored.startsWith("data:")) {
     const parsed = parseDataUrl(stored);
     if (!parsed) {
       return new Response("Bad image", { status: 500 });
     }
-    const resized = await maybeResize(parsed.buffer, parsed.mime, width);
-    return new Response(new Uint8Array(resized.buffer), {
+    return new Response(new Uint8Array(parsed.buffer), {
       status: 200,
       headers: {
-        "Content-Type": resized.mime,
+        "Content-Type": parsed.mime,
         "Cache-Control": MEDIA_CACHE_CONTROL,
-        Vary: "Accept",
       },
     });
   }
@@ -89,14 +53,11 @@ async function serveStored(
     try {
       const filePath = path.join(process.cwd(), "public", stored);
       const buffer = await readFile(filePath);
-      const mime = mimeFromExt(filePath);
-      const resized = await maybeResize(buffer, mime, width);
-      return new Response(new Uint8Array(resized.buffer), {
+      return new Response(new Uint8Array(buffer), {
         status: 200,
         headers: {
-          "Content-Type": resized.mime,
+          "Content-Type": mimeFromExt(filePath),
           "Cache-Control": MEDIA_IMMUTABLE_CACHE_CONTROL,
-          Vary: "Accept",
         },
       });
     } catch {
@@ -111,35 +72,44 @@ async function serveStored(
   return new Response("Not found", { status: 404 });
 }
 
+/**
+ * Product/brand media for the storefront.
+ * NOTE: `?w=` is accepted for cache-busting compatibility with card URLs but
+ * resize is intentionally disabled — sharp native load was crashing this route
+ * in production (HTTP 500 / "This page couldn’t load") and taking down images app-wide.
+ */
 export async function GET(
   req: Request,
   ctx: { params: Promise<{ productId: string }> },
 ) {
-  const { productId } = await ctx.params;
-  const id = decodeURIComponent(productId || "").trim();
-  if (!id) {
-    return new Response("Not found", { status: 404 });
+  try {
+    const { productId } = await ctx.params;
+    const id = decodeURIComponent(productId || "").trim();
+    if (!id) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    const url = new URL(req.url);
+    const kind =
+      url.searchParams.get("kind") === "brandLogo" ? "brandLogo" : "product";
+
+    const row = await prisma.product.findFirst({
+      where: { id },
+      select: { imageUrl: true, brandLogoUrl: true },
+    });
+
+    const stored =
+      kind === "brandLogo"
+        ? row?.brandLogoUrl?.trim()
+        : row?.imageUrl?.trim();
+
+    if (!stored) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    return await serveStored(stored);
+  } catch (error) {
+    console.error("[media/product] GET failed", error);
+    return new Response("Media unavailable", { status: 500 });
   }
-
-  const url = new URL(req.url);
-  const kind =
-    url.searchParams.get("kind") === "brandLogo" ? "brandLogo" : "product";
-  const width = parseWidth(url.searchParams.get("w"));
-
-  // Serve even for inactive products — admin preview + soft-hidden catalog need images.
-  const row = await prisma.product.findFirst({
-    where: { id },
-    select: { imageUrl: true, brandLogoUrl: true },
-  });
-
-  const stored =
-    kind === "brandLogo"
-      ? row?.brandLogoUrl?.trim()
-      : row?.imageUrl?.trim();
-
-  if (!stored) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  return serveStored(stored, kind === "brandLogo" ? null : width);
 }
