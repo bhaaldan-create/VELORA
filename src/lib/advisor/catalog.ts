@@ -4,7 +4,23 @@ import {
 } from "@/lib/catalog";
 import type { CategorySlug, Product, SkinConcern } from "@/types";
 
-/** كتالوج مضغوط للنموذج — من قاعدة البيانات */
+/** ملخص خفيف للـ prompt — بدون dump كامل للكتالوج */
+export async function getCatalogSummaryForPrompt() {
+  const products = await getAdvisorProducts();
+  const byCategory: Record<string, number> = {};
+  const brands = new Set<string>();
+  for (const p of products) {
+    byCategory[p.category] = (byCategory[p.category] ?? 0) + 1;
+    if (p.brandName?.trim()) brands.add(p.brandName.trim());
+  }
+  return {
+    total: products.length,
+    byCategory,
+    brandSample: [...brands].slice(0, 24),
+  };
+}
+
+/** @deprecated استخدم getCatalogSummaryForPrompt — الإبقاء للتوافق المؤقت */
 export async function getCatalogForPrompt() {
   const products = await getAdvisorProducts();
   return products.map((p) => ({
@@ -29,23 +45,40 @@ export async function getCatalogForPrompt() {
 
 export type CatalogSearchInput = {
   query?: string;
+  brand?: string;
   category?: CategorySlug | "all";
   concerns?: SkinConcern[];
   maxPriceIQD?: number;
   minPriceIQD?: number;
   bestsellersOnly?: boolean;
+  inStockOnly?: boolean;
   limit?: number;
 };
+
+function tokenizeQuery(q: string): string[] {
+  return q
+    .toLowerCase()
+    .split(/[\s,،/\-_]+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 1);
+}
+
+function productHaystack(p: Product): string {
+  return `${p.name} ${p.nameAr} ${p.brandName ?? ""} ${p.descriptionAr} ${p.benefitsAr.join(" ")} ${p.ingredients.join(" ")} ${(p.featureTags ?? []).join(" ")} ${(p.skinTypes ?? []).join(" ")} ${p.productType ?? ""} ${p.category}`.toLowerCase();
+}
 
 export async function searchCatalogProducts(
   input: CatalogSearchInput,
 ): Promise<Product[]> {
   const all = await getAdvisorProducts();
   const q = (input.query || "").trim().toLowerCase();
+  const tokens = q ? tokenizeQuery(q) : [];
+  const brandQ = (input.brand || "").trim().toLowerCase();
   const limit = Math.min(Math.max(input.limit ?? 8, 1), 12);
 
   let list = all.filter((p) => {
     if (input.bestsellersOnly && !p.isBestseller) return false;
+    if (input.inStockOnly && (p.stock ?? 1) <= 0) return false;
     if (typeof input.maxPriceIQD === "number" && p.price > input.maxPriceIQD) {
       return false;
     }
@@ -58,12 +91,18 @@ export async function searchCatalogProducts(
     if (input.concerns?.length) {
       if (!input.concerns.some((c) => p.concerns.includes(c))) return false;
     }
-    if (q) {
-      const hay =
-        `${p.name} ${p.nameAr} ${p.descriptionAr} ${p.benefitsAr.join(" ")} ${p.ingredients.join(" ")} ${(p.featureTags ?? []).join(" ")} ${(p.skinTypes ?? []).join(" ")} ${p.productType ?? ""} ${p.category}`.toLowerCase();
-      if (!hay.includes(q) && !q.split(/\s+/).some((w) => w.length > 2 && hay.includes(w))) {
-        return false;
-      }
+    if (brandQ) {
+      const bn = (p.brandName ?? "").toLowerCase();
+      const nameHit =
+        bn.includes(brandQ) ||
+        p.name.toLowerCase().includes(brandQ) ||
+        p.nameAr.includes(input.brand!.trim());
+      if (!nameHit) return false;
+    }
+    if (tokens.length) {
+      const hay = productHaystack(p);
+      const matched = tokens.some((w) => hay.includes(w));
+      if (!matched) return false;
     }
     return true;
   });
@@ -72,13 +111,26 @@ export async function searchCatalogProducts(
     let sa = (a.isBestseller ? 2 : 0) + (a.isNew ? 1 : 0) + a.rating / 5;
     let sb = (b.isBestseller ? 2 : 0) + (b.isNew ? 1 : 0) + b.rating / 5;
     if (input.concerns?.length) {
-      sa += input.concerns.filter((c) => a.concerns.includes(c)).length;
-      sb += input.concerns.filter((c) => b.concerns.includes(c)).length;
+      sa += input.concerns.filter((c) => a.concerns.includes(c)).length * 2;
+      sb += input.concerns.filter((c) => b.concerns.includes(c)).length * 2;
+    }
+    if (tokens.length) {
+      const ha = productHaystack(a);
+      const hb = productHaystack(b);
+      sa += tokens.filter((t) => ha.includes(t)).length;
+      sb += tokens.filter((t) => hb.includes(t)).length;
     }
     return sb - sa;
   });
 
   return list.slice(0, limit);
+}
+
+export async function getProductDetailsByIdOrSlug(
+  idOrSlug: string,
+): Promise<Product | null> {
+  const [product] = await resolveFromDb([idOrSlug]);
+  return product ?? null;
 }
 
 export async function resolveProductsByIdsOrSlugs(
@@ -111,7 +163,39 @@ export function toRecommendationPayload(list: Product[]) {
     reviews: p.reviews,
     isBestseller: p.isBestseller,
     isNew: p.isNew,
+    brandName: p.brandName ?? null,
+    stock: p.stock,
   }));
+}
+
+export function toProductDetailPayload(p: Product) {
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    nameAr: p.nameAr,
+    brandName: p.brandName ?? null,
+    category: p.category,
+    productType: p.productType ?? null,
+    priceIQD: p.price,
+    originalPrice: p.originalPrice ?? null,
+    discountPercent: p.discountPercent ?? null,
+    size: p.size,
+    stock: p.stock ?? null,
+    inStock: (p.stock ?? 1) > 0,
+    concerns: p.concerns,
+    skinTypes: p.skinTypes ?? [],
+    benefitsAr: p.benefitsAr,
+    benefits: p.benefits,
+    ingredients: p.ingredients,
+    featureTags: p.featureTags ?? [],
+    descriptionAr: p.descriptionAr,
+    description: p.description,
+    rating: p.rating,
+    reviews: p.reviews,
+    isBestseller: !!p.isBestseller,
+    isNew: !!p.isNew,
+  };
 }
 
 export function extractLatestUserText(

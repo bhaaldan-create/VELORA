@@ -1,14 +1,10 @@
 import {
-  convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  isStepCount,
-  streamText,
   type UIMessage,
 } from "ai";
-import { getAdvisorModel, getAdvisorProvider } from "@/lib/advisor/model";
-import { buildAdvisorSystemPrompt } from "@/lib/advisor/prompt";
-import { advisorTools } from "@/lib/advisor/tools";
+import { getAdvisorProvider } from "@/lib/advisor/model";
+import { streamLarsaAgent } from "@/lib/advisor/agent";
 import {
   extractLatestUserText,
   toRecommendationPayload,
@@ -28,32 +24,26 @@ export async function GET() {
         ? "OpenAI"
         : provider === "google"
           ? "Google Gemini"
-          : "مستشارة VELORA المحلية",
+          : "وضع محلي محدود",
+    offlineHint:
+      provider === "local"
+        ? "مفتاح الذكاء الاصطناعي غير مفعّل — الإجابات محلية ومحدودة الدقة."
+        : null,
   });
 }
 
 export async function POST(req: Request) {
   const body = await req.json();
   const messages = (body.messages ?? []) as UIMessage[];
-  const model = getAdvisorModel();
 
-  if (model) {
-    try {
-      const system = await buildAdvisorSystemPrompt();
-      const result = streamText({
-        model,
-        system,
-        messages: await convertToModelMessages(messages),
-        tools: advisorTools,
-        stopWhen: isStepCount(6),
-        temperature: 0.65,
-      });
-
+  try {
+    const result = await streamLarsaAgent(messages);
+    if (result) {
       return result.toUIMessageStreamResponse();
-    } catch (error) {
-      console.error("[advisor] AI provider failed, using local fallback", error);
-      return localAdvisorStream(messages);
     }
+  } catch (error) {
+    console.error("[advisor] AI provider failed, using local fallback", error);
+    return localAdvisorStream(messages);
   }
 
   return localAdvisorStream(messages);
@@ -63,6 +53,9 @@ async function localAdvisorStream(messages: UIMessage[]) {
   const userText = extractLatestUserText(messages);
   const reply = await buildAdvisorReply(userText || "مرحبا");
   const recs = await recommendProducts(userText || "");
+  const offlineNote =
+    "\n\n(تنبيه: الوضع المحلي مفعّل حالياً — التوصيات تقريبية وليست وكيل ذكاء كامل.)";
+  const fullReply = `${reply}${offlineNote}`;
   const payload = {
     products: toRecommendationPayload(recs),
     ritualNote: "ابدئي بلطف: تنظيف ثم علاج ثم ترطيب.",
@@ -74,7 +67,7 @@ async function localAdvisorStream(messages: UIMessage[]) {
       const textId = "local-text";
       writer.write({ type: "text-start", id: textId });
 
-      const chunks = chunkArabic(reply, 18);
+      const chunks = chunkArabic(fullReply, 18);
       for (const chunk of chunks) {
         writer.write({ type: "text-delta", id: textId, delta: chunk });
         await sleep(16);

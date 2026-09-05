@@ -11,10 +11,14 @@ export function LarsaLobby({
   onSelect,
   onOpenChat,
   onQuickPrompt,
+  aiEnabled,
+  providerLabel,
 }: {
   onSelect: (path: LarsaPathDef) => void;
   onOpenChat: () => void;
   onQuickPrompt?: (prompt: string) => void;
+  aiEnabled?: boolean;
+  providerLabel?: string;
 }) {
   return (
     <div
@@ -24,7 +28,6 @@ export function LarsaLobby({
       <div className="larsa-lobby-ambient pointer-events-none absolute inset-0" aria-hidden />
 
       <div className="relative mx-auto w-full max-w-6xl px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-12 lg:pb-20 lg:pt-14">
-        {/* Hero — LARSA concierge identity only */}
         <header className="larsa-hero mx-auto flex max-w-xl flex-col items-center text-center">
           <div className="larsa-hero-logo-stage relative">
             <div className="larsa-hero-glow" aria-hidden />
@@ -42,6 +45,21 @@ export function LarsaLobby({
           <p className="larsa-hero-eyebrow mt-7 font-latin text-[10px] font-medium tracking-[0.26em] text-[var(--larsa-muted)] uppercase sm:mt-8">
             VELORA Beauty Concierge
           </p>
+
+          {typeof aiEnabled === "boolean" ? (
+            <p
+              className={cn(
+                "mt-3 rounded-full px-3 py-1 text-[11px] font-medium ring-1",
+                aiEnabled
+                  ? "bg-[var(--larsa-lavender)] text-[var(--larsa-plum)] ring-[var(--larsa-border)]"
+                  : "bg-amber-50 text-amber-900 ring-amber-200/80",
+              )}
+            >
+              {aiEnabled
+                ? `وكيل ذكاء مفعّل${providerLabel ? ` · ${providerLabel}` : ""}`
+                : "وضع محلي محدود — فعّلي مفتاح الذكاء لدقة أعلى"}
+            </p>
+          ) : null}
 
           <h1 className="larsa-hero-title font-display mt-3 text-[clamp(1.55rem,4.5vw,2.15rem)] font-semibold leading-[var(--lh-snug)] text-[var(--larsa-plum)]">
             مستشارك الشخصي للجمال
@@ -70,7 +88,9 @@ export function LarsaLobby({
             <button
               key={topic.id}
               type="button"
-              onClick={() => (onQuickPrompt ? onQuickPrompt(topic.prompt) : onOpenChat())}
+              onClick={() =>
+                onQuickPrompt ? onQuickPrompt(topic.prompt) : onOpenChat()
+              }
               className="rounded-full bg-white px-3.5 py-2 text-[12px] text-[var(--larsa-plum-soft)] ring-1 ring-[var(--larsa-border)] transition hover:bg-[var(--larsa-lavender)]/50 hover:text-[var(--larsa-plum)]"
             >
               {topic.titleAr}

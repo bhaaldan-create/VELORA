@@ -22,7 +22,8 @@ export function getAdvisorModel(): LanguageModel | null {
     const openai = createOpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    return openai(process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini");
+    // Prefer stronger default for accurate grounding; override via OPENAI_MODEL.
+    return openai(process.env.OPENAI_MODEL?.trim() || "gpt-4o");
   }
 
   if (provider === "google") {

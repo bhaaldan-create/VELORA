@@ -46,6 +46,7 @@ export function LarsaResults({
   pathTitle,
   introLine,
   onRestart,
+  onContinueChat,
 }: {
   products: RecommendedProduct[];
   ritualSteps: string[];
@@ -54,6 +55,7 @@ export function LarsaResults({
   pathTitle: string;
   introLine?: string | null;
   onRestart: () => void;
+  onContinueChat?: () => void;
 }) {
   const { addItem } = useCart();
 
@@ -194,6 +196,15 @@ export function LarsaResults({
           >
             أضيفي الروتين إلى السلة
           </button>
+          {onContinueChat ? (
+            <button
+              type="button"
+              onClick={onContinueChat}
+              className="w-full rounded-full border border-[var(--larsa-plum)]/30 bg-[var(--larsa-lavender)]/50 px-8 py-3.5 text-[0.95rem] font-medium text-[var(--larsa-plum)] hover:bg-[var(--larsa-lavender)] sm:w-auto"
+            >
+              كمّلي مع لارسا
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onRestart}

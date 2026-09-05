@@ -28,20 +28,51 @@ function messageText(message: UIMessage): string {
 function toolOutputs(message: UIMessage): ToolRecOutput[] {
   const out: ToolRecOutput[] = [];
   for (const part of message.parts ?? []) {
-    if (part.type !== "tool-recommendProducts") continue;
-    if (part.state !== "output-available") continue;
-    const output = part.output as ToolRecOutput | undefined;
-    if (output?.products?.length) out.push(output);
+    const p = part as {
+      type?: string;
+      state?: string;
+      output?: ToolRecOutput;
+    };
+    const type = p.type ?? "";
+    if (type !== "tool-recommendProducts" && type !== "tool-buildRitual") {
+      continue;
+    }
+    if (p.state !== "output-available") continue;
+    if (p.output?.products?.length) out.push(p.output);
   }
   return out;
+}
+
+/** Map in-flight tool parts to Arabic thinking labels */
+function thinkingLabelFromMessages(messages: UIMessage[]): string | null {
+  const last = [...messages].reverse().find((m) => m.role === "assistant");
+  if (!last?.parts?.length) return "لارسا تفكّر…";
+
+  for (let i = last.parts.length - 1; i >= 0; i--) {
+    const part = last.parts[i] as { type?: string; state?: string };
+    const type = part.type ?? "";
+    const state = part.state ?? "";
+    if (!type.startsWith("tool-")) continue;
+    if (state === "output-available") continue;
+
+    if (type.includes("searchCatalog")) return "تبحث في كتالوج VELORA…";
+    if (type.includes("getProductDetails")) return "تراجع تفاصيل المنتج…";
+    if (type.includes("buildRitual")) return "ترتّب روتينكِ…";
+    if (type.includes("recommendProducts")) return "تجهّز التوصيات…";
+    return "لارسا تفكّر…";
+  }
+
+  return "لارسا تفكّر…";
 }
 
 export function LarsaChat({
   onBack,
   initialPrompt,
+  offlineMode,
 }: {
   onBack: () => void;
   initialPrompt?: string;
+  offlineMode?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
@@ -59,6 +90,7 @@ export function LarsaChat({
   }, [initialPrompt, sendMessage]);
 
   const busy = status === "streaming" || status === "submitted";
+  const thinkingLabel = busy ? thinkingLabelFromMessages(messages) : null;
 
   const starters = useMemo(
     () => [
@@ -93,11 +125,20 @@ export function LarsaChat({
           <div className="flex items-center gap-3">
             <LarsaAvatar size="sm" active={busy} />
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <LarsaMark size={18} />
                 <span className="font-latin text-[11px] font-semibold tracking-[0.22em] text-[var(--larsa-plum)]">
                   LARSA
                 </span>
+                {offlineMode ? (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 ring-1 ring-amber-200/80">
+                    وضع محلي محدود
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-[var(--larsa-lavender)] px-2 py-0.5 text-[10px] font-medium text-[var(--larsa-plum)] ring-1 ring-[var(--larsa-border)]">
+                    وكيل ذكاء مفعّل
+                  </span>
+                )}
               </div>
               <p className="mt-0.5 text-[0.85rem] text-[var(--larsa-plum-soft)]">
                 محادثة حرة — اسألي عن بشرتكِ، شعركِ، أو مكياجكِ
@@ -119,6 +160,12 @@ export function LarsaChat({
         className="relative z-[1] flex-1 overflow-y-auto px-5 py-6 sm:px-8"
       >
         <div className="mx-auto max-w-3xl space-y-5">
+          {offlineMode ? (
+            <p className="rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-center text-[0.8rem] text-amber-900">
+              مفتاح الذكاء الاصطناعي غير مفعّل — الإجابات محلية ومحدودة الدقة.
+            </p>
+          ) : null}
+
           {messages.length === 0 ? (
             <div className="rounded-[22px] border border-[var(--larsa-border)] bg-white p-6 text-center">
               <p className="text-[0.95rem] leading-relaxed text-[var(--larsa-plum-soft)]">
@@ -180,10 +227,14 @@ export function LarsaChat({
             );
           })}
 
-          {busy ? (
+          {busy && thinkingLabel ? (
             <div className="flex justify-end">
-              <div className="rounded-[20px] border border-[var(--larsa-border)] bg-white px-4 py-3 text-[0.875rem] text-[var(--larsa-muted)]">
-                لارسا تفكّر…
+              <div className="flex items-center gap-2 rounded-[20px] border border-[var(--larsa-border)] bg-white px-4 py-3 text-[0.875rem] text-[var(--larsa-muted)]">
+                <span
+                  className="inline-block size-1.5 animate-pulse rounded-full bg-[var(--larsa-plum)]"
+                  aria-hidden
+                />
+                {thinkingLabel}
               </div>
             </div>
           ) : null}

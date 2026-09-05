@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildConsultQuery,
   type LarsaPathDef,
@@ -31,7 +31,28 @@ export function LarsaExperience() {
   const [result, setResult] = useState<ResultState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [chatPrompt, setChatPrompt] = useState<string | undefined>();
+  const [aiEnabled, setAiEnabled] = useState<boolean | undefined>(undefined);
+  const [providerLabel, setProviderLabel] = useState<string | undefined>();
   const chatKey = useRef(0);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    void fetch("/api/advisor", { signal: ac.signal })
+      .then((r) => r.json())
+      .then(
+        (d: {
+          ok?: boolean;
+          aiEnabled?: boolean;
+          label?: string;
+        }) => {
+          if (!d.ok) return;
+          setAiEnabled(!!d.aiEnabled);
+          setProviderLabel(d.label);
+        },
+      )
+      .catch(() => undefined);
+    return () => ac.abort();
+  }, []);
 
   const reset = () => {
     setPhase("lobby");
@@ -46,6 +67,22 @@ export function LarsaExperience() {
     setChatPrompt(prompt);
     chatKey.current += 1;
     setPhase("chat");
+  };
+
+  const continueFromResults = () => {
+    const tags = result?.understood?.join("، ") || "";
+    const names =
+      result?.products?.map((p) => p.nameAr).filter(Boolean).join("، ") || "";
+    const prompt = [
+      "كمّلي معي بعد استشارة لارسا الموجّهة.",
+      path?.title ? `المسار: ${path.title}.` : "",
+      tags ? `ما فهمته عني: ${tags}.` : "",
+      names ? `المنتجات المقترحة كانت: ${names}.` : "",
+      "هل تناسبني؟ وما التعديلات إن احتجتِ ميزانية أو روتين صباح/مساء؟",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    openChat(prompt);
   };
 
   const startPath = (p: LarsaPathDef) => {
@@ -114,6 +151,8 @@ export function LarsaExperience() {
         onSelect={startPath}
         onOpenChat={() => openChat()}
         onQuickPrompt={(prompt) => openChat(prompt)}
+        aiEnabled={aiEnabled}
+        providerLabel={providerLabel}
       />
     );
   }
@@ -124,6 +163,7 @@ export function LarsaExperience() {
         key={chatKey.current}
         initialPrompt={chatPrompt}
         onBack={reset}
+        offlineMode={aiEnabled === false}
       />
     );
   }
@@ -161,6 +201,7 @@ export function LarsaExperience() {
           understood={result?.understood ?? []}
           introLine={result?.introLine}
           onRestart={reset}
+          onContinueChat={continueFromResults}
         />
       </div>
     );
@@ -171,6 +212,8 @@ export function LarsaExperience() {
       onSelect={startPath}
       onOpenChat={() => openChat()}
       onQuickPrompt={(prompt) => openChat(prompt)}
+      aiEnabled={aiEnabled}
+      providerLabel={providerLabel}
     />
   );
 }
