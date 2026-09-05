@@ -63,7 +63,7 @@ export function ProductRail({
                   alt={label}
                   width={logoMaxWidth}
                   height={logoHeight}
-                  className="block h-auto w-auto object-contain"
+                  className="block h-auto w-auto max-w-full object-contain"
                   style={{
                     maxHeight: logoHeight,
                     maxWidth: logoMaxWidth,
