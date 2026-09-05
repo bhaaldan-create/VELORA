@@ -103,6 +103,7 @@ export function ProductRecommendationCards({
               imageTone={item.imageTone}
               imageUrl={item.imageUrl}
               aspectClassName="h-20 w-16 aspect-auto"
+              fit="contain"
               sizes="64px"
             />
           </Link>

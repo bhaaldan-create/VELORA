@@ -5,54 +5,70 @@ import { useState } from "react";
 import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
 import { cn } from "@/lib/utils";
 
+export type ProductMediaFit = "contain" | "cover";
+
 type Props = {
   name: string;
   imageTone: string;
   imageUrl?: string | null;
+  /** Styles for the fixed aspect/size shell only (not the <img>). */
   className?: string;
-  /** نسب العرض مثل aspect-[3/4] */
+  /** Transforms / filters applied to the image element (e.g. hover scale). */
+  imageClassName?: string;
+  /** Fixed frame ratio/size, e.g. aspect-[3/4] or h-20 w-16. */
   aspectClassName?: string;
   sizes?: string;
   priority?: boolean;
+  /**
+   * Beauty packshots must stay fully visible in cards → contain (default).
+   * Use cover only for intentionally full-bleed editorial crops.
+   */
+  fit?: ProductMediaFit;
 };
 
 /**
- * صورة المنتج داخل مساحة ثابتة (aspect).
- * Full-bleed: تملأ الحاوية بالكامل بدون padding أو خلفية ثيم ظاهرة حولها.
- * /api/media و data: تستخدم <img> الأصلي — محسّن next/image لا يدعمها.
+ * Product image inside a fixed frame.
+ * Aspect/size never depends on badges, wishlist, or text — only on aspectClassName.
  */
 export function ProductMedia({
   name,
   imageTone,
   imageUrl,
   className,
+  imageClassName,
   aspectClassName = "aspect-[3/4]",
   sizes = "(max-width: 768px) 50vw, 25vw",
   priority = false,
+  fit = "contain",
 }: Props) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const src = imageUrl?.trim() || "";
   const showImage = Boolean(src) && !failed;
+  const objectFit =
+    fit === "cover" ? "object-cover object-center" : "object-contain object-center";
 
-  if (showImage) {
-    const useNative = shouldUseNativeImageElement(src);
-    return (
-      <div
-        className={cn(
-          "relative isolate h-full w-full overflow-hidden",
-          aspectClassName,
-          className,
-        )}
-      >
-        {!loaded ? (
-          <div
-            className="absolute inset-0 animate-pulse"
-            style={{ background: imageTone }}
-            aria-hidden
-          />
-        ) : null}
-        {useNative ? (
+  return (
+    <div
+      className={cn(
+        "relative w-full overflow-hidden",
+        aspectClassName,
+        className,
+      )}
+      style={{ background: imageTone }}
+      role={showImage ? undefined : "img"}
+      aria-label={showImage ? undefined : name}
+    >
+      {showImage && !loaded ? (
+        <div
+          className="absolute inset-0 animate-pulse"
+          style={{ background: imageTone }}
+          aria-hidden
+        />
+      ) : null}
+
+      {showImage ? (
+        shouldUseNativeImageElement(src) ? (
           // eslint-disable-next-line @next/next/no-img-element -- /api/media & data URLs
           <img
             src={src}
@@ -69,8 +85,10 @@ export function ProductMedia({
               }
             }}
             className={cn(
-              "absolute inset-0 h-full w-full max-w-none object-cover object-center transition-opacity duration-300",
+              "absolute inset-0 h-full w-full max-w-none transition-opacity duration-300",
+              objectFit,
               loaded ? "opacity-100" : "opacity-0",
+              imageClassName,
             )}
           />
         ) : (
@@ -89,21 +107,14 @@ export function ProductMedia({
               }
             }}
             className={cn(
-              "absolute inset-0 h-full w-full max-w-none object-cover object-center transition-opacity duration-300",
+              "absolute inset-0 h-full w-full max-w-none transition-opacity duration-300",
+              objectFit,
               loaded ? "opacity-100" : "opacity-0",
+              imageClassName,
             )}
           />
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn("w-full", aspectClassName, className)}
-      style={{ background: imageTone }}
-      role="img"
-      aria-label={name}
-    />
+        )
+      ) : null}
+    </div>
   );
 }

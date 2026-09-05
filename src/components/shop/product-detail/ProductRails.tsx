@@ -66,6 +66,7 @@ export function ProductRoutine({
                     imageTone={step.product.imageTone}
                     imageUrl={step.product.imageUrl}
                     aspectClassName="h-full w-full"
+                    fit="contain"
                     sizes="70px"
                   />
                 </div>
@@ -113,23 +114,28 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
   const inStock = (product.stock ?? 1) > 0;
 
   return (
-    <article className="relative flex h-full w-[38vw] max-w-[168px] shrink-0 flex-col sm:w-auto sm:max-w-none">
-      <WishlistHeartButton
-        productId={product.id}
-        size="sm"
-        className="absolute end-1.5 top-1.5 z-[1] rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-1.5 shadow-[var(--shadow-sm)] backdrop-blur"
-      />
-      <Link href={`/shop/${product.slug}`} className="group block">
-        <div className="overflow-hidden rounded-[1.1rem] ring-1 ring-[var(--border)]">
+    <article className="group relative flex h-full w-[38vw] max-w-[168px] shrink-0 flex-col sm:w-auto sm:max-w-none">
+      <div className="relative overflow-hidden rounded-[1.1rem] ring-1 ring-[var(--border)]">
+        <Link href={`/shop/${product.slug}`} className="block" tabIndex={-1}>
           <ProductMedia
             name={product.nameAr}
             imageTone={product.imageTone}
             imageUrl={product.imageUrl}
             aspectClassName="aspect-[3/4]"
-            className="transition duration-500 group-hover:scale-[1.03]"
+            fit="contain"
+            imageClassName="transition-transform duration-500 group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 38vw, 180px"
           />
+        </Link>
+        <div className="pointer-events-none absolute inset-0 z-[1]">
+          <WishlistHeartButton
+            productId={product.id}
+            size="sm"
+            className="pointer-events-auto absolute end-1.5 top-1.5 rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-1.5 shadow-[var(--shadow-sm)] backdrop-blur"
+          />
         </div>
+      </div>
+      <Link href={`/shop/${product.slug}`} className="block">
         {product.brandName ? (
           <p
             className="mt-2 truncate text-[0.6rem] tracking-[0.1em] text-[var(--muted)]"

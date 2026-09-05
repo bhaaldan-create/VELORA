@@ -142,13 +142,14 @@ export function LarsaResults({
               >
                 <Link
                   href={`/shop/${item.slug}`}
-                  className="relative mx-auto aspect-[3/4] w-28 shrink-0 overflow-hidden rounded-[18px] bg-[var(--larsa-lavender)] sm:mx-0 sm:w-32"
+                  className="relative mx-auto block w-28 shrink-0 overflow-hidden rounded-[18px] sm:mx-0 sm:w-32"
                 >
                   <ProductMedia
                     name={item.nameAr}
                     imageTone={item.imageTone}
                     imageUrl={item.imageUrl}
                     aspectClassName="aspect-[3/4]"
+                    fit="contain"
                     sizes="128px"
                   />
                 </Link>

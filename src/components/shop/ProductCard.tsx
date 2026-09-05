@@ -5,10 +5,8 @@ import type { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
 import { AddToBagButton } from "@/components/shop/AddToBagButton";
-import { ProductBadge, productOverlayBadgeLabel } from "@/components/shop/ProductBadge";
-import { ProductMedia } from "@/components/shop/ProductMedia";
+import { ProductCardMediaFrame } from "@/components/shop/ProductCardMediaFrame";
 import { ProductPrice } from "@/components/shop/ProductPrice";
-import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { getProductBrand } from "@/lib/product-brand";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +24,6 @@ export function ProductCard({
   const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
-  const badge = productOverlayBadgeLabel(product, locale);
 
   return (
     <article
@@ -35,38 +32,15 @@ export function ProductCard({
         className,
       )}
     >
-      <div className="relative overflow-hidden">
-        <WishlistHeartButton
-          productId={product.id}
-          size={compactOverlayIcons ? "sm" : "md"}
-          className={cn(
-            "absolute z-10 rounded-full bg-[var(--bg-glass-strong)] text-[var(--icon)] backdrop-blur-sm",
-            compactOverlayIcons ? "top-2.5 end-2.5" : "top-3 end-3",
-          )}
-        />
-
-        {badge ? (
-          <ProductBadge
-            label={badge}
-            size="sm"
-            className={cn(
-              "absolute z-10",
-              compactOverlayIcons ? "top-2.5 start-2.5" : "top-3 start-3",
-            )}
-          />
-        ) : null}
-
-        <Link href={`/shop/${product.slug}`} className="block">
-          <ProductMedia
-            name={title}
-            imageTone={product.imageTone}
-            imageUrl={product.imageUrl}
-            aspectClassName="aspect-[3/4]"
-            className="transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-            sizes="(max-width: 768px) 55vw, 25vw"
-          />
-        </Link>
-      </div>
+      <ProductCardMediaFrame
+        product={product}
+        locale={locale}
+        href={`/shop/${product.slug}`}
+        compact={compactOverlayIcons}
+        aspectClassName="aspect-[3/4]"
+        sizes="(max-width: 768px) 55vw, 25vw"
+        imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+      />
 
       <div className="flex flex-1 flex-col p-4 pt-3.5">
         <p

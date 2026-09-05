@@ -54,6 +54,7 @@ export function CartLineItem({
             imageUrl={product.imageUrl}
             aspectClassName="h-[7.5rem] w-[7.5rem] sm:h-[7.75rem] sm:w-[7.75rem]"
             className="rounded-[18px] border border-[var(--plum)]/6"
+            fit="contain"
             sizes="120px"
           />
         </Link>

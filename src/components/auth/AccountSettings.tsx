@@ -1369,24 +1369,27 @@ function WishGridCard({
   const brand = getProductBrand(product.name, product.nameAr);
   return (
     <article className="overflow-hidden rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)]">
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <Link href={`/shop/${product.slug}`} className="block">
           <ProductMedia
             name={ar ? product.nameAr : product.name}
             imageTone={product.imageTone}
             imageUrl={product.imageUrl}
             aspectClassName="aspect-[3/4]"
+            fit="contain"
             sizes="(max-width: 640px) 90vw, 280px"
           />
         </Link>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label="wishlist"
-          className="absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--account-plum)] backdrop-blur-sm"
-        >
-          <AccIcon name="heart" size={15} />
-        </button>
+        <div className="pointer-events-none absolute inset-0 z-[1]">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="wishlist"
+            className="pointer-events-auto absolute top-3 end-3 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] text-[var(--account-plum)] backdrop-blur-sm"
+          >
+            <AccIcon name="heart" size={15} />
+          </button>
+        </div>
       </div>
       <div className="p-4">
         <p
@@ -1450,13 +1453,13 @@ function WishRow({
   const inStock = product.inStock !== false && (product.stock ?? 1) > 0;
   return (
     <div className={cn("flex gap-3", large && "rounded-[16px] border border-[var(--account-border)] p-3")}>
-      <Link href={`/shop/${product.slug}`} className="relative block h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-[var(--account-lilac)]">
+      <Link href={`/shop/${product.slug}`} className="relative block h-20 w-16 shrink-0 overflow-hidden rounded-xl">
         <ProductMedia
           name={ar ? product.nameAr : product.name}
           imageTone={product.imageTone}
           imageUrl={product.imageUrl}
           aspectClassName="h-full w-full"
-          className="!aspect-auto h-full min-h-full"
+          fit="contain"
           sizes="64px"
         />
       </Link>

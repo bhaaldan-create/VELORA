@@ -26,20 +26,24 @@ export function ProductHeroImage({ product, ar }: Props) {
           className="w-full"
           sizes="(max-width: 1024px) 100vw, 46vw"
           priority
+          fit="contain"
         />
 
-        <WishlistHeartButton
-          productId={product.id}
-          className="absolute end-3.5 top-3.5 z-[2] rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-2.5 text-[var(--plum)] shadow-[var(--shadow-md)] backdrop-blur-md sm:end-4 sm:top-4"
-        />
+        {/* Overlay layer — never participates in image sizing */}
+        <div className="pointer-events-none absolute inset-0 z-[2]">
+          <WishlistHeartButton
+            productId={product.id}
+            className="pointer-events-auto absolute end-3.5 top-3.5 rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-2.5 text-[var(--plum)] shadow-[var(--shadow-md)] backdrop-blur-md sm:end-4 sm:top-4"
+          />
 
-        {badges.length > 0 ? (
-          <div className="absolute start-3.5 top-3.5 z-[2] flex max-w-[72%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
-            {badges.map((b) => (
-              <ProductBadge key={b.key} label={b.label} size="md" />
-            ))}
-          </div>
-        ) : null}
+          {badges.length > 0 ? (
+            <div className="absolute start-3.5 top-3.5 flex max-w-[72%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
+              {badges.map((b) => (
+                <ProductBadge key={b.key} label={b.label} size="md" />
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <ProductBrandLogo
