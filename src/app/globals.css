@@ -1218,6 +1218,13 @@ html[data-launch="1"] .velora-launch {
   display: grid;
 }
 
+/* After cold start — never show again even if React re-inserts the node */
+html[data-launch="done"] .velora-launch {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 .velora-launch--exit {
   opacity: 0;
 }

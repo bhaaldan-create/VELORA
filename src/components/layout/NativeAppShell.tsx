@@ -6,16 +6,13 @@ import { NativeLaunchExperience } from "@/components/layout/NativeLaunchExperien
 
 /**
  * تهيئة طبقة الجوال عند التشغيل داخل تطبيق Capacitor.
- * شاشة الافتتاح: HTML مبكر (VeloraBootLaunch) + تنسيق هنا.
+ * شاشة الافتتاح تُدار مرة واحدة فقط عند الإقلاع — لا تُعاد عند التنقل.
  */
 export function NativeAppShell() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     document.documentElement.dataset.native = Capacitor.getPlatform();
-    if (document.documentElement.dataset.launch !== "0") {
-      document.documentElement.dataset.launch = "1";
-    }
 
     let cancelled = false;
 
