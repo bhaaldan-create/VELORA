@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   FormEvent,
   useEffect,
@@ -120,13 +121,17 @@ export function AdminLoginForm() {
 
       <div className="relative px-6 pb-7 pt-8 sm:px-9 sm:pb-9 sm:pt-10">
         <div className="mb-8 text-center">
-          <p className="font-[family-name:var(--font-brand)] text-[11px] font-medium tracking-[0.35em] text-[#968A93]">
-            VELORA
-          </p>
-          <h1 className="mt-2 text-[1.75rem] font-semibold tracking-tight text-[#342239] sm:text-[2rem]">
-            Admin OS
-          </h1>
-          <p className="mt-2 text-[13px] leading-relaxed text-[#6E626C]">
+          <div className="relative mx-auto mb-4 h-[4.75rem] w-[14rem]">
+            <Image
+              src="/brand/velora-admin-logo.jpg"
+              alt="VELORA Admin Control Board"
+              fill
+              className="object-contain"
+              sizes="224px"
+              priority
+            />
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#6E626C]">
             {step === "credentials"
               ? "ادخلي بياناتك للمتابعة إلى مساحة التشغيل."
               : "طبقة حماية إضافية — أدخلي الشفرة السرية."}

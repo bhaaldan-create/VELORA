@@ -37,6 +37,7 @@ import {
   Images,
   Sparkles,
   TrendingUp,
+  TrendingDown,
   Factory,
   Ship,
   Receipt,
@@ -133,6 +134,9 @@ export {
   CalendarCheck,
   Wallet,
   Gem,
+  TrendingUp,
+  TrendingDown,
+  TriangleAlert,
 };
 
 export type { LucideIcon };

@@ -23,23 +23,31 @@ export const getAdminActor = cache(async function getAdminActor(): Promise<Admin
   if (!session?.ok) return null;
 
   if (session.subject === "root") {
-    return { subject: "root", role: "root", label: "root" };
-  }
-
-  if (session.role) {
-    return {
-      subject: session.subject,
-      role: session.role,
-      label: session.subject,
-    };
+    return { subject: "root", role: "root", label: "أدمن VELORA" };
   }
 
   const emp = await prisma.employee.findUnique({
     where: { id: session.subject },
     select: { id: true, name: true, role: true, isActive: true },
   });
-  if (!emp || !emp.isActive) return null;
-  return { subject: emp.id, role: emp.role, label: emp.name };
+  if (emp?.isActive) {
+    return {
+      subject: emp.id,
+      role: emp.role || session.role || "staff",
+      label: emp.name.trim() || "الأدمن",
+    };
+  }
+
+  // Legacy session with role but missing/inactive employee row
+  if (session.role) {
+    return {
+      subject: session.subject,
+      role: session.role,
+      label: "الأدمن",
+    };
+  }
+
+  return null;
 });
 
 export async function assertAdminModule(

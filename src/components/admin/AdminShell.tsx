@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
@@ -221,18 +222,32 @@ export function AdminShellLayout({ children }: { children: ReactNode }) {
                 }`}
               >
                 {!collapsed ? (
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-medium tracking-[0.2em] text-[var(--admin-text-muted)]">
-                      VELORA
-                    </p>
-                    <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
-                      Admin OS
-                    </p>
-                  </div>
+                  <Link href="/admin" className="block min-w-0 py-1">
+                    <div className="relative h-10 w-[9.5rem]">
+                      <Image
+                        src="/brand/velora-admin-logo.jpg"
+                        alt="VELORA Admin"
+                        fill
+                        className="object-contain object-right"
+                        sizes="152px"
+                        priority
+                      />
+                    </div>
+                  </Link>
                 ) : (
-                  <span className="text-[11px] font-semibold tracking-widest text-[var(--admin-plum)]">
-                    V
-                  </span>
+                  <Link
+                    href="/admin"
+                    className="flex size-8 items-center justify-center overflow-hidden rounded-lg"
+                    title="الرئيسية"
+                  >
+                    <Image
+                      src="/brand/velora-admin-logo.jpg"
+                      alt="V"
+                      width={32}
+                      height={32}
+                      className="size-8 object-cover object-left"
+                    />
+                  </Link>
                 )}
                 <button
                   type="button"
@@ -316,14 +331,15 @@ export function AdminShellLayout({ children }: { children: ReactNode }) {
                 />
                 <div className="absolute inset-y-0 end-0 flex w-[min(100%,18rem)] flex-col bg-[var(--admin-surface)] shadow-[var(--admin-shadow-md)]">
                   <div className="flex h-[var(--admin-topbar-h)] items-center justify-between border-b border-[var(--admin-border)] px-4">
-                    <div>
-                      <p className="text-[10px] tracking-[0.2em] text-[var(--admin-text-muted)]">
-                        VELORA
-                      </p>
-                      <p className="text-[13px] font-semibold text-[var(--admin-plum)]">
-                        Admin OS
-                      </p>
-                    </div>
+                    <Link href="/admin" className="relative h-9 w-[8.5rem]">
+                      <Image
+                        src="/brand/velora-admin-logo.jpg"
+                        alt="VELORA Admin"
+                        fill
+                        className="object-contain object-right"
+                        sizes="136px"
+                      />
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setMobileOpen(false)}

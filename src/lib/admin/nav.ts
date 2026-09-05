@@ -40,7 +40,7 @@ export type AdminNavItem = {
 };
 
 export const ADMIN_NAV: AdminNavItem[] = [
-  { id: "overview", href: "/admin", labelAr: "نظرة عامة", labelEn: "Overview", icon: "overview", group: "main" },
+  { id: "overview", href: "/admin", labelAr: "الرئيسية", labelEn: "Home", icon: "overview", group: "main" },
   { id: "ai", href: "/admin/ai", labelAr: "وكيل الأعمال الذكي", labelEn: "AI Business Agent", icon: "ai", group: "main" },
   { id: "sales", href: "/admin/sales", labelAr: "المبيعات", labelEn: "Sales", icon: "sales", group: "commerce" },
   { id: "orders", href: "/admin/orders", labelAr: "الطلبات", labelEn: "Orders", icon: "orders", group: "commerce" },

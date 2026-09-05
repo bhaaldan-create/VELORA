@@ -419,8 +419,7 @@ export const getBusinessOverview = cache(async function getBusinessOverview(
       .sort((a, b) => b.revenue - a.revenue),
     salesByProduct: [...byProduct.entries()]
       .map(([key, v]) => ({ key, ...v }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 20),
+      .sort((a, b) => b.revenue - a.revenue),
     insufficientCostNote:
       !allCostKnown && unitsSold > 0
         ? "بعض المبيعات بلا تكلفة واصلة مسجّلة — الربح الإجمالي غير مكتمل."
