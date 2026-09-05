@@ -13,6 +13,7 @@ import { Providers } from "@/components/layout/Providers";
 import { FloatingContactLazy } from "@/components/contact/FloatingContactLazy";
 import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { brand } from "@/constants/brand";
+import { VeloraBootLaunch } from "@/components/layout/VeloraBootLaunch";
 import "./globals.css";
 
 /** نص الواجهة والأسعار — IBM Plex Sans Arabic */
@@ -111,7 +112,7 @@ export const viewport: Viewport = {
   themeColor: "#F8F4F1",
 };
 
-const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");var dark=t==="dark";if(dark){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute("content",dark?"#141114":"#F8F4F1");}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}}catch(e){}})();`;
+const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");var dark=t==="dark";if(dark){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute("content",dark?"#141114":"#F8F4F1");}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}var C=window.Capacitor;var native=!!(C&&((C.isNativePlatform&&C.isNativePlatform())||(C.getPlatform&&C.getPlatform()!=="web")));if(!native){try{native=/Capacitor/i.test(navigator.userAgent)||!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.bridge);}catch(e2){}}if(native){document.documentElement.setAttribute("data-native",C&&C.getPlatform?C.getPlatform():"ios");document.documentElement.setAttribute("data-launch","1");document.documentElement.style.backgroundColor="#F8F4F1";}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -127,8 +128,10 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <link rel="preload" as="image" href="/brand/velora-logo-dark.png" />
       </head>
       <body className="flex min-h-full max-w-full flex-col overflow-x-clip antialiased">
+        <VeloraBootLaunch />
         <Providers>
           <RoutePrefetcher />
           <Suspense fallback={null}>

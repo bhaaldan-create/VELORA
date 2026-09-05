@@ -31,13 +31,15 @@ const config: CapacitorConfig = {
   },
   ios: {
     backgroundColor: "#F8F4F1",
-    contentInset: "automatic",
+    /* Safe areas handled in CSS (html[data-native] + chrome). Avoid double insets. */
+    contentInset: "never",
     preferredContentMode: "mobile",
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1800,
-      launchAutoHide: true,
+      /* Native splash stays until web launch experience calls hide() */
+      launchShowDuration: 0,
+      launchAutoHide: false,
       backgroundColor: "#F8F4F1",
       showSpinner: false,
       androidSplashResourceName: "splash",

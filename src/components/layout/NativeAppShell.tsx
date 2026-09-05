@@ -2,16 +2,20 @@
 
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
+import { NativeLaunchExperience } from "@/components/layout/NativeLaunchExperience";
 
 /**
  * تهيئة طبقة الجوال عند التشغيل داخل تطبيق Capacitor.
- * يتابع تغيّر الثيم ليحدّث شريط الحالة فوراً.
+ * شاشة الافتتاح: HTML مبكر (VeloraBootLaunch) + تنسيق هنا.
  */
 export function NativeAppShell() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     document.documentElement.dataset.native = Capacitor.getPlatform();
+    if (document.documentElement.dataset.launch !== "0") {
+      document.documentElement.dataset.launch = "1";
+    }
 
     let cancelled = false;
 
@@ -26,19 +30,11 @@ export function NativeAppShell() {
           color: dark ? "#141114" : "#F8F4F1",
         });
       } catch {
-        // ignore — web or unsupported
+        // ignore
       }
     }
 
-    void (async () => {
-      await syncStatusBar();
-      try {
-        const { SplashScreen } = await import("@capacitor/splash-screen");
-        if (!cancelled) await SplashScreen.hide();
-      } catch {
-        // ignore
-      }
-    })();
+    void syncStatusBar();
 
     const onTheme = () => {
       void syncStatusBar();
@@ -67,5 +63,5 @@ export function NativeAppShell() {
     };
   }, []);
 
-  return null;
+  return <NativeLaunchExperience />;
 }
