@@ -575,18 +575,38 @@ export const shopBrands: ShopBrand[] = [
   },
 ];
 
-export function getShopBrand(slug: string | undefined | null) {
-  if (!slug) return null;
-  return shopBrands.find((b) => b.slug === slug) ?? null;
+export function getShopBrand(slugOrName: string | undefined | null) {
+  if (!slugOrName?.trim()) return null;
+  const raw = slugOrName.trim();
+  const lower = raw.toLowerCase();
+  return (
+    shopBrands.find((b) => b.slug === raw || b.slug === lower) ||
+    shopBrands.find((b) => b.name.toLowerCase() === lower) ||
+    shopBrands.find((b) => b.match.some((m) => m.toLowerCase() === lower)) ||
+    null
+  );
 }
 
+/**
+ * Brand filter matching.
+ * Prefer Product.brandName when present so title text cannot fake a brand hit.
+ * Fall back to title only for legacy rows without brandName.
+ */
 export function productMatchesBrand(
   productName: string,
   productNameAr: string,
   brand: ShopBrand,
   productBrandName?: string | null,
 ) {
-  const hay = `${productName} ${productNameAr} ${productBrandName || ""}`.toLowerCase();
+  if (productBrandName?.trim()) {
+    const bn = productBrandName.trim().toLowerCase();
+    return (
+      bn === brand.name.toLowerCase() ||
+      brand.match.some((m) => bn.includes(m.toLowerCase())) ||
+      bn.includes(brand.name.toLowerCase())
+    );
+  }
+  const hay = `${productName} ${productNameAr}`.toLowerCase();
   return (
     brand.match.some((m) => hay.includes(m.toLowerCase())) ||
     hay.includes(brand.name.toLowerCase())

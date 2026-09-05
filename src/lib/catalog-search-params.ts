@@ -107,6 +107,47 @@ function parseFloatParam(raw: string | null): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+export function mergeCatalogSearchParams(
+  current: CatalogSearchParams,
+  patch: Partial<CatalogSearchParams>,
+): CatalogSearchParams {
+  const merged: CatalogSearchParams = {
+    ...current,
+    ...patch,
+    concerns: patch.concerns ?? current.concerns,
+    skinTypes: patch.skinTypes ?? current.skinTypes,
+    ingredients: patch.ingredients ?? current.ingredients,
+    features: patch.features ?? current.features,
+    page: patch.page ?? current.page,
+  };
+
+  const filterChanged =
+    patch.page === undefined &&
+    (patch.q !== undefined ||
+      patch.category !== undefined ||
+      patch.brand !== undefined ||
+      patch.productType !== undefined ||
+      patch.minPrice !== undefined ||
+      patch.maxPrice !== undefined ||
+      patch.sort !== undefined ||
+      patch.inStock !== undefined ||
+      patch.concerns !== undefined ||
+      patch.skinTypes !== undefined ||
+      patch.ingredients !== undefined ||
+      patch.features !== undefined ||
+      patch.ratingMin !== undefined ||
+      patch.onSale !== undefined ||
+      patch.isNew !== undefined ||
+      patch.isBestseller !== undefined ||
+      patch.origin !== undefined);
+
+  if (filterChanged) {
+    merged.page = 1;
+  }
+
+  return merged;
+}
+
 export function parseCatalogSearchParams(
   input: URLSearchParams | Record<string, string | string[] | undefined>,
 ): CatalogSearchParams {

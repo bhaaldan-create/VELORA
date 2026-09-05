@@ -6,9 +6,32 @@ import {
   CONCERN_LABELS,
   SKIN_TYPE_LABELS,
 } from "@/data/popular-searches";
+import {
+  getShopBrand,
+  getShopBrandByProductBrandName,
+} from "@/data/shop-brands";
 import type { CatalogFacets, CatalogSearchParams } from "@/lib/catalog-search-params";
 import type { CategorySlug, SkinConcern, SkinType } from "@/types";
 import { formatPrice } from "@/lib/utils";
+
+/** Resolve facet brandName → URL brand value (prefer shop slug). */
+function brandParamFromFacetName(brandName: string): string {
+  return getShopBrandByProductBrandName(brandName)?.slug ?? brandName;
+}
+
+function isBrandSelected(
+  selected: string | undefined,
+  facetBrandName: string,
+): boolean {
+  if (!selected) return false;
+  if (selected.toLowerCase() === facetBrandName.toLowerCase()) return true;
+  const meta = getShopBrand(selected);
+  if (meta && meta.name.toLowerCase() === facetBrandName.toLowerCase()) {
+    return true;
+  }
+  const fromFacet = getShopBrandByProductBrandName(facetBrandName);
+  return !!fromFacet && fromFacet.slug === selected;
+}
 
 type Props = {
   ar?: boolean;
@@ -172,8 +195,10 @@ export function FilterPanel({
                 <input
                   type="radio"
                   name="vs-brand"
-                  checked={params.brand?.toLowerCase() === b.toLowerCase()}
-                  onChange={() => onChange({ brand: b })}
+                  checked={isBrandSelected(params.brand, b)}
+                  onChange={() =>
+                    onChange({ brand: brandParamFromFacetName(b) })
+                  }
                 />
                 {b}
               </label>

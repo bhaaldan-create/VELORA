@@ -9,7 +9,7 @@ type Props = {
 };
 
 const QUICK: {
-  id: string;
+  id: "best" | "rated" | "new" | "sale" | "under25";
   en: string;
   ar: string;
   patch: Partial<CatalogSearchParams>;
@@ -20,14 +20,14 @@ const QUICK: {
     en: "Best Selling",
     ar: "الأكثر طلبًا",
     patch: { sort: "best-selling" as CatalogSort, isBestseller: true },
-    active: (p) => !!p.isBestseller || p.sort === "best-selling",
+    active: (p) => !!p.isBestseller,
   },
   {
     id: "rated",
     en: "Top Rated",
     ar: "الأعلى تقييمًا",
     patch: { sort: "top-rated", ratingMin: 4 },
-    active: (p) => p.sort === "top-rated" || (p.ratingMin ?? 0) >= 4,
+    active: (p) => (p.ratingMin ?? 0) >= 4,
   },
   {
     id: "new",
@@ -52,6 +52,25 @@ const QUICK: {
   },
 ];
 
+function clearPatchFor(
+  id: (typeof QUICK)[number]["id"],
+  params: CatalogSearchParams,
+): Partial<CatalogSearchParams> {
+  const defaultSort: CatalogSort = params.q ? "best-match" : "best-selling";
+  switch (id) {
+    case "best":
+      return { isBestseller: false, sort: defaultSort };
+    case "rated":
+      return { ratingMin: undefined, sort: defaultSort };
+    case "new":
+      return { isNew: false, sort: defaultSort };
+    case "sale":
+      return { onSale: false, sort: defaultSort };
+    case "under25":
+      return { maxPrice: undefined };
+  }
+}
+
 export function QuickFilters({ ar = false, params, onApply }: Props) {
   return (
     <div className="vs-quick" aria-label={ar ? "فلاتر سريعة" : "Quick filters"}>
@@ -64,18 +83,7 @@ export function QuickFilters({ ar = false, params, onApply }: Props) {
             className="vs-quick__pill"
             data-active={active}
             onClick={() => {
-              if (active) {
-                onApply({
-                  isBestseller: q.id === "best" ? false : params.isBestseller,
-                  isNew: q.id === "new" ? false : params.isNew,
-                  onSale: q.id === "sale" ? false : params.onSale,
-                  ratingMin: q.id === "rated" ? undefined : params.ratingMin,
-                  maxPrice: q.id === "under25" ? undefined : params.maxPrice,
-                  sort: params.q ? "best-match" : "best-selling",
-                });
-              } else {
-                onApply(q.patch);
-              }
+              onApply(active ? clearPatchFor(q.id, params) : q.patch);
             }}
           >
             {ar ? q.ar : q.en}

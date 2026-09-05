@@ -6,6 +6,7 @@ import {
   SKIN_TYPE_LABELS,
   SORT_LABELS,
 } from "@/data/popular-searches";
+import { getShopBrand } from "@/data/shop-brands";
 import type { CatalogSearchParams } from "@/lib/catalog-search-params";
 import type { CatalogFacets } from "@/lib/catalog-search-params";
 import { formatPrice } from "@/lib/utils";
@@ -44,9 +45,11 @@ export function ActiveFilterChips({
     });
   }
   if (params.brand) {
+    const brandLabel =
+      getShopBrand(params.brand)?.name ?? params.brand;
     chips.push({
       key: "brand",
-      label: params.brand,
+      label: brandLabel,
       onRemove: () => onRemove({ brand: undefined }),
     });
   }

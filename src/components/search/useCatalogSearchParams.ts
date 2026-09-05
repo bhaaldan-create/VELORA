@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  mergeCatalogSearchParams,
   parseCatalogSearchParams,
   serializeCatalogSearchParams,
   type CatalogSearchParams,
@@ -20,40 +21,20 @@ export function useCatalogSearchParams() {
     [searchParams],
   );
 
+  /**
+   * Optimistic SSOT for rapid successive patches.
+   * `params` from useSearchParams lags behind router.replace; without this ref,
+   * click A then click B merges both against the same stale URL and drops A.
+   */
+  const latestRef = useRef(params);
+  useEffect(() => {
+    latestRef.current = params;
+  }, [params]);
+
   const replace = useCallback(
     (patch: Partial<CatalogSearchParams>, options?: { scroll?: boolean }) => {
-      const merged: CatalogSearchParams = {
-        ...params,
-        ...patch,
-        concerns: patch.concerns ?? params.concerns,
-        skinTypes: patch.skinTypes ?? params.skinTypes,
-        ingredients: patch.ingredients ?? params.ingredients,
-        features: patch.features ?? params.features,
-        page: patch.page ?? (patch.q !== undefined || patch.category !== undefined || patch.brand !== undefined || patch.sort !== undefined ? 1 : params.page),
-      };
-      // Reset page when filters change unless page explicitly set
-      if (
-        patch.page === undefined &&
-        (patch.q !== undefined ||
-          patch.category !== undefined ||
-          patch.brand !== undefined ||
-          patch.productType !== undefined ||
-          patch.minPrice !== undefined ||
-          patch.maxPrice !== undefined ||
-          patch.sort !== undefined ||
-          patch.inStock !== undefined ||
-          patch.concerns !== undefined ||
-          patch.skinTypes !== undefined ||
-          patch.ingredients !== undefined ||
-          patch.features !== undefined ||
-          patch.ratingMin !== undefined ||
-          patch.onSale !== undefined ||
-          patch.isNew !== undefined ||
-          patch.isBestseller !== undefined ||
-          patch.origin !== undefined)
-      ) {
-        merged.page = 1;
-      }
+      const merged = mergeCatalogSearchParams(latestRef.current, patch);
+      latestRef.current = merged;
 
       const next = serializeCatalogSearchParams(merged);
       const qs = next.toString();
@@ -61,42 +42,43 @@ export function useCatalogSearchParams() {
         scroll: options?.scroll ?? false,
       });
     },
-    [params, pathname, router],
+    [pathname, router],
   );
 
   const clearAll = useCallback(() => {
+    latestRef.current = parseCatalogSearchParams(new URLSearchParams());
     router.replace(pathname, { scroll: false });
   }, [pathname, router]);
 
   const toggleConcern = useCallback(
     (c: SkinConcern) => {
-      const set = new Set(params.concerns);
+      const set = new Set(latestRef.current.concerns);
       if (set.has(c)) set.delete(c);
       else set.add(c);
       replace({ concerns: [...set] });
     },
-    [params.concerns, replace],
+    [replace],
   );
 
   const toggleSkinType = useCallback(
     (s: SkinType) => {
-      const set = new Set(params.skinTypes);
+      const set = new Set(latestRef.current.skinTypes);
       if (set.has(s)) set.delete(s);
       else set.add(s);
       replace({ skinTypes: [...set] });
     },
-    [params.skinTypes, replace],
+    [replace],
   );
 
   const toggleList = useCallback(
     (key: "ingredients" | "features", value: string) => {
-      const current = params[key];
+      const current = latestRef.current[key];
       const set = new Set(current);
       if (set.has(value)) set.delete(value);
       else set.add(value);
       replace({ [key]: [...set] });
     },
-    [params, replace],
+    [replace],
   );
 
   const setCategory = useCallback(

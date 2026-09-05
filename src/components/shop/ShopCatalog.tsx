@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getShopBrand, productMatchesBrand } from "@/data/shop-brands";
-import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
+import { getShopBrand } from "@/data/shop-brands";
 import { CompactProductCard } from "@/components/shop/CompactProductCard";
+import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
 import {
   ActiveFilterChips,
   FilterDrawer,
@@ -49,91 +49,71 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
   const [remoteTotal, setRemoteTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const advanced =
-    hasActiveFilters &&
-    (!!params.q ||
-      !!params.productType ||
-      params.minPrice != null ||
-      params.maxPrice != null ||
-      params.inStock ||
-      params.concerns.length > 0 ||
-      params.skinTypes.length > 0 ||
-      params.ingredients.length > 0 ||
-      params.features.length > 0 ||
-      params.ratingMin != null ||
-      params.onSale ||
-      params.isNew ||
-      params.isBestseller ||
-      !!params.origin ||
-      (params.sort &&
-        params.sort !== "best-selling" &&
-        params.sort !== "best-match") ||
-      // brand as free-text brandName (not only shop-brands slug)
-      (!!params.brand && !brandMeta));
+  /** Stable key for fetch — all filter fields that affect results. */
+  const searchKey = useMemo(
+    () => serializeCatalogSearchParams(params).toString(),
+    [params],
+  );
 
   useEffect(() => {
-    void fetch("/api/catalog/facets")
+    const ac = new AbortController();
+    void fetch("/api/catalog/facets", { signal: ac.signal })
       .then((r) => r.json())
       .then((d: { ok?: boolean; facets?: CatalogFacets }) => {
         if (d.ok && d.facets) setFacets(d.facets);
       })
       .catch(() => undefined);
+    return () => ac.abort();
   }, []);
 
+  /**
+   * Single results path when any filter/search is active: always hit the API.
+   * Avoids client/server divergence (slug brand vs name brand, missing sort, etc.).
+   */
   useEffect(() => {
-    if (!advanced) {
+    if (!hasActiveFilters) {
       setRemote(null);
       setRemoteTotal(0);
       setLoading(false);
       return;
     }
+
+    const ac = new AbortController();
     setLoading(true);
-    const qs = serializeCatalogSearchParams(params).toString();
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       void (async () => {
         try {
-          const res = await fetch(`/api/catalog/search?${qs}`);
+          const res = await fetch(`/api/catalog/search?${searchKey}`, {
+            signal: ac.signal,
+          });
           const data = (await res.json()) as {
             ok?: boolean;
             products?: Product[];
             total?: number;
           };
+          if (ac.signal.aborted) return;
           setRemote(
             data.ok && Array.isArray(data.products) ? data.products : [],
           );
           setRemoteTotal(typeof data.total === "number" ? data.total : 0);
         } catch {
+          if (ac.signal.aborted) return;
           setRemote([]);
           setRemoteTotal(0);
         } finally {
-          setLoading(false);
+          if (!ac.signal.aborted) setLoading(false);
         }
       })();
-    }, 280);
-    return () => window.clearTimeout(t);
-  }, [advanced, params]);
+    }, 200);
 
-  const list = useMemo(() => {
-    if (advanced && remote) return remote;
-    let result = products;
-    if (brandMeta) {
-      result = result.filter((p) =>
-        productMatchesBrand(p.name, p.nameAr, brandMeta, p.brandName),
-      );
-    } else if (params.brand) {
-      const b = params.brand.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.brandName?.toLowerCase().includes(b) ||
-          p.name.toLowerCase().includes(b) ||
-          p.nameAr.includes(params.brand!),
-      );
-    }
-    if (params.category) {
-      result = result.filter((p) => p.category === params.category);
-    }
-    return result;
-  }, [advanced, remote, products, brandMeta, params.brand, params.category]);
+    return () => {
+      window.clearTimeout(timer);
+      ac.abort();
+    };
+  }, [hasActiveFilters, searchKey]);
+
+  const list = remote ?? [];
+  const total = hasActiveFilters ? remoteTotal : 0;
 
   const rails = useMemo(() => {
     if (hasActiveFilters) return null;
@@ -156,8 +136,6 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
       : locale === "en"
         ? "Shop"
         : "التسوق";
-
-  const total = advanced ? remoteTotal : list.length;
 
   return (
     <div className="vs-root">
@@ -260,18 +238,14 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
           </aside>
           <div>
             <ResultCount ar={ar} total={total} />
-            {loading ? (
+            {loading && !remote ? (
               <div className="h-40 animate-pulse rounded-3xl bg-[var(--mist)]" />
             ) : list.length ? (
-              advanced ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                  {list.map((product) => (
-                    <CompactProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <ProductScrollRail products={list} variant="compact" />
-              )
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                {list.map((product) => (
+                  <CompactProductCard key={product.id} product={product} />
+                ))}
+              </div>
             ) : (
               <SearchEmptyState ar={ar} onClear={clearAll} />
             )}

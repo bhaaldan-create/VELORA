@@ -69,24 +69,30 @@ function buildWhere(params: CatalogSearchParams): Prisma.ProductWhereInput {
     const brandMeta = shopBrands.find(
       (b) =>
         b.slug === params.brand ||
-        b.name.toLowerCase() === params.brand!.toLowerCase(),
+        b.name.toLowerCase() === params.brand!.toLowerCase() ||
+        b.match.some((m) => m.toLowerCase() === params.brand!.toLowerCase()),
     );
     if (brandMeta) {
-      const tokens = [brandMeta.name, ...brandMeta.match].filter(Boolean);
+      const tokens = Array.from(
+        new Set(
+          [brandMeta.name, ...brandMeta.match]
+            .map((t) => t.trim())
+            .filter(Boolean),
+        ),
+      );
+      // Brand filter MUST only constrain Product.brandName — never product title.
+      // Matching name/nameAr made brand filters behave like free-text search.
       and.push({
         OR: [
-          // Prefer exact official Product.brandName (Admin SSOT)
           {
             brandName: {
               equals: brandMeta.name,
               mode: "insensitive" as const,
             },
           },
-          ...tokens.flatMap((token) => [
-            { brandName: { contains: token, mode: "insensitive" as const } },
-            { name: { contains: token, mode: "insensitive" as const } },
-            { nameAr: { contains: token, mode: "insensitive" as const } },
-          ]),
+          ...tokens.map((token) => ({
+            brandName: { contains: token, mode: "insensitive" as const },
+          })),
         ],
       });
     } else {
@@ -315,7 +321,7 @@ export async function searchCatalog(
         sort: params.sort,
       };
     },
-    ["catalog-advanced-search-v1", cacheKey],
+    ["catalog-advanced-search-v2", cacheKey],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.products],

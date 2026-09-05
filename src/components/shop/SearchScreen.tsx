@@ -78,10 +78,12 @@ export function SearchScreen() {
     suppressOpenRef.current = true;
     setSuggestOpen(false);
     setSuggestLoading(false);
+    // Discard uncommitted draft so it cannot look like an active search/filter
+    setDraftQ(params.q);
     window.setTimeout(() => {
       suppressOpenRef.current = false;
     }, 400);
-  }, []);
+  }, [params.q]);
 
   const openSearchFocus = useCallback(() => {
     if (suppressOpenRef.current) return;
@@ -222,19 +224,20 @@ export function SearchScreen() {
   );
 
   const brandsVisible = useMemo(() => {
-    const q = suggestOpen ? "" : draftQ.trim().toLowerCase();
+    // Only committed URL `q` may filter the discover brand grid — never draft text.
+    const q = params.q.trim().toLowerCase();
     return shopBrands.filter((b) => {
       if (country !== "all" && b.countryCode !== country) return false;
       if (!q) return true;
       return (
         b.name.toLowerCase().includes(q) ||
-        b.nameAr.includes(draftQ.trim()) ||
-        b.countryAr.includes(draftQ.trim()) ||
+        b.nameAr.includes(params.q.trim()) ||
+        b.countryAr.includes(params.q.trim()) ||
         b.country.toLowerCase().includes(q) ||
         b.match.some((m) => m.includes(q))
       );
     });
-  }, [draftQ, country, suggestOpen]);
+  }, [params.q, country]);
 
   const showDiscover = !hasActiveFilters;
 
