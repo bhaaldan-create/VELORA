@@ -297,6 +297,13 @@ html[data-native] body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Sticky glass blur is costly in WKWebView while scrolling image rails */
+html[data-native] .backdrop-blur-md,
+html[data-native] .backdrop-blur-xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 /* انتقال ثيم ناعم — فقط أثناء التبديل اليدوي */
 html.theme-animating,
 html.theme-animating body,
@@ -1232,7 +1239,6 @@ html[data-launch="1"] .velora-launch {
   filter: blur(52px);
   opacity: 0.5;
   pointer-events: none;
-  will-change: transform;
   animation: velora-launch-drift 9s ease-in-out infinite alternate;
 }
 
@@ -1281,7 +1287,6 @@ html[data-launch="1"] .velora-launch {
   );
   filter: blur(0.4px);
   opacity: 0.55;
-  will-change: transform;
   animation: velora-launch-petal 14s ease-in-out infinite alternate;
 }
 

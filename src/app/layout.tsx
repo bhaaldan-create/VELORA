@@ -26,21 +26,11 @@ const sans = IBM_Plex_Sans_Arabic({
 });
 
 /**
- * عناوين العرض — Kufyan Arabic
- * Thin 100 · UltraLight 200 · Light 300 · Regular 400 · Bold 700 · Heavy 800 · Black 900
+ * عناوين العرض — Kufyan Arabic (الأوزان المستخدمة فعلياً في الواجهة)
+ * Light 300 · Regular 400 · Bold 700 · Heavy 800 · Black 900
  */
 const kufyan = localFont({
   src: [
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Thin.ttf",
-      weight: "100",
-      style: "normal",
-    },
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_UltraLight.ttf",
-      weight: "200",
-      style: "normal",
-    },
     {
       path: "../fonts/kufyan/Kufyan_Arabic_Light.ttf",
       weight: "300",
@@ -69,7 +59,8 @@ const kufyan = localFont({
   ],
   variable: "--font-kufyan",
   display: "swap",
-  preload: true,
+  /* Avoid competing with LCP images on first paint (thin/ultralight unused). */
+  preload: false,
 });
 
 /** لاتيني مودرن لشعارات مثل My VELORA */

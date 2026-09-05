@@ -17,8 +17,8 @@ import {
 } from "@/lib/home/config";
 import { getHomePromoConfigForStorefront } from "@/lib/home/promo-config";
 
-/** Dynamic: product image payloads exceed Vercel ISR size limits when prerendered. */
-export const dynamic = "force-dynamic";
+/** Short ISR — home rails use card payloads without image blobs. */
+export const revalidate = 60;
 
 const HOME_BRAND_RAILS = [
   {

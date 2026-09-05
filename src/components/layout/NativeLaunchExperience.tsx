@@ -79,13 +79,13 @@ export function NativeLaunchExperience() {
           el.remove();
           delete root.dataset.launch;
         }
-      }, prefersReduced ? 160 : 480);
+      }, prefersReduced ? 120 : 280);
     };
 
     hideNativeSplash();
 
-    const minBeatMs = prefersReduced ? 200 : 720;
-    const maxMs = prefersReduced ? 500 : 2000;
+    const minBeatMs = prefersReduced ? 120 : 280;
+    const maxMs = prefersReduced ? 400 : 1400;
     const started = performance.now();
 
     const tryExit = () => {

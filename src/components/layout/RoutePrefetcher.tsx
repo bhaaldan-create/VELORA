@@ -3,18 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const PRIMARY_ROUTES = ["/", "/shop", "/search", "/advisor", "/account", "/login"] as const;
+const IMMEDIATE = ["/", "/shop"] as const;
+const DEFERRED = ["/search", "/advisor", "/account", "/login"] as const;
 
 /**
- * يجهّز صفحات التنقل الأساسية مسبقاً على الجوال —
- * يقلّل انتظار RSC عند الضغط على الشريط السفلي.
+ * Prefetch hot tab routes after first paint — avoid fighting LCP bandwidth.
  */
 export function RoutePrefetcher() {
   const router = useRouter();
 
   useEffect(() => {
-    const run = () => {
-      for (const href of PRIMARY_ROUTES) {
+    const warm = (hrefs: readonly string[]) => {
+      for (const href of hrefs) {
         try {
           router.prefetch(href);
         } catch {
@@ -23,13 +23,40 @@ export function RoutePrefetcher() {
       }
     };
 
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(run, { timeout: 2500 });
-      return () => window.cancelIdleCallback(id);
+    let idleId: number | undefined;
+    let deferredTimer: number | undefined;
+    let immediateTimer: number | undefined;
+
+    const scheduleImmediate = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(() => warm(IMMEDIATE), {
+          timeout: 1800,
+        });
+      } else {
+        immediateTimer = window.setTimeout(() => warm(IMMEDIATE), 600);
+      }
+    };
+
+    const onLoad = () => {
+      deferredTimer = window.setTimeout(() => warm(DEFERRED), 2500);
+    };
+
+    scheduleImmediate();
+
+    if (document.readyState === "complete") {
+      onLoad();
+    } else {
+      window.addEventListener("load", onLoad, { once: true });
     }
 
-    const t = window.setTimeout(run, 400);
-    return () => window.clearTimeout(t);
+    return () => {
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      window.clearTimeout(immediateTimer);
+      window.clearTimeout(deferredTimer);
+      window.removeEventListener("load", onLoad);
+    };
   }, [router]);
 
   return null;

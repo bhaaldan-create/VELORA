@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
-import { getAllCategories, getAllProducts } from "@/lib/catalog";
+import { getAllCategories, getProductsByCategory } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "التسوق",
@@ -9,14 +9,16 @@ export const metadata: Metadata = {
     "تسوّقي من VELORA — تمرير سريع على العناية والمكياج بأسعار الدينار العراقي.",
 };
 
-/** Dynamic: avoid embedding huge base64 blobs in a static ISR payload. */
-export const dynamic = "force-dynamic";
+/** Short ISR — card payloads no longer embed image blobs. */
+export const revalidate = 60;
 
 export default async function ShopPage() {
-  const [categories, products] = await Promise.all([
-    getAllCategories(),
-    getAllProducts(),
-  ]);
+  const categories = await getAllCategories();
+  // Rails only need ~12 items/category — avoid shipping the full catalog into RSC.
+  const perCategory = await Promise.all(
+    categories.map((cat) => getProductsByCategory(cat.slug, 16)),
+  );
+  const products = perCategory.flat();
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14">

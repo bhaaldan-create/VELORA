@@ -24,12 +24,25 @@ export function storefrontProductImageUrl(
   productId: string,
   imageUrl: string | null | undefined,
   cacheBust?: number | string,
+  width?: number,
 ): string | null {
   if (!imageUrl?.trim()) return null;
   const url = imageUrl.trim();
   if (url.startsWith("https://") || url.startsWith("http://")) return url;
-  const q = cacheBust !== undefined && cacheBust !== "" ? `?v=${encodeURIComponent(String(cacheBust))}` : "";
-  return `/api/media/product/${encodeURIComponent(productId)}${q}`;
+  const params = new URLSearchParams();
+  if (cacheBust !== undefined && cacheBust !== "") {
+    params.set("v", String(cacheBust));
+  }
+  if (typeof width === "number" && width > 0) {
+    params.set("w", String(Math.round(width)));
+  }
+  const q = params.toString();
+  return `/api/media/product/${encodeURIComponent(productId)}${q ? `?${q}` : ""}`;
+}
+
+/** بطاقات القوائم: دائماً عبر الوسيط مع عرض محدود — بدون جلب blob من DB */
+export function storefrontProductCardImageUrl(productId: string): string {
+  return `/api/media/product/${encodeURIComponent(productId)}?w=720`;
 }
 
 export function storefrontBrandLogoUrl(
@@ -78,7 +91,7 @@ export type ProductAdvisorRow = Prisma.ProductGetPayload<{
   select: typeof productAdvisorSelect;
 }>;
 
-/** حقول القائمة فقط — بدون أوصاف/مكونات ثقيلة (تسريع التنقل) */
+/** حقول القائمة فقط — بدون أوصاف/مكونات/blob الصورة (تسريع التنقل وTTFB) */
 export const productCardSelect = {
   id: true,
   slug: true,
@@ -94,7 +107,6 @@ export const productCardSelect = {
   rating: true,
   reviews: true,
   imageTone: true,
-  imageUrl: true,
   brandName: true,
   concernsJson: true,
   skinTypesJson: true,
@@ -188,7 +200,7 @@ export function mapProductCard(row: ProductCardRow): Product {
     rating: row.rating,
     reviews: row.reviews,
     imageTone: row.imageTone,
-    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
+    imageUrl: storefrontProductCardImageUrl(row.id),
     brandName: row.brandName || null,
     brandLogoUrl: null,
     stock: row.stock,

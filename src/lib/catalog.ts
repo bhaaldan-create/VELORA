@@ -59,7 +59,7 @@ export async function getAllProducts(): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-all-products-card-v4"],
+    ["catalog-all-products-card-v5"],
     catalogCache,
   )();
 }
@@ -131,7 +131,7 @@ export async function getProductsByCategory(
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
     [
-      "catalog-products-category-card-v4",
+      "catalog-products-category-card-v5",
       category ?? "all",
       String(limit ?? "all"),
     ],
@@ -153,7 +153,7 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-featured-card-v2", String(limit)],
+    ["catalog-featured-card-v3", String(limit)],
     catalogCache,
   )();
 }
@@ -179,7 +179,7 @@ export async function getNewArrivals(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-new-arrivals-card-v4", String(limit)],
+    ["catalog-new-arrivals-card-v5", String(limit)],
     catalogCache,
   )();
 }
@@ -205,7 +205,7 @@ export async function getBestsellers(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-bestsellers-card-v4", String(limit)],
+    ["catalog-bestsellers-card-v5", String(limit)],
     catalogCache,
   )();
 }
@@ -248,7 +248,7 @@ export async function getProductsByBrandSlug(
         )
         .slice(0, limit);
     },
-    ["catalog-brand-rail-v3", slug, String(limit)],
+    ["catalog-brand-rail-v4", slug, String(limit)],
     catalogCache,
   )();
 }
@@ -274,7 +274,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-search-card-v4", q.toLowerCase()],
+    ["catalog-search-card-v5", q.toLowerCase()],
     catalogCache,
   )();
 }
@@ -358,7 +358,7 @@ export async function getRelatedProducts(
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-related-card-v1", product.id, String(limit)],
+    ["catalog-related-card-v2", product.id, String(limit)],
     catalogCache,
   )();
 }
@@ -381,7 +381,7 @@ export async function getRoutineCompanions(
       });
       return withoutFragranceProducts(rows.map(mapProductCard)).slice(0, limit);
     },
-    ["catalog-routine-card-v1", product.id, String(limit)],
+    ["catalog-routine-card-v2", product.id, String(limit)],
     catalogCache,
   )();
 }
