@@ -25,7 +25,7 @@ const HOME_BRAND_RAILS = [
     slug: "anua",
     title: "أنوا",
     titleEn: "Anua",
-    logoSrc: "/brands/logos/home-rails/anua.webp",
+    logoSrc: "/brands/logos/home-rails/anua.png",
     logoHeight: 34,
     logoMaxWidth: 132,
     tone: "white" as const,

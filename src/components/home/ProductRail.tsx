@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
 import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
@@ -57,17 +56,19 @@ export function ProductRail({
             {logoSrc ? (
               <h2 className="m-0">
                 <span className="sr-only">{label}</span>
-                <Image
+                {/* Native img keeps brand wordmarks crisp without optimizer quirks */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={logoSrc}
                   alt={label}
-                  width={logoMaxWidth * 2}
-                  height={logoHeight * 2}
-                  className="h-auto w-auto object-contain"
+                  width={logoMaxWidth}
+                  height={logoHeight}
+                  className="block h-auto w-auto object-contain"
                   style={{
                     maxHeight: logoHeight,
                     maxWidth: logoMaxWidth,
                   }}
-                  priority={false}
+                  decoding="async"
                 />
               </h2>
             ) : (
