@@ -26,8 +26,8 @@ const HOME_BRAND_RAILS = [
     title: "أنوا",
     titleEn: "Anua",
     logoSrc: "/brands/logos/home-rails/anua.png",
-    logoHeight: 36,
-    logoMaxWidth: 140,
+    logoHeight: 32,
+    logoMaxWidth: 120,
     tone: "white" as const,
   },
   {
@@ -35,8 +35,8 @@ const HOME_BRAND_RAILS = [
     title: "لوريال",
     titleEn: "L'Oréal Paris",
     logoSrc: "/brands/logos/home-rails/loreal-paris.png",
-    logoHeight: 48,
-    logoMaxWidth: 200,
+    logoHeight: 40,
+    logoMaxWidth: 168,
     tone: "ivory" as const,
   },
   {
@@ -44,8 +44,8 @@ const HOME_BRAND_RAILS = [
     title: "ميبيلين",
     titleEn: "Maybelline",
     logoSrc: "/brands/logos/home-rails/maybelline.png",
-    logoHeight: 36,
-    logoMaxWidth: 220,
+    logoHeight: 30,
+    logoMaxWidth: 180,
     tone: "mist" as const,
   },
 ] as const;

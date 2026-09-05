@@ -51,22 +51,24 @@ export function ProductRail({
   return (
     <section className={cn(bg, "overflow-x-clip py-16 sm:py-20 lg:py-24", className)}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mb-5 flex items-end justify-between gap-6 sm:mb-6">
-          <div className="min-w-0 max-w-xl">
+        <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6 sm:gap-6">
+          <div className="min-w-0 flex-1">
             {logoSrc ? (
-              <h2 className="m-0">
+              <h2 className="m-0 flex min-h-[2.5rem] items-center">
                 <span className="sr-only">{label}</span>
-                {/* Native img keeps brand wordmarks crisp without optimizer quirks */}
+                {/* Native img: black wordmarks invert under dark theme for mobile contrast */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoSrc}
                   alt={label}
                   width={logoMaxWidth}
                   height={logoHeight}
-                  className="block h-auto w-auto max-w-full object-contain"
+                  className="brand-rail-logo block h-auto w-auto max-w-full object-contain"
                   style={{
                     maxHeight: logoHeight,
-                    maxWidth: logoMaxWidth,
+                    maxWidth: `min(100%, ${logoMaxWidth}px)`,
+                    height: logoHeight,
+                    width: "auto",
                   }}
                   decoding="async"
                 />
@@ -85,7 +87,7 @@ export function ProductRail({
           {href ? (
             <Link
               href={href}
-              className="shrink-0 text-[11px] font-medium tracking-[0.16em] text-[var(--plum)] uppercase transition-opacity hover:opacity-70"
+              className="shrink-0 self-end pb-1 text-[11px] font-medium tracking-[0.16em] text-[var(--plum)] uppercase transition-opacity hover:opacity-70"
             >
               {t.viewAll}
             </Link>

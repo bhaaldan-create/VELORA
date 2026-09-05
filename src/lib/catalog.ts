@@ -227,12 +227,15 @@ export async function getProductsByBrandSlug(
             .filter(Boolean),
         ),
       );
+      // Broad candidate fetch (legacy rows may lack brandName), then strict match.
       const rows = await prisma.product.findMany({
         where: {
           isActive: true,
-          OR: tokens.map((token) => ({
-            brandName: { contains: token, mode: "insensitive" as const },
-          })),
+          OR: tokens.flatMap((token) => [
+            { brandName: { contains: token, mode: "insensitive" as const } },
+            { name: { contains: token, mode: "insensitive" as const } },
+            { nameAr: { contains: token, mode: "insensitive" as const } },
+          ]),
         },
         orderBy: [{ isBestseller: "desc" }, { updatedAt: "desc" }],
         take: Math.max(limit * 4, 32),
@@ -245,7 +248,7 @@ export async function getProductsByBrandSlug(
         )
         .slice(0, limit);
     },
-    ["catalog-brand-rail-v2", slug, String(limit)],
+    ["catalog-brand-rail-v3", slug, String(limit)],
     catalogCache,
   )();
 }

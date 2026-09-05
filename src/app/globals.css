@@ -367,6 +367,15 @@ html.theme-animating .surface-input {
   display: block;
 }
 
+/* Brand rail wordmarks are black PNGs — invert under dark theme (esp. mobile) */
+.brand-rail-logo {
+  opacity: 1;
+}
+[data-theme="dark"] .brand-rail-logo {
+  filter: invert(1);
+  opacity: 0.92;
+}
+
 /* نماذج عامة — Theme-aware */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 textarea,
