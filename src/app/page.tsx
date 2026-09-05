@@ -6,7 +6,11 @@ import { ProductRail } from "@/components/home/ProductRail";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { ContactHelpCard } from "@/components/contact/ContactHelpCard";
 import { GlobalOrigins } from "@/components/home/GlobalOrigins";
-import { getBestsellers, getNewArrivals } from "@/lib/catalog";
+import {
+  getBestsellers,
+  getNewArrivals,
+  getProductsByBrandSlug,
+} from "@/lib/catalog";
 import {
   getHomeCategoryConfigForStorefront,
   getHomeHeroConfigForStorefront,
@@ -15,6 +19,36 @@ import { getHomePromoConfigForStorefront } from "@/lib/home/promo-config";
 
 /** Dynamic: product image payloads exceed Vercel ISR size limits when prerendered. */
 export const dynamic = "force-dynamic";
+
+const HOME_BRAND_RAILS = [
+  {
+    slug: "anua",
+    title: "أنوا",
+    titleEn: "Anua",
+    logoSrc: "/brands/logos/home-rails/anua.webp",
+    logoHeight: 34,
+    logoMaxWidth: 132,
+    tone: "white" as const,
+  },
+  {
+    slug: "loreal",
+    title: "لوريال",
+    titleEn: "L'Oréal Paris",
+    logoSrc: "/brands/logos/home-rails/loreal-paris.png",
+    logoHeight: 42,
+    logoMaxWidth: 148,
+    tone: "ivory" as const,
+  },
+  {
+    slug: "maybelline",
+    title: "ميبيلين",
+    titleEn: "Maybelline",
+    logoSrc: "/brands/logos/home-rails/maybelline.png",
+    logoHeight: 32,
+    logoMaxWidth: 168,
+    tone: "mist" as const,
+  },
+] as const;
 
 async function HomeAboveFold() {
   const [heroConfig, categoryConfig, promoConfig] = await Promise.all([
@@ -34,10 +68,20 @@ async function HomeAboveFold() {
 }
 
 async function HomeProductRails() {
-  const [newArrivals, bestsellers] = await Promise.all([
-    getNewArrivals(8),
-    getBestsellers(8),
-  ]);
+  const [newArrivals, bestsellers, anua, loreal, maybelline] =
+    await Promise.all([
+      getNewArrivals(8),
+      getBestsellers(8),
+      getProductsByBrandSlug("anua", 8),
+      getProductsByBrandSlug("loreal", 8),
+      getProductsByBrandSlug("maybelline", 8),
+    ]);
+
+  const brandProducts: Record<string, typeof anua> = {
+    anua,
+    loreal,
+    maybelline,
+  };
 
   return (
     <>
@@ -56,6 +100,20 @@ async function HomeProductRails() {
         href="/shop"
         tone="mist"
       />
+
+      {HOME_BRAND_RAILS.map((rail) => (
+        <ProductRail
+          key={rail.slug}
+          title={rail.title}
+          titleEn={rail.titleEn}
+          logoSrc={rail.logoSrc}
+          logoHeight={rail.logoHeight}
+          logoMaxWidth={rail.logoMaxWidth}
+          products={brandProducts[rail.slug] ?? []}
+          href={`/shop?brand=${rail.slug}`}
+          tone={rail.tone}
+        />
+      ))}
 
       <GlobalOrigins />
     </>

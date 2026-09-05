@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
 import { ProductScrollRail } from "@/components/shop/ProductScrollRail";
@@ -11,6 +12,12 @@ type Props = {
   titleEn: string;
   subtitle?: string;
   subtitleEn?: string;
+  /** When set, shows brand logo instead of text title. */
+  logoSrc?: string;
+  /** Max height in px for the logo wordmark (optical calibration). */
+  logoHeight?: number;
+  /** Max width in px — keeps wide logos from dominating the header. */
+  logoMaxWidth?: number;
   products: Product[];
   href?: string;
   tone?: "ivory" | "mist" | "white";
@@ -22,6 +29,9 @@ export function ProductRail({
   titleEn,
   subtitle,
   subtitleEn,
+  logoSrc,
+  logoHeight = 36,
+  logoMaxWidth = 160,
   products,
   href,
   tone = "ivory",
@@ -37,14 +47,34 @@ export function ProductRail({
         ? "bg-[var(--bg-elevated)]"
         : "bg-[var(--background)]";
 
+  const label = locale === "en" ? titleEn : title;
+
   return (
     <section className={cn(bg, "overflow-x-clip py-16 sm:py-20 lg:py-24", className)}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mb-5 flex items-end justify-between gap-6 sm:mb-6">
           <div className="min-w-0 max-w-xl">
-            <h2 className="font-display text-[clamp(1.65rem,3.4vw,2.2rem)] font-bold tracking-tight text-[var(--plum)]">
-              {locale === "en" ? titleEn : title}
-            </h2>
+            {logoSrc ? (
+              <h2 className="m-0">
+                <span className="sr-only">{label}</span>
+                <Image
+                  src={logoSrc}
+                  alt={label}
+                  width={logoMaxWidth * 2}
+                  height={logoHeight * 2}
+                  className="h-auto w-auto object-contain"
+                  style={{
+                    maxHeight: logoHeight,
+                    maxWidth: logoMaxWidth,
+                  }}
+                  priority={false}
+                />
+              </h2>
+            ) : (
+              <h2 className="font-display text-[clamp(1.65rem,3.4vw,2.2rem)] font-bold tracking-tight text-[var(--plum)]">
+                {label}
+              </h2>
+            )}
             {subtitle || subtitleEn ? (
               <p className="mt-2 text-[0.95rem] text-[var(--ink)]/60">
                 {locale === "en" ? subtitleEn : subtitle}

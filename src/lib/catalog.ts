@@ -8,6 +8,7 @@ import {
   productAdvisorSelect,
   productCardSelect,
 } from "@/lib/catalog-mapper";
+import { getShopBrand, productMatchesBrand } from "@/data/shop-brands";
 import { isFragranceProduct } from "@/lib/product-brand";
 import {
   CACHE_TAGS,
@@ -205,6 +206,48 @@ export async function getBestsellers(limit = 12): Promise<Product[]> {
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
     ["catalog-bestsellers-card-v4", String(limit)],
+    catalogCache,
+  )();
+}
+
+/** Active products for a shop brand slug — same SSOT as search/filters. */
+export async function getProductsByBrandSlug(
+  slug: string,
+  limit = 8,
+): Promise<Product[]> {
+  const brand = getShopBrand(slug);
+  if (!brand) return [];
+
+  return unstable_cache(
+    async () => {
+      const tokens = Array.from(
+        new Set(
+          [brand.name, ...brand.match]
+            .map((t) => t.trim())
+            .filter(Boolean),
+        ),
+      );
+      const rows = await prisma.product.findMany({
+        where: {
+          isActive: true,
+          OR: tokens.flatMap((token) => [
+            { brandName: { contains: token, mode: "insensitive" as const } },
+            { name: { contains: token, mode: "insensitive" as const } },
+            { nameAr: { contains: token, mode: "insensitive" as const } },
+          ]),
+        },
+        orderBy: [{ isBestseller: "desc" }, { updatedAt: "desc" }],
+        take: Math.max(limit * 4, 32),
+        select: productCardSelect,
+      });
+
+      return withoutFragranceProducts(rows.map(mapProductCard))
+        .filter((p) =>
+          productMatchesBrand(p.name, p.nameAr, brand, p.brandName),
+        )
+        .slice(0, limit);
+    },
+    ["catalog-brand-rail-v1", slug, String(limit)],
     catalogCache,
   )();
 }
