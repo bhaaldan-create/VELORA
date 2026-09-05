@@ -38,11 +38,28 @@ function isLaunchDone(): boolean {
   }
 }
 
-function removeLaunchOverlay() {
-  const el = document.getElementById(LAUNCH_ID);
-  if (el) el.remove();
+/**
+ * Hide launch via attributes/CSS only.
+ * Never remove #velora-boot-launch from the DOM — React owns that node in the
+ * root layout; manual remove() breaks soft navigations ("This page couldn’t load").
+ */
+function hideLaunchOverlay() {
   const root = document.documentElement;
   root.dataset.launch = "done";
+  const el = document.getElementById(LAUNCH_ID);
+  if (el) {
+    el.classList.add("velora-launch--exit");
+    el.setAttribute("aria-hidden", "true");
+  }
+}
+
+async function hideNativeSplash(fadeOutDuration = 0) {
+  try {
+    const { SplashScreen } = await import("@capacitor/splash-screen");
+    await SplashScreen.hide({ fadeOutDuration });
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -51,7 +68,7 @@ function removeLaunchOverlay() {
 export function NativeLaunchExperience() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
-      removeLaunchOverlay();
+      hideLaunchOverlay();
       delete document.documentElement.dataset.launch;
       return;
     }
@@ -62,20 +79,16 @@ export function NativeLaunchExperience() {
     // Already shown this WebView session — never show again on route changes.
     if (isLaunchDone() || root.dataset.launch === "done") {
       markLaunchDone();
-      removeLaunchOverlay();
-      void import("@capacitor/splash-screen")
-        .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 0 }))
-        .catch(() => undefined);
+      hideLaunchOverlay();
+      void hideNativeSplash(0);
       return;
     }
 
     // Only continue if boot script armed this cold start.
     if (root.dataset.launch !== "1") {
       markLaunchDone();
-      removeLaunchOverlay();
-      void import("@capacitor/splash-screen")
-        .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 0 }))
-        .catch(() => undefined);
+      hideLaunchOverlay();
+      void hideNativeSplash(0);
       return;
     }
 
@@ -83,9 +96,7 @@ export function NativeLaunchExperience() {
     if (!el) {
       markLaunchDone();
       root.dataset.launch = "done";
-      void import("@capacitor/splash-screen")
-        .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 0 }))
-        .catch(() => undefined);
+      void hideNativeSplash(0);
       return;
     }
 
@@ -105,20 +116,14 @@ export function NativeLaunchExperience() {
       markLaunchDone();
       el.classList.add("velora-launch--exit");
       root.dataset.launch = "done";
+      // Keep the node in the tree; CSS hides it when data-launch !== "1".
       exitTimer = window.setTimeout(() => {
-        if (!cancelled) removeLaunchOverlay();
+        if (!cancelled) hideLaunchOverlay();
       }, prefersReduced ? 120 : 280);
     };
 
     hideNativeTimer = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const { SplashScreen } = await import("@capacitor/splash-screen");
-          if (!cancelled) await SplashScreen.hide({ fadeOutDuration: 320 });
-        } catch {
-          /* ignore */
-        }
-      })();
+      void hideNativeSplash(320);
     }, 30);
 
     const minBeatMs = prefersReduced ? 200 : 900;
