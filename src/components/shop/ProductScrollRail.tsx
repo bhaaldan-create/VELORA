@@ -27,7 +27,7 @@ export function ProductScrollRail({
         className,
       )}
     >
-      {products.map((product) => (
+      {products.map((product, index) => (
         <div
           key={product.id}
           className={cn(
@@ -38,9 +38,13 @@ export function ProductScrollRail({
           )}
         >
           {variant === "compact" ? (
-            <CompactProductCard product={product} />
+            <CompactProductCard product={product} priority={index < 3} />
           ) : (
-            <ProductCard product={product} compactOverlayIcons />
+            <ProductCard
+              product={product}
+              compactOverlayIcons
+              priority={index < 3}
+            />
           )}
         </div>
       ))}

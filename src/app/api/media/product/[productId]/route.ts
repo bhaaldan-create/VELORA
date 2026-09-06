@@ -9,6 +9,8 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const MAX_RESIZE_WIDTH = 1600;
+
 function parseDataUrl(url: string): { mime: string; buffer: Buffer } | null {
   const match = url.match(/^data:([^;,]+)?(?:;base64)?,([\s\S]+)$/);
   if (!match?.[2]) return null;
@@ -29,19 +31,70 @@ function mimeFromExt(filePath: string): string {
   return "image/jpeg";
 }
 
-async function serveStored(stored: string): Promise<Response> {
+function parseWidth(raw: string | null): number | null {
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(n, MAX_RESIZE_WIDTH);
+}
+
+/**
+ * Optional card resize via dynamic sharp import.
+ * Never import sharp at module top-level — that previously crashed this route
+ * in production and returned HTTP 500 for all product images.
+ */
+async function maybeResize(
+  buffer: Buffer,
+  mime: string,
+  width: number | null,
+): Promise<{ buffer: Buffer; mime: string }> {
+  if (!width || width <= 0) return { buffer, mime };
+  try {
+    const sharpMod = await import("sharp");
+    const sharp = sharpMod.default;
+    const out = await sharp(buffer)
+      .rotate()
+      .resize({
+        width,
+        withoutEnlargement: true,
+        fit: "inside",
+      })
+      .webp({ quality: 78, effort: 4 })
+      .toBuffer();
+    return { buffer: out, mime: "image/webp" };
+  } catch (error) {
+    console.warn("[media/product] resize skipped, serving original", error);
+    return { buffer, mime };
+  }
+}
+
+async function respondImage(
+  buffer: Buffer,
+  mime: string,
+  width: number | null,
+  cacheControl: string,
+): Promise<Response> {
+  const resized = await maybeResize(buffer, mime, width);
+  return new Response(new Uint8Array(resized.buffer), {
+    status: 200,
+    headers: {
+      "Content-Type": resized.mime,
+      "Cache-Control": cacheControl,
+      Vary: "Accept",
+    },
+  });
+}
+
+async function serveStored(
+  stored: string,
+  width: number | null,
+): Promise<Response> {
   if (stored.startsWith("data:")) {
     const parsed = parseDataUrl(stored);
     if (!parsed) {
       return new Response("Bad image", { status: 500 });
     }
-    return new Response(new Uint8Array(parsed.buffer), {
-      status: 200,
-      headers: {
-        "Content-Type": parsed.mime,
-        "Cache-Control": MEDIA_CACHE_CONTROL,
-      },
-    });
+    return respondImage(parsed.buffer, parsed.mime, width, MEDIA_CACHE_CONTROL);
   }
 
   if (
@@ -53,13 +106,12 @@ async function serveStored(stored: string): Promise<Response> {
     try {
       const filePath = path.join(process.cwd(), "public", stored);
       const buffer = await readFile(filePath);
-      return new Response(new Uint8Array(buffer), {
-        status: 200,
-        headers: {
-          "Content-Type": mimeFromExt(filePath),
-          "Cache-Control": MEDIA_IMMUTABLE_CACHE_CONTROL,
-        },
-      });
+      return respondImage(
+        buffer,
+        mimeFromExt(filePath),
+        width,
+        MEDIA_IMMUTABLE_CACHE_CONTROL,
+      );
     } catch {
       return new Response("Not found", { status: 404 });
     }
@@ -74,9 +126,7 @@ async function serveStored(stored: string): Promise<Response> {
 
 /**
  * Product/brand media for the storefront.
- * NOTE: `?w=` is accepted for cache-busting compatibility with card URLs but
- * resize is intentionally disabled — sharp native load was crashing this route
- * in production (HTTP 500 / "This page couldn’t load") and taking down images app-wide.
+ * `?w=` resizes when sharp is available; otherwise the original is served.
  */
 export async function GET(
   req: Request,
@@ -92,6 +142,8 @@ export async function GET(
     const url = new URL(req.url);
     const kind =
       url.searchParams.get("kind") === "brandLogo" ? "brandLogo" : "product";
+    const width =
+      kind === "brandLogo" ? null : parseWidth(url.searchParams.get("w"));
 
     const row = await prisma.product.findFirst({
       where: { id },
@@ -107,7 +159,7 @@ export async function GET(
       return new Response("Not found", { status: 404 });
     }
 
-    return await serveStored(stored);
+    return await serveStored(stored, width);
   } catch (error) {
     console.error("[media/product] GET failed", error);
     return new Response("Media unavailable", { status: 500 });

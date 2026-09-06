@@ -71,7 +71,7 @@ export function CartView() {
             </ul>
           </section>
 
-          <div className="hidden lg:block lg:sticky lg:top-24">
+          <div className="hidden lg:block lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
             <CartOrderSummary
               subtotal={subtotal}
               deliveryFee={deliveryFee}

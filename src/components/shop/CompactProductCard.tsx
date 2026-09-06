@@ -14,9 +14,11 @@ import { cn } from "@/lib/utils";
 export function CompactProductCard({
   product,
   className,
+  priority = false,
 }: {
   product: Product;
   className?: string;
+  priority?: boolean;
 }) {
   const { addItem } = useCart();
   const { locale } = useLocale();
@@ -30,6 +32,7 @@ export function CompactProductCard({
         locale={locale}
         href={`/shop/${product.slug}`}
         compact
+        priority={priority}
         roundedClassName="rounded-2xl"
         aspectClassName="aspect-[3/4]"
         sizes="(max-width: 768px) 42vw, 18vw"

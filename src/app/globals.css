@@ -34,6 +34,12 @@
   --bg-glass-strong: rgba(255, 255, 255, 0.92);
   --bg-overlay: rgba(26, 18, 28, 0.45);
 
+  /* Storefront chrome — fixed header outside document scroll */
+  --header-bar-h: 3.85rem; /* matches Header inner h-[3.85rem] */
+  --header-offset: calc(
+    var(--header-bar-h) + env(safe-area-inset-top, 0px)
+  );
+
   --text-primary: var(--ink);
   --text-secondary: color-mix(in srgb, var(--ink) 72%, transparent);
   --text-muted: var(--muted);
@@ -277,12 +283,37 @@
   box-sizing: border-box;
 }
 
+@media (min-width: 640px) {
+  :root {
+    --header-bar-h: 5rem; /* matches Header inner sm:h-20 */
+  }
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
   max-width: 100%;
   /* Match page paint so iOS rubber-band never flashes system white through transparent html */
   background-color: var(--background);
+  scroll-padding-top: var(--header-offset);
+}
+
+/*
+ * Viewport-fixed storefront header (outside scroll).
+ * Safe-area lives on the header itself — not on body — so Dynamic Island /
+ * notch never create a gap above chrome, and Safari toolbar resize cannot
+ * drag the bar with content.
+ */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 60;
+  padding-top: env(safe-area-inset-top, 0px);
+  /* Solid underlay so scrolling content never shows through during overscroll */
+  background-color: var(--bg-glass-strong);
 }
 
 /*
@@ -410,9 +441,9 @@ textarea::placeholder {
   opacity: 1;
 }
 
-/* هوامش آمنة لشق الشاشة في تطبيق الجوال */
+/* هوامش آمنة — أعلى الشاشة يخصّ الـHeader الثابت؛ الباقي على body */
 html[data-native] body {
-  padding-top: env(safe-area-inset-top);
+  padding-top: 0;
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);

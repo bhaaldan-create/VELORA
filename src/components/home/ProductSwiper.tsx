@@ -109,9 +109,13 @@ export function ProductSwiper({ products, className }: Props) {
         }}
         className="velora-swiper overflow-hidden pb-10"
       >
-        {products.map((product) => (
+        {products.map((product, index) => (
           <SwiperSlide key={product.id} className="!h-auto">
-            <ProductCard product={product} compactOverlayIcons />
+            <ProductCard
+              product={product}
+              compactOverlayIcons
+              priority={index < 3}
+            />
           </SwiperSlide>
         ))}
       </Swiper>

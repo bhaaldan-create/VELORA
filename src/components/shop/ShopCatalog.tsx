@@ -242,8 +242,12 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
               <div className="h-40 animate-pulse rounded-3xl bg-[var(--mist)]" />
             ) : list.length ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                {list.map((product) => (
-                  <CompactProductCard key={product.id} product={product} />
+                {list.map((product, index) => (
+                  <CompactProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 4}
+                  />
                 ))}
               </div>
             ) : (

@@ -12,7 +12,8 @@ export function SiteMain({ children }: { children: React.ReactNode }) {
     <main
       className={cn(
         "min-w-0 flex-1 overflow-x-clip",
-        !auth && "pb-20 lg:pb-0",
+        /* Reserve space for viewport-fixed Header; auth routes hide Header */
+        !auth && "pt-[var(--header-offset)] pb-20 lg:pb-0",
       )}
     >
       {children}

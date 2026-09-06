@@ -28,7 +28,7 @@ type Props = {
 
 /**
  * Product image inside a fixed frame.
- * Aspect/size never depends on badges, wishlist, or text — only on aspectClassName.
+ * Shows immediately (no opacity-0 gate) — tone shell paints first, then the photo.
  */
 export function ProductMedia({
   name,
@@ -42,7 +42,6 @@ export function ProductMedia({
   fit = "contain",
 }: Props) {
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const src = imageUrl?.trim() || "";
   const showImage = Boolean(src) && !failed;
   const objectFit =
@@ -59,14 +58,6 @@ export function ProductMedia({
       role={showImage ? undefined : "img"}
       aria-label={showImage ? undefined : name}
     >
-      {showImage && !loaded ? (
-        <div
-          className="absolute inset-0 animate-pulse"
-          style={{ background: imageTone }}
-          aria-hidden
-        />
-      ) : null}
-
       {showImage ? (
         shouldUseNativeImageElement(src) ? (
           // eslint-disable-next-line @next/next/no-img-element -- /api/media & data URLs
@@ -74,20 +65,17 @@ export function ProductMedia({
             src={src}
             alt={name}
             loading={priority ? "eager" : "lazy"}
-            decoding="async"
+            decoding={priority ? "sync" : "async"}
             fetchPriority={priority ? "high" : "auto"}
-            onLoad={() => setLoaded(true)}
             onError={() => {
               setFailed(true);
-              setLoaded(true);
               if (process.env.NODE_ENV === "development") {
                 console.warn("[ProductMedia] image failed", { name, src });
               }
             }}
             className={cn(
-              "absolute inset-0 h-full w-full max-w-none transition-opacity duration-300",
+              "absolute inset-0 h-full w-full max-w-none",
               objectFit,
-              loaded ? "opacity-100" : "opacity-0",
               imageClassName,
             )}
           />
@@ -98,18 +86,15 @@ export function ProductMedia({
             fill
             sizes={sizes}
             priority={priority}
-            onLoad={() => setLoaded(true)}
             onError={() => {
               setFailed(true);
-              setLoaded(true);
               if (process.env.NODE_ENV === "development") {
                 console.warn("[ProductMedia] image failed", { name, src });
               }
             }}
             className={cn(
-              "absolute inset-0 h-full w-full max-w-none transition-opacity duration-300",
+              "absolute inset-0 h-full w-full max-w-none",
               objectFit,
-              loaded ? "opacity-100" : "opacity-0",
               imageClassName,
             )}
           />

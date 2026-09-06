@@ -394,7 +394,7 @@ export function AccountSettings() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Sidebar */}
         <aside className="shrink-0 lg:w-[240px]">
-          <div className="rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] px-5 py-6 lg:sticky lg:top-24">
+          <div className="rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] px-5 py-6 lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
             {/* dir=ltr يمنع عكس حرفَي My في الواجهة العربية */}
             <div className="text-center" dir="ltr">
               <p className="font-latin text-[0.62rem] font-medium tracking-[0.38em] text-[var(--account-muted)] uppercase">

@@ -584,7 +584,7 @@ export function CheckoutForm({
             ) : null}
           </form>
 
-          <div className="space-y-6 lg:sticky lg:top-24">
+          <div className="space-y-6 lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
             <CheckoutOrderSummary
               itemCount={itemCount}
               subtotal={subtotal}

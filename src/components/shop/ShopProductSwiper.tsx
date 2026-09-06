@@ -87,9 +87,9 @@ export function ShopProductSwiper({
         }}
         className="velora-swiper !overflow-hidden pb-9"
       >
-        {products.map((product) => (
+        {products.map((product, index) => (
           <SwiperSlide key={product.id} className="!h-auto">
-            <CompactProductCard product={product} />
+            <CompactProductCard product={product} priority={index < 3} />
           </SwiperSlide>
         ))}
       </Swiper>

@@ -8,8 +8,8 @@ export async function FeaturedProducts() {
   return (
     <FeaturedProductsView>
       <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {featured.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {featured.map((product, index) => (
+          <ProductCard key={product.id} product={product} priority={index < 3} />
         ))}
       </div>
     </FeaturedProductsView>

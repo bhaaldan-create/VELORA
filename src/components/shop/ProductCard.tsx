@@ -14,11 +14,14 @@ export function ProductCard({
   product,
   className,
   compactOverlayIcons,
+  priority = false,
 }: {
   product: Product;
   className?: string;
   /** أيقونات أصغر — للصفحة الرئيسية فقط */
   compactOverlayIcons?: boolean;
+  /** Eager-load above-the-fold / first rail cards */
+  priority?: boolean;
 }) {
   const { addItem } = useCart();
   const { locale } = useLocale();
@@ -37,6 +40,7 @@ export function ProductCard({
         locale={locale}
         href={`/shop/${product.slug}`}
         compact={compactOverlayIcons}
+        priority={priority}
         aspectClassName="aspect-[3/4]"
         sizes="(max-width: 768px) 55vw, 25vw"
         imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.03]"

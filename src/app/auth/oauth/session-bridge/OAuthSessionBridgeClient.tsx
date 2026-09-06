@@ -50,6 +50,7 @@ export default function OAuthSessionBridgeClient() {
           return;
         }
 
+        await refresh();
         router.replace(next);
       } catch {
         setMessage("تعذّر إكمال تسجيل الدخول. أعيدي المحاولة.");
@@ -57,7 +58,7 @@ export default function OAuthSessionBridgeClient() {
     }
 
     void finish();
-  }, [search, router]);
+  }, [search, router, refresh]);
 
   return (
     <div

@@ -31,7 +31,9 @@ export function AuthHeader({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        "relative z-10 flex items-center justify-between px-5 py-4 sm:px-8",
+        "relative z-10 flex items-center justify-between px-5 pb-4 sm:px-8",
+        /* Top safe-area when storefront Header is hidden (auth routes) */
+        "pt-[max(1rem,env(safe-area-inset-top,0px))]",
         className,
       )}
     >
