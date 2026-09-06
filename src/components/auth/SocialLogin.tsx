@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 import { authCopy } from "@/components/auth/auth-copy";
 import { safeNext } from "@/components/auth/auth-utils";
 import { useLocale } from "@/context/LocaleContext";
@@ -72,7 +73,24 @@ export function SocialLogin({
     };
   }, []);
 
-  function start(provider: "google" | "apple") {
+  // Clear stuck loading when returning from system browser / cancel
+  useEffect(() => {
+    function clearBusy() {
+      setLoading(null);
+    }
+    const onPageShow = () => clearBusy();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") clearBusy();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  async function start(provider: "google" | "apple") {
     const enabled = status?.[provider];
     if (!status) return;
     if (!enabled) {
@@ -84,12 +102,42 @@ export function SocialLogin({
       );
       return;
     }
+    if (loading) return;
     setLoading(provider);
 
-    // داخل Capacitor: نفس WebView حتى تبقى كوكي الجلسة في التطبيق
-    // (فتح Browser منفصل يفصل الجلسة عن WebView على iOS)
-    const url = `/api/auth/oauth/${provider}?next=${encodeURIComponent(nextPath)}`;
-    window.location.assign(url);
+    const params = new URLSearchParams({
+      next: nextPath,
+    });
+    const native = Capacitor.isNativePlatform();
+    if (native) params.set("mobile", "1");
+
+    const path = `/api/auth/oauth/${provider}?${params.toString()}`;
+
+    try {
+      if (native) {
+        const { Browser } = await import("@capacitor/browser");
+        const absolute = new URL(path, window.location.origin).toString();
+        const finished = await Browser.addListener("browserFinished", () => {
+          setLoading(null);
+          void finished.remove();
+        });
+        await Browser.open({
+          url: absolute,
+          presentationStyle: "popover",
+        });
+        // Loading clears on browserFinished, appUrlOpen handoff, or visibility
+        return;
+      }
+
+      window.location.assign(path);
+    } catch {
+      setLoading(null);
+      onError?.(
+        locale === "en"
+          ? "Could not start sign-in. Please try again."
+          : "تعذّر بدء تسجيل الدخول. أعيدي المحاولة.",
+      );
+    }
   }
 
   return (
@@ -100,7 +148,7 @@ export function SocialLogin({
           type="button"
           className="auth-social-btn"
           disabled={loading !== null}
-          onClick={() => start("google")}
+          onClick={() => void start("google")}
           aria-label="Google"
           aria-busy={loading === "google"}
         >
@@ -117,7 +165,7 @@ export function SocialLogin({
           type="button"
           className="auth-social-btn"
           disabled={loading !== null}
-          onClick={() => start("apple")}
+          onClick={() => void start("apple")}
           aria-label="Apple"
           aria-busy={loading === "apple"}
         >

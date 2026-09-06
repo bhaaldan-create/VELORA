@@ -56,6 +56,11 @@ export async function upsertCustomerFromOAuth(profile: OAuthProfile) {
     where: { email: profile.email },
   });
   if (byEmail) {
+    if (!profile.emailVerified) {
+      throw new Error(
+        "تعذّر ربط الحساب — تأكيد البريد مطلوب من مزود الدخول.",
+      );
+    }
     const linkedProvider = resolveAuthProvider(byEmail, profile.provider);
     return prisma.customer.update({
       where: { id: byEmail.id },

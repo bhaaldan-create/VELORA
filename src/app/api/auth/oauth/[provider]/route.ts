@@ -41,7 +41,10 @@ export async function GET(
 
   const url = new URL(req.url);
   const next = safeOAuthNext(url.searchParams.get("next"));
-  const state = await createOAuthState(next);
+  const mobile =
+    url.searchParams.get("mobile") === "1" ||
+    url.searchParams.get("mobile") === "true";
+  const state = await createOAuthState(next, { mobile });
   const authUrl =
     provider === "google"
       ? await buildGoogleAuthUrl(state)

@@ -41,6 +41,24 @@ export function parseMobileOAuthAppUrl(raw: string) {
   }
 }
 
+/** خطأ OAuth يُعاد إلى التطبيق عبر custom scheme */
+export function parseMobileOAuthErrorUrl(raw: string) {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== `${OAUTH_APP_URL_SCHEME}:`) return null;
+    if (url.hostname !== "oauth") return null;
+    if (!url.pathname.startsWith("/error")) return null;
+    const message = url.searchParams.get("oauth_error")?.trim();
+    if (!message) return null;
+    return {
+      message,
+      next: safeOAuthNext(url.searchParams.get("next")),
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** يستبدل التذكرة بكوكي جلسة داخل WebView عبر إعادة توجيه من الخادم */
 export function mobileOAuthCompleteUrl(ticket: string, nextPath: string) {
   const next = safeOAuthNext(nextPath);

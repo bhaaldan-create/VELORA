@@ -52,10 +52,22 @@ export async function GET(req: Request) {
   const next = safeOAuthNext(url.searchParams.get("next"));
   const customerId = await verifyMobileOAuthTicket(ticket);
   if (!customerId) {
-    return NextResponse.redirect(new URL("/login?oauth_error=invalid_ticket", url.origin));
+    return NextResponse.redirect(
+      new URL("/login?oauth_error=invalid_ticket", url.origin),
+    );
   }
 
-  const sessionToken = await createSessionCookieValue(customerId);
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { id: true },
+  });
+  if (!customer) {
+    return NextResponse.redirect(
+      new URL("/login?oauth_error=account_missing", url.origin),
+    );
+  }
+
+  const sessionToken = await createSessionCookieValue(customer.id);
   const res = NextResponse.redirect(new URL(next, url.origin));
   res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
   return res;

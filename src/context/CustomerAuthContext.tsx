@@ -28,13 +28,21 @@ type CustomerAuthValue = {
 
 const CustomerAuthContext = createContext<CustomerAuthValue | null>(null);
 
+const ME_TIMEOUT_MS = 12_000;
+
 export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<CustomerPublic | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), ME_TIMEOUT_MS);
     try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      const res = await fetch("/api/auth/me", {
+        cache: "no-store",
+        credentials: "include",
+        signal: controller.signal,
+      });
       const data = (await res.json()) as {
         ok?: boolean;
         customer?: CustomerPublic | null;
@@ -43,6 +51,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setCustomer(null);
     } finally {
+      window.clearTimeout(timer);
       setLoading(false);
     }
   }, []);
@@ -52,8 +61,14 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setCustomer(null);
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      setCustomer(null);
+    }
   }, []);
 
   const value = useMemo(

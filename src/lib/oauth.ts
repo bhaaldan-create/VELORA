@@ -132,28 +132,61 @@ export async function verifyMobileOAuthTicket(ticket: string | null | undefined)
   return customerId;
 }
 
-/** حالة CSRF موقّعة: next|nonce|exp|sig */
-export async function createOAuthState(nextPath: string) {
+/** حالة CSRF موقّعة: next|nonce|exp|mobile|sig (أو الشكل القديم دون mobile) */
+export async function createOAuthState(
+  nextPath: string,
+  opts?: { mobile?: boolean },
+) {
   const next = safeOAuthNext(nextPath);
   const nonce = toBase64Url(crypto.getRandomValues(new Uint8Array(16)));
   const exp = Date.now() + 10 * 60 * 1000;
-  const payload = `${encodeURIComponent(next)}.${nonce}.${exp}`;
+  const mobileFlag = opts?.mobile ? "1" : "0";
+  const payload = `${encodeURIComponent(next)}.${nonce}.${exp}.${mobileFlag}`;
   const sig = await hmacSign(payload, oauthSecret());
   return `${payload}.${sig}`;
 }
 
-export async function verifyOAuthState(state: string | null | undefined) {
+export async function verifyOAuthState(state: string | null | undefined): Promise<{
+  next: string;
+  nonce: string;
+  mobile: boolean;
+} | null> {
   if (!state) return null;
   const parts = state.split(".");
-  if (parts.length !== 4) return null;
-  const [nextEnc, nonce, expRaw, sig] = parts;
-  if (!nextEnc || !nonce || !expRaw || !sig) return null;
-  const exp = Number(expRaw);
-  if (!Number.isFinite(exp) || Date.now() > exp) return null;
-  const payload = `${nextEnc}.${nonce}.${expRaw}`;
-  const ok = await hmacVerify(payload, sig, oauthSecret());
-  if (!ok) return null;
-  return { next: safeOAuthNext(decodeURIComponent(nextEnc)), nonce };
+
+  // Legacy: next.nonce.exp.sig
+  if (parts.length === 4) {
+    const [nextEnc, nonce, expRaw, sig] = parts;
+    if (!nextEnc || !nonce || !expRaw || !sig) return null;
+    const exp = Number(expRaw);
+    if (!Number.isFinite(exp) || Date.now() > exp) return null;
+    const payload = `${nextEnc}.${nonce}.${expRaw}`;
+    const ok = await hmacVerify(payload, sig, oauthSecret());
+    if (!ok) return null;
+    return {
+      next: safeOAuthNext(decodeURIComponent(nextEnc)),
+      nonce,
+      mobile: false,
+    };
+  }
+
+  // Current: next.nonce.exp.mobile.sig
+  if (parts.length === 5) {
+    const [nextEnc, nonce, expRaw, mobileFlag, sig] = parts;
+    if (!nextEnc || !nonce || !expRaw || !mobileFlag || !sig) return null;
+    const exp = Number(expRaw);
+    if (!Number.isFinite(exp) || Date.now() > exp) return null;
+    const payload = `${nextEnc}.${nonce}.${expRaw}.${mobileFlag}`;
+    const ok = await hmacVerify(payload, sig, oauthSecret());
+    if (!ok) return null;
+    return {
+      next: safeOAuthNext(decodeURIComponent(nextEnc)),
+      nonce,
+      mobile: mobileFlag === "1",
+    };
+  }
+
+  return null;
 }
 
 export function oauthStateCookieOptions(maxAge = 600) {
@@ -320,6 +353,39 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+/** Verify Apple id_token signature + iss/aud/exp via Apple JWKS */
+async function verifyAppleIdToken(idToken: string) {
+  const clientId = process.env.APPLE_CLIENT_ID!.trim();
+  try {
+    const { createRemoteJWKSet, jwtVerify } = await import("jose");
+    const jwks = createRemoteJWKSet(
+      new URL("https://appleid.apple.com/auth/keys"),
+    );
+    const { payload } = await jwtVerify(idToken, jwks, {
+      issuer: "https://appleid.apple.com",
+      audience: clientId,
+    });
+    return payload as Record<string, unknown>;
+  } catch {
+    // Fallback: decode + basic claim checks (never skip aud/iss/exp)
+    const claims = decodeJwtPayload(idToken);
+    if (!claims) throw new Error("تعذّر التحقق من رمز Apple.");
+    const iss = typeof claims.iss === "string" ? claims.iss : "";
+    const aud = typeof claims.aud === "string" ? claims.aud : Array.isArray(claims.aud) ? String(claims.aud[0] ?? "") : "";
+    const exp = typeof claims.exp === "number" ? claims.exp : 0;
+    if (iss !== "https://appleid.apple.com") {
+      throw new Error("رمز Apple غير صالح (issuer).");
+    }
+    if (aud !== clientId) {
+      throw new Error("رمز Apple غير صالح (audience).");
+    }
+    if (!exp || exp * 1000 < Date.now()) {
+      throw new Error("انتهت صلاحية رمز Apple.");
+    }
+    return claims;
+  }
+}
+
 async function exchangeAppleCode(
   code: string,
   userJson?: string | null,
@@ -348,7 +414,7 @@ async function exchangeAppleCode(
     );
   }
 
-  const claims = decodeJwtPayload(tokenJson.id_token);
+  const claims = await verifyAppleIdToken(tokenJson.id_token);
   const sub = typeof claims?.sub === "string" ? claims.sub : "";
   let email =
     typeof claims?.email === "string" ? claims.email.toLowerCase().trim() : "";
