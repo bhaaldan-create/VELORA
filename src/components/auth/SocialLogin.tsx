@@ -6,6 +6,10 @@ import { Capacitor } from "@capacitor/core";
 import { authCopy } from "@/components/auth/auth-copy";
 import { safeNext } from "@/components/auth/auth-utils";
 import { useLocale } from "@/context/LocaleContext";
+import {
+  isCapacitorWebView,
+  VELORA_OAUTH_RETURN_EVENT,
+} from "@/lib/oauth-mobile-bridge";
 
 function GoogleIcon() {
   return (
@@ -40,6 +44,15 @@ function AppleIcon() {
 
 type Status = { google: boolean; apple: boolean };
 
+function detectNativeApp() {
+  try {
+    if (Capacitor.isNativePlatform()) return true;
+  } catch {
+    /* ignore */
+  }
+  return isCapacitorWebView();
+}
+
 export function SocialLogin({
   onUnavailable,
   onError,
@@ -73,7 +86,7 @@ export function SocialLogin({
     };
   }, []);
 
-  // Clear stuck loading when returning from system browser / cancel
+  // Clear stuck loading when returning from system browser / cancel / deep link
   useEffect(() => {
     function clearBusy() {
       setLoading(null);
@@ -82,11 +95,14 @@ export function SocialLogin({
     const onVisibility = () => {
       if (document.visibilityState === "visible") clearBusy();
     };
+    const onReturn = () => clearBusy();
     window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener(VELORA_OAUTH_RETURN_EVENT, onReturn);
     return () => {
       window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener(VELORA_OAUTH_RETURN_EVENT, onReturn);
     };
   }, []);
 
@@ -105,10 +121,8 @@ export function SocialLogin({
     if (loading) return;
     setLoading(provider);
 
-    const params = new URLSearchParams({
-      next: nextPath,
-    });
-    const native = Capacitor.isNativePlatform();
+    const native = detectNativeApp();
+    const params = new URLSearchParams({ next: nextPath });
     if (native) params.set("mobile", "1");
 
     const path = `/api/auth/oauth/${provider}?${params.toString()}`;
@@ -121,11 +135,7 @@ export function SocialLogin({
           setLoading(null);
           void finished.remove();
         });
-        await Browser.open({
-          url: absolute,
-          presentationStyle: "popover",
-        });
-        // Loading clears on browserFinished, appUrlOpen handoff, or visibility
+        await Browser.open({ url: absolute });
         return;
       }
 

@@ -5,7 +5,11 @@ import {
   customerCookieOptions,
 } from "@/lib/customer-auth";
 import { upsertCustomerFromOAuth } from "@/lib/oauth-customers";
-import { buildMobileOAuthAppUrl } from "@/lib/oauth-mobile-bridge";
+import {
+  buildMobileOAuthAppUrl,
+  buildMobileOAuthErrorUrl,
+  mobileOAuthHandoffResponse,
+} from "@/lib/oauth-mobile-bridge";
 import {
   createMobileOAuthTicket,
   createSessionCookieValue,
@@ -34,14 +38,15 @@ function loginErrorUrl(req: Request, message: string, nextPath: string) {
   return `${origin}/login?${params}`;
 }
 
-function mobileErrorRedirect(message: string, nextPath: string) {
-  const params = new URLSearchParams({
-    oauth_error: message,
-    next: nextPath,
-  });
-  return NextResponse.redirect(
-    `beauty.velora.app://oauth/error?${params.toString()}`,
-  );
+function mobileHandoff(appUrl: string, clearStateCookie: boolean) {
+  const res = mobileOAuthHandoffResponse(appUrl);
+  if (clearStateCookie) {
+    res.cookies.set(OAUTH_STATE_COOKIE, "", {
+      ...oauthStateCookieOptions(0),
+      maxAge: 0,
+    });
+  }
+  return res;
 }
 
 async function finishOAuth(
@@ -62,7 +67,9 @@ async function finishOAuth(
 
   if (input.error) {
     const message = mapOAuthUserError(provider, input.error);
-    if (verified?.mobile) return mobileErrorRedirect(message, nextPath);
+    if (verified?.mobile) {
+      return mobileHandoff(buildMobileOAuthErrorUrl(message, nextPath), true);
+    }
     return NextResponse.redirect(loginErrorUrl(req, message, nextPath));
   }
 
@@ -94,7 +101,9 @@ async function finishOAuth(
 
   if (!input.code) {
     const message = "لم يُرجع المزود رمز التفويض.";
-    if (verified.mobile) return mobileErrorRedirect(message, nextPath);
+    if (verified.mobile) {
+      return mobileHandoff(buildMobileOAuthErrorUrl(message, nextPath), true);
+    }
     return NextResponse.redirect(loginErrorUrl(req, message, nextPath));
   }
 
@@ -110,18 +119,9 @@ async function finishOAuth(
     const finalNext = safeOAuthNext(nextPath);
     const ticket = await createMobileOAuthTicket(customer.id);
 
-    const clearState = {
-      ...oauthStateCookieOptions(0),
-      maxAge: 0,
-    };
-
     if (verified.mobile) {
-      // System browser → custom scheme → Capacitor WebView exchanges ticket
-      const res = NextResponse.redirect(
-        buildMobileOAuthAppUrl(ticket, finalNext),
-      );
-      res.cookies.set(OAUTH_STATE_COOKIE, "", clearState);
-      return res;
+      // HTML → custom scheme (أكثر موثوقية من 302 داخل in-app browser)
+      return mobileHandoff(buildMobileOAuthAppUrl(ticket, finalNext), true);
     }
 
     const bridgeParams = new URLSearchParams({
@@ -132,14 +132,19 @@ async function finishOAuth(
       `${origin}/auth/oauth/session-bridge?${bridgeParams.toString()}`,
     );
     res.cookies.set(CUSTOMER_COOKIE, sessionToken, customerCookieOptions());
-    res.cookies.set(OAUTH_STATE_COOKIE, "", clearState);
+    res.cookies.set(OAUTH_STATE_COOKIE, "", {
+      ...oauthStateCookieOptions(0),
+      maxAge: 0,
+    });
     return res;
   } catch (error) {
     console.error(`[oauth/${provider}/callback]`, error);
     const raw =
       error instanceof Error ? error.message : "تعذّر إكمال تسجيل الدخول.";
     const message = mapOAuthUserError(provider, raw);
-    if (verified.mobile) return mobileErrorRedirect(message, nextPath);
+    if (verified.mobile) {
+      return mobileHandoff(buildMobileOAuthErrorUrl(message, nextPath), true);
+    }
     return NextResponse.redirect(loginErrorUrl(req, message, nextPath));
   }
 }

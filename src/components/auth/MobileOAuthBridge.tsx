@@ -6,6 +6,8 @@ import {
   mobileOAuthCompleteUrl,
   parseMobileOAuthAppUrl,
   parseMobileOAuthErrorUrl,
+  VELORA_OAUTH_RETURN_EVENT,
+  isCapacitorWebView,
 } from "@/lib/oauth-mobile-bridge";
 
 /**
@@ -16,7 +18,15 @@ export function MobileOAuthBridge() {
   const handledRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    const native =
+      (() => {
+        try {
+          return Capacitor.isNativePlatform();
+        } catch {
+          return false;
+        }
+      })() || isCapacitorWebView();
+    if (!native) return;
 
     let removed = false;
     let listener: { remove: () => Promise<void> | void } | undefined;
@@ -30,12 +40,21 @@ export function MobileOAuthBridge() {
       }
     }
 
+    function notifyReturn() {
+      try {
+        window.dispatchEvent(new Event(VELORA_OAUTH_RETURN_EVENT));
+      } catch {
+        /* ignore */
+      }
+    }
+
     function handle(rawUrl: string) {
       if (!rawUrl || handledRef.current === rawUrl) return;
 
       const error = parseMobileOAuthErrorUrl(rawUrl);
       if (error) {
         handledRef.current = rawUrl;
+        notifyReturn();
         void closeBrowser();
         const params = new URLSearchParams({
           oauth_error: error.message,
@@ -49,7 +68,9 @@ export function MobileOAuthBridge() {
       if (!parsed) return;
 
       handledRef.current = rawUrl;
+      notifyReturn();
       void closeBrowser();
+      // Exchange ticket → session cookie inside the app WebView
       window.location.assign(
         mobileOAuthCompleteUrl(parsed.ticket, parsed.next),
       );
