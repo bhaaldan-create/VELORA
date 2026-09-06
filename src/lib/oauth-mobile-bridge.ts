@@ -119,10 +119,9 @@ p{margin:0.5rem 0;line-height:1.6}
 <script>
 (function(){
   var u=${jsUrl};
-  function go(){ try{ window.location.replace(u); }catch(e){ try{ window.location.href=u; }catch(_e){} } }
-  go();
-  setTimeout(go, 350);
-  setTimeout(go, 1200);
+  try { window.location.replace(u); } catch(e) {
+    try { window.location.href = u; } catch(_e) {}
+  }
 })();
 </script>
 </body>

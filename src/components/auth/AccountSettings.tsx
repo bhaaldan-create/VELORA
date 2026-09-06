@@ -172,7 +172,9 @@ export function AccountSettings() {
   }
 
   useEffect(() => {
-    if (!loading && !customer) {
+    // Wait until the first auth check finishes — avoid login↔account bounce
+    if (loading) return;
+    if (!customer) {
       router.replace("/login?next=/account");
     }
   }, [loading, customer, router]);

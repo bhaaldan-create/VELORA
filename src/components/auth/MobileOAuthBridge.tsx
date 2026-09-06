@@ -10,12 +10,30 @@ import {
   isCapacitorWebView,
 } from "@/lib/oauth-mobile-bridge";
 
+const HANDLED_KEY = "velora-oauth-deeplink-handled";
+
+function readHandled(): string | null {
+  try {
+    return sessionStorage.getItem(HANDLED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeHandled(id: string) {
+  try {
+    sessionStorage.setItem(HANDLED_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
- * يستقبل deep link بعد OAuth في متصفح النظام
- * وينقل الجلسة إلى WebView داخل التطبيق.
+ * يستقبل deep link بعد OAuth مرة واحدة فقط لكل تذكرة —
+ * لا يعيد معالجة getLaunchUrl بعد كل تحميل للصفحة (يمنع حلقة الوميض).
  */
 export function MobileOAuthBridge() {
-  const handledRef = useRef<string | null>(null);
+  const handledRef = useRef<string | null>(readHandled());
 
   useEffect(() => {
     const native =
@@ -48,30 +66,41 @@ export function MobileOAuthBridge() {
       }
     }
 
+    function claim(id: string): boolean {
+      if (!id) return false;
+      if (handledRef.current === id || readHandled() === id) return false;
+      handledRef.current = id;
+      writeHandled(id);
+      return true;
+    }
+
     function handle(rawUrl: string) {
-      if (!rawUrl || handledRef.current === rawUrl) return;
+      if (!rawUrl) return;
 
       const error = parseMobileOAuthErrorUrl(rawUrl);
       if (error) {
-        handledRef.current = rawUrl;
+        const id = `err:${rawUrl}`;
+        if (!claim(id)) return;
         notifyReturn();
         void closeBrowser();
         const params = new URLSearchParams({
           oauth_error: error.message,
           next: error.next,
         });
-        window.location.assign(`/login?${params.toString()}`);
+        window.location.replace(`/login?${params.toString()}`);
         return;
       }
 
       const parsed = parseMobileOAuthAppUrl(rawUrl);
       if (!parsed) return;
 
-      handledRef.current = rawUrl;
+      // Key by ticket — survives remounts; stops getLaunchUrl replay loop
+      const id = `ticket:${parsed.ticket}`;
+      if (!claim(id)) return;
+
       notifyReturn();
       void closeBrowser();
-      // Exchange ticket → session cookie inside the app WebView
-      window.location.assign(
+      window.location.replace(
         mobileOAuthCompleteUrl(parsed.ticket, parsed.next),
       );
     }
@@ -85,6 +114,7 @@ export function MobileOAuthBridge() {
           handle(url);
         });
 
+        // Cold start only — skip if this ticket was already consumed
         const launch = await App.getLaunchUrl();
         if (launch?.url) handle(launch.url);
       } catch {

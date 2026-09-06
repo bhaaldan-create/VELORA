@@ -67,6 +67,10 @@ export function CustomerLoginForm() {
 
   useEffect(() => {
     if (loading) return;
+    if (customer) {
+      router.replace(nextPath);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -81,15 +85,14 @@ export function CustomerLoginForm() {
           router.replace(nextPath);
           return;
         }
-        setCustomer(null);
       } catch {
-        if (!cancelled) setCustomer(null);
+        /* stay on login */
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [loading, nextPath, router, setCustomer]);
+  }, [loading, customer, nextPath, router, setCustomer]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
