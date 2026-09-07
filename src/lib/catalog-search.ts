@@ -321,7 +321,7 @@ export async function searchCatalog(
         sort: params.sort,
       };
     },
-    ["catalog-advanced-search-v3", cacheKey],
+    ["catalog-advanced-search-v4", cacheKey],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.products],

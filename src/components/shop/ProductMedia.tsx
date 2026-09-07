@@ -65,8 +65,8 @@ export function ProductMedia({
             src={src}
             alt={name}
             loading={priority ? "eager" : "lazy"}
-            decoding={priority ? "sync" : "async"}
-            fetchPriority={priority ? "high" : "auto"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "low"}
             onError={() => {
               setFailed(true);
               if (process.env.NODE_ENV === "development") {
@@ -86,6 +86,7 @@ export function ProductMedia({
             fill
             sizes={sizes}
             priority={priority}
+            quality={72}
             onError={() => {
               setFailed(true);
               if (process.env.NODE_ENV === "development") {

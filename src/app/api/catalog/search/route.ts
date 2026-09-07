@@ -2,8 +2,9 @@ import {
   parseCatalogSearchParams,
   searchCatalog,
 } from "@/lib/catalog-search";
+import { MEDIA_CACHE_CONTROL, MEDIA_CDN_CACHE_CONTROL } from "@/lib/media-cache";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 /**
  * Advanced catalog search.
@@ -37,18 +38,36 @@ export async function GET(req: Request) {
       url.searchParams.has("sort");
 
     if (!hasFilters) {
-      return Response.json({
-        ok: true,
-        products: [],
-        total: 0,
-        page: 1,
-        pageSize: params.pageSize,
-        sort: params.sort,
-      });
+      return Response.json(
+        {
+          ok: true,
+          products: [],
+          total: 0,
+          page: 1,
+          pageSize: params.pageSize,
+          sort: params.sort,
+        },
+        {
+          headers: {
+            "Cache-Control": MEDIA_CACHE_CONTROL,
+            "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+            "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+          },
+        },
+      );
     }
 
     const result = await searchCatalog(params);
-    return Response.json({ ok: true, ...result });
+    return Response.json(
+      { ok: true, ...result },
+      {
+        headers: {
+          "Cache-Control": MEDIA_CACHE_CONTROL,
+          "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+          "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+        },
+      },
+    );
   } catch (error) {
     console.error("[catalog/search]", error);
     return Response.json(

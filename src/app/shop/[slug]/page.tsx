@@ -6,8 +6,9 @@ import {
   getRelatedProducts,
   getRoutineCompanions,
 } from "@/lib/catalog";
-/** Dynamic: product pages with embedded images exceed Vercel ISR size limits. */
-export const dynamic = "force-dynamic";
+
+/** ISR — payloads use /api/media paths (no embedded image blobs). */
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

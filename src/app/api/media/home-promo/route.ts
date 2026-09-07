@@ -6,7 +6,7 @@ import {
   MEDIA_IMMUTABLE_CACHE_CONTROL,
 } from "@/lib/media-cache";
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 function parseDataUrl(url: string): { mime: string; buffer: Buffer } | null {
   const match = url.match(/^data:([^;,]+)?(?:;base64)?,([\s\S]+)$/);

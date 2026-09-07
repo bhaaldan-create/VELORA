@@ -16,7 +16,7 @@ export default async function ShopPage() {
   const categories = await getAllCategories();
   // Rails only need ~12 items/category — avoid shipping the full catalog into RSC.
   const perCategory = await Promise.all(
-    categories.map((cat) => getProductsByCategory(cat.slug, 16)),
+    categories.map((cat) => getProductsByCategory(cat.slug, 12)),
   );
   const products = perCategory.flat();
 

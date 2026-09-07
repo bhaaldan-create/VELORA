@@ -100,7 +100,7 @@ async function compressImage(
     const meta = await sharp(buffer, { failOn: "none" }).rotate().metadata();
     const width = meta.width || 0;
     const height = meta.height || 0;
-    const maxEdge = 2560;
+    const maxEdge = 1600;
     const needsResize = width > maxEdge || height > maxEdge;
 
     let pipeline = sharp(buffer, { failOn: "none" }).rotate();

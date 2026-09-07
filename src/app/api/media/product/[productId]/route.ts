@@ -4,10 +4,12 @@ import { prisma } from "@/lib/db";
 import {
   MEDIA_CACHE_CONTROL,
   MEDIA_IMMUTABLE_CACHE_CONTROL,
+  MEDIA_CDN_CACHE_CONTROL,
 } from "@/lib/media-cache";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+/** Allow CDN/edge caching of resized product images (was force-dynamic → every card hit serverless+DB). */
+export const revalidate = 604800;
 
 const MAX_RESIZE_WIDTH = 1600;
 
@@ -49,17 +51,24 @@ async function maybeResize(
   width: number | null,
 ): Promise<{ buffer: Buffer; mime: string }> {
   if (!width || width <= 0) return { buffer, mime };
+  if (mime.includes("svg") || mime.includes("gif")) return { buffer, mime };
   try {
     const sharpMod = await import("sharp");
     const sharp = sharpMod.default;
-    const out = await sharp(buffer)
+    const image = sharp(buffer, { failOn: "none" }).rotate();
+    const meta = await image.metadata();
+    if (meta.width && meta.width <= width && mime === "image/webp") {
+      const out = await image.toBuffer();
+      return { buffer: out, mime };
+    }
+    const out = await sharp(buffer, { failOn: "none" })
       .rotate()
       .resize({
         width,
         withoutEnlargement: true,
         fit: "inside",
       })
-      .webp({ quality: 78, effort: 4 })
+      .webp({ quality: 72, effort: 3 })
       .toBuffer();
     return { buffer: out, mime: "image/webp" };
   } catch (error) {
@@ -80,9 +89,45 @@ async function respondImage(
     headers: {
       "Content-Type": resized.mime,
       "Cache-Control": cacheControl,
+      "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+      "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
       Vary: "Accept",
     },
   });
+}
+
+async function serveHttp(
+  stored: string,
+  width: number | null,
+): Promise<Response> {
+  // Without a width hint, a short redirect is fine (PDP full / brand logos).
+  if (!width) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: stored,
+        "Cache-Control": MEDIA_CACHE_CONTROL,
+        "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+        "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+      },
+    });
+  }
+
+  try {
+    const remote = await fetch(stored, {
+      signal: AbortSignal.timeout(12_000),
+      next: { revalidate: 86400 },
+    });
+    if (!remote.ok) {
+      return new Response("Upstream image failed", { status: 502 });
+    }
+    const mime = remote.headers.get("content-type") || "image/jpeg";
+    const buffer = Buffer.from(await remote.arrayBuffer());
+    return respondImage(buffer, mime, width, MEDIA_CACHE_CONTROL);
+  } catch (error) {
+    console.warn("[media/product] remote fetch failed, redirecting", error);
+    return Response.redirect(stored, 302);
+  }
 }
 
 async function serveStored(
@@ -118,7 +163,7 @@ async function serveStored(
   }
 
   if (/^https?:\/\//i.test(stored)) {
-    return Response.redirect(stored, 302);
+    return serveHttp(stored, width);
   }
 
   return new Response("Not found", { status: 404 });
@@ -126,7 +171,9 @@ async function serveStored(
 
 /**
  * Product/brand media for the storefront.
- * `?w=` resizes when sharp is available; otherwise the original is served.
+ * `?w=` resizes when sharp is available (including remote Blob URLs).
+ * Source blobs are NOT put in Next data cache (data-URLs can be multi-MB);
+ * the resized response is cached at the CDN via Cache-Control headers.
  */
 export async function GET(
   req: Request,
@@ -152,8 +199,8 @@ export async function GET(
 
     const stored =
       kind === "brandLogo"
-        ? row?.brandLogoUrl?.trim()
-        : row?.imageUrl?.trim();
+        ? row?.brandLogoUrl?.trim() || null
+        : row?.imageUrl?.trim() || null;
 
     if (!stored) {
       return new Response("Not found", { status: 404 });

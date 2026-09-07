@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: "اكتشفِ منتجات وماركات VELORA — بحث وفلاتر ذكية.",
 };
 
-export const dynamic = "force-dynamic";
+/** Static shell — search runs client-side against cached catalog APIs. */
+export const revalidate = 3600;
 
 export default function SearchPage() {
   return (

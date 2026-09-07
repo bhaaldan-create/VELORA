@@ -5,8 +5,10 @@ import {
   mapProduct,
   mapProductAdvisor,
   mapProductCard,
+  mapProductDetail,
   productAdvisorSelect,
   productCardSelect,
+  productDetailSelect,
 } from "@/lib/catalog-mapper";
 import { getShopBrand, productMatchesBrand } from "@/data/shop-brands";
 import { isFragranceProduct } from "@/lib/product-brand";
@@ -59,7 +61,7 @@ export async function getAllProducts(): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-all-products-card-v5"],
+    ["catalog-all-products-card-v6"],
     catalogCache,
   )();
 }
@@ -85,12 +87,13 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     async () => {
       const row = await prisma.product.findFirst({
         where: { slug, isActive: true },
+        select: productDetailSelect,
       });
-      const product = row ? mapProduct(row) : null;
+      const product = row ? mapProductDetail(row) : null;
       if (product && isFragranceProduct(product)) return null;
       return product;
     },
-    ["catalog-product-slug-v4", slug],
+    ["catalog-product-slug-v5", slug],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.product(slug)],
@@ -103,12 +106,13 @@ export async function getProductById(id: string): Promise<Product | null> {
     async () => {
       const row = await prisma.product.findFirst({
         where: { id, isActive: true },
+        select: productDetailSelect,
       });
-      const product = row ? mapProduct(row) : null;
+      const product = row ? mapProductDetail(row) : null;
       if (product && isFragranceProduct(product)) return null;
       return product;
     },
-    ["catalog-product-id", id],
+    ["catalog-product-id-v5", id],
     catalogCache,
   )();
 }
@@ -131,7 +135,7 @@ export async function getProductsByCategory(
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
     [
-      "catalog-products-category-card-v5",
+      "catalog-products-category-card-v6",
       category ?? "all",
       String(limit ?? "all"),
     ],
@@ -153,7 +157,7 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-featured-card-v3", String(limit)],
+    ["catalog-featured-card-v6", String(limit)],
     catalogCache,
   )();
 }
@@ -179,7 +183,7 @@ export async function getNewArrivals(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-new-arrivals-card-v5", String(limit)],
+    ["catalog-new-arrivals-card-v6", String(limit)],
     catalogCache,
   )();
 }
@@ -205,7 +209,7 @@ export async function getBestsellers(limit = 12): Promise<Product[]> {
       });
       return withoutFragranceProducts(fallback.map(mapProductCard));
     },
-    ["catalog-bestsellers-card-v5", String(limit)],
+    ["catalog-bestsellers-card-v6", String(limit)],
     catalogCache,
   )();
 }
@@ -274,7 +278,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
       });
       return withoutFragranceProducts(rows.map(mapProductCard));
     },
-    ["catalog-search-card-v5", q.toLowerCase()],
+    ["catalog-search-card-v6", q.toLowerCase()],
     catalogCache,
   )();
 }

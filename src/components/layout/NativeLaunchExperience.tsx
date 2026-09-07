@@ -126,8 +126,8 @@ export function NativeLaunchExperience() {
       void hideNativeSplash(320);
     }, 30);
 
-    const minBeatMs = prefersReduced ? 200 : 5500;
-    const maxMs = prefersReduced ? 600 : 6000;
+    const minBeatMs = prefersReduced ? 200 : 1400;
+    const maxMs = prefersReduced ? 500 : 2000;
     const started = performance.now();
 
     const tryExit = () => {

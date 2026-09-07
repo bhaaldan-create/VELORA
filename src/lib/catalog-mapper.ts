@@ -42,7 +42,12 @@ export function storefrontProductImageUrl(
 
 /** بطاقات القوائم: دائماً عبر الوسيط مع عرض محدود — بدون جلب blob من DB */
 export function storefrontProductCardImageUrl(productId: string): string {
-  return `/api/media/product/${encodeURIComponent(productId)}?w=720`;
+  return `/api/media/product/${encodeURIComponent(productId)}?w=480`;
+}
+
+/** صورة صفحة المنتج — أعرض قليلاً للـ PDP دون تحميل الأصل الكامل */
+export function storefrontProductDetailImageUrl(productId: string): string {
+  return `/api/media/product/${encodeURIComponent(productId)}?w=1080`;
 }
 
 export function storefrontBrandLogoUrl(
@@ -119,6 +124,40 @@ export type ProductCardRow = Prisma.ProductGetPayload<{
   select: typeof productCardSelect;
 }>;
 
+/** حقول صفحة المنتج — بدون imageUrl/brandLogoUrl (قد تكون data-URL ضخمة) */
+export const productDetailSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  nameAr: true,
+  categorySlug: true,
+  price: true,
+  discountPercent: true,
+  currency: true,
+  description: true,
+  descriptionAr: true,
+  benefitsJson: true,
+  benefitsArJson: true,
+  ingredientsJson: true,
+  concernsJson: true,
+  size: true,
+  isBestseller: true,
+  isNew: true,
+  rating: true,
+  reviews: true,
+  imageTone: true,
+  brandName: true,
+  brandLogoUrl: true,
+  stock: true,
+  skinTypesJson: true,
+  productType: true,
+  featureTagsJson: true,
+} as const;
+
+export type ProductDetailRow = Prisma.ProductGetPayload<{
+  select: typeof productDetailSelect;
+}>;
+
 export function mapCategory(row: DbCategory): Category {
   return {
     slug: row.slug as CategorySlug,
@@ -162,7 +201,7 @@ export function mapProductAdvisor(row: ProductAdvisorRow): Product {
     rating: row.rating,
     reviews: row.reviews,
     imageTone: row.imageTone,
-    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
+    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl, undefined, 480),
     brandName: row.brandName || null,
     brandLogoUrl: null,
     stock: row.stock,
@@ -207,6 +246,44 @@ export function mapProductCard(row: ProductCardRow): Product {
   };
 }
 
+/** صفحة المنتج — وسائط عبر /api/media دون سحب blob من DB إلى RSC */
+export function mapProductDetail(row: ProductDetailRow): Product {
+  const discountPercent = row.discountPercent || 0;
+  const base = row.price;
+  const sale = salePriceFromBase(base, discountPercent);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    category: row.categorySlug as CategorySlug,
+    price: sale,
+    originalPrice: discountPercent > 0 ? base : undefined,
+    discountPercent: discountPercent > 0 ? discountPercent : undefined,
+    currency: (row.currency as Currency) || "IQD",
+    description: row.description,
+    descriptionAr: row.descriptionAr,
+    benefits: asStringArray(row.benefitsJson),
+    benefitsAr: asStringArray(row.benefitsArJson),
+    ingredients: asStringArray(row.ingredientsJson),
+    concerns: asStringArray<SkinConcern>(row.concernsJson),
+    skinTypes: asStringArray<SkinType>(row.skinTypesJson),
+    productType: row.productType || null,
+    featureTags: asStringArray(row.featureTagsJson),
+    size: row.size,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    rating: row.rating,
+    reviews: row.reviews,
+    imageTone: row.imageTone,
+    imageUrl: storefrontProductDetailImageUrl(row.id),
+    brandName: row.brandName || null,
+    brandLogoUrl: storefrontBrandLogoUrl(row.id, row.brandLogoUrl),
+    stock: row.stock,
+  };
+}
+
 export function mapProduct(row: DbProduct): Product {
   const discountPercent = row.discountPercent || 0;
   const base = row.price;
@@ -238,7 +315,7 @@ export function mapProduct(row: DbProduct): Product {
     rating: row.rating,
     reviews: row.reviews,
     imageTone: row.imageTone,
-    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl),
+    imageUrl: storefrontProductImageUrl(row.id, row.imageUrl, undefined, 1080),
     brandName: row.brandName || null,
     brandLogoUrl: storefrontBrandLogoUrl(row.id, brandLogo),
     stock: row.stock,
