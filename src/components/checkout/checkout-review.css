@@ -1,0 +1,313 @@
+/* Review step only — do not import from Success / Countdown / Processing */
+
+.checkout-review {
+  --cr-surface: var(--surface);
+  --cr-elevated: color-mix(in srgb, var(--surface) 86%, var(--mist));
+  --cr-border: color-mix(in srgb, var(--plum) 10%, transparent);
+  --cr-border-strong: color-mix(in srgb, var(--plum) 24%, transparent);
+  --cr-ink: var(--ink);
+  --cr-muted: var(--muted);
+  --cr-plum: var(--plum);
+  --cr-radius: 18px;
+  --cr-radius-lg: 22px;
+  --cr-shadow: 0 14px 40px -22px rgba(61, 38, 64, 0.16);
+  --cr-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--cr-ink);
+}
+
+[data-theme="dark"] .checkout-review {
+  --cr-surface: #1c181b;
+  --cr-elevated: #241f26;
+  --cr-border: rgba(243, 235, 230, 0.1);
+  --cr-border-strong: rgba(226, 210, 213, 0.22);
+  --cr-shadow: 0 18px 48px -18px rgba(0, 0, 0, 0.5);
+}
+
+.cr-head__title {
+  font-family: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
+  font-size: clamp(1.45rem, 3.5vw, 1.7rem);
+  font-weight: 550;
+  line-height: 1.25;
+  color: var(--cr-plum);
+}
+
+.cr-head__sub {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--cr-muted);
+}
+
+.cr-section {
+  border-radius: var(--cr-radius-lg);
+  border: 1px solid var(--cr-border);
+  background: var(--cr-surface);
+  box-shadow: var(--cr-shadow);
+  padding: 1.1rem 1.05rem;
+}
+
+@media (min-width: 640px) {
+  .cr-section {
+    padding: 1.3rem 1.25rem;
+  }
+}
+
+.cr-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--cr-border);
+}
+
+.cr-section__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.cr-section__icon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--cr-border);
+  background: var(--cr-elevated);
+  color: var(--cr-plum);
+}
+
+.cr-section__title {
+  font-size: 0.98rem;
+  font-weight: 550;
+  color: var(--cr-plum);
+}
+
+.cr-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--cr-border);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 520;
+  color: var(--cr-muted);
+  transition:
+    color 180ms var(--cr-ease),
+    border-color 180ms var(--cr-ease),
+    background 180ms var(--cr-ease);
+}
+
+.cr-edit:hover {
+  color: var(--cr-plum);
+  border-color: var(--cr-border-strong);
+  background: var(--cr-elevated);
+}
+
+.cr-section__body {
+  margin-top: 1rem;
+}
+
+/* Shipping / payment / delivery text */
+.cr-meta__name {
+  font-size: 1rem;
+  font-weight: 550;
+  color: var(--cr-ink);
+}
+
+.cr-meta__line {
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--cr-muted);
+}
+
+.cr-meta__address {
+  margin-top: 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--cr-ink) 88%, transparent);
+  overflow-wrap: anywhere;
+}
+
+/* Products — mobile-first, no squeezed third column */
+.cr-products {
+  display: grid;
+  gap: 0;
+}
+
+.cr-product {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--cr-border);
+}
+
+.cr-product:first-child {
+  padding-top: 0;
+}
+
+.cr-product:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.cr-product__media {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: 4.75rem;
+  height: 4.75rem;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--cr-border);
+  background: var(--cr-elevated);
+}
+
+@media (min-width: 640px) {
+  .cr-product__media {
+    width: 5.25rem;
+    height: 5.25rem;
+    border-radius: 18px;
+  }
+}
+
+.cr-product__media .cr-product__photo {
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.1);
+  transform-origin: center;
+}
+
+.cr-product__body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cr-product__brand {
+  font-family: var(--font-latin), system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 550;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cr-muted);
+}
+
+.cr-product__name {
+  font-size: 0.95rem;
+  font-weight: 550;
+  line-height: 1.4;
+  color: var(--cr-ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cr-product__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+
+.cr-product__meta {
+  font-size: 0.8rem;
+  color: var(--cr-muted);
+}
+
+.cr-product__price {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cr-plum);
+  white-space: nowrap;
+}
+
+/* Delivery row */
+.cr-ship {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.cr-ship__badge {
+  display: inline-flex;
+  height: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1b4f9c;
+  padding: 0 0.55rem;
+}
+
+/* Totals */
+.cr-totals {
+  border-radius: var(--cr-radius-lg);
+  border: 1px solid var(--cr-border);
+  background: var(--cr-surface);
+  box-shadow: var(--cr-shadow);
+  padding: 1.15rem 1.1rem;
+}
+
+.cr-totals__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cr-totals__row + .cr-totals__row {
+  margin-top: 0.7rem;
+}
+
+.cr-totals__label {
+  font-size: 0.88rem;
+  color: var(--cr-muted);
+}
+
+.cr-totals__value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  font-weight: 520;
+  color: var(--cr-ink);
+}
+
+.cr-totals__rule {
+  margin: 1rem 0;
+  height: 1px;
+  background: var(--cr-border);
+}
+
+.cr-totals__grand-label {
+  font-family: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 550;
+  color: var(--cr-plum);
+}
+
+.cr-totals__grand-value {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
+  font-weight: 650;
+  color: var(--cr-plum);
+}
+
+.cr-confirm-note {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--cr-muted);
+}

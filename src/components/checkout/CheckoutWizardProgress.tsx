@@ -12,8 +12,8 @@ const steps = [
 ];
 
 /**
- * Progress for DATA + PAYMENT only.
- * Review keeps the original CheckoutProgress — do not reuse this there.
+ * Progress for DATA + PAYMENT + REVIEW.
+ * Do not use on Success / Countdown / Processing.
  */
 export function CheckoutWizardProgress({
   active = "details",

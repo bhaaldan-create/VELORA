@@ -15,10 +15,7 @@ import {
   type PaymentMethodId,
 } from "@/data/payments";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
-import {
-  CheckoutProgress,
-  type CheckoutProgressStep,
-} from "@/components/checkout/CheckoutProgress";
+import { type CheckoutProgressStep } from "@/components/checkout/CheckoutProgress";
 import { CheckoutWizardProgress } from "@/components/checkout/CheckoutWizardProgress";
 import { CheckoutCountdown } from "@/components/checkout/CheckoutCountdown";
 import { CheckoutProcessing } from "@/components/checkout/CheckoutProcessing";
@@ -444,11 +441,7 @@ export function CheckoutForm({
           <h1 className="font-display mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-medium leading-tight text-[var(--plum)]">
             {header.title}
           </h1>
-          {step === "review" ? (
-            <CheckoutProgress active={step} />
-          ) : (
-            <CheckoutWizardProgress active={step} />
-          )}
+          <CheckoutWizardProgress active={step} />
         </header>
 
         <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_380px]">
