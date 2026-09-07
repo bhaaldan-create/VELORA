@@ -117,15 +117,24 @@ export function CheckoutFlowCta({
 }
 
 /** Sticky bar above bottom navigation on mobile */
-export function CheckoutStickyBar({ children }: { children: ReactNode }) {
+export function CheckoutStickyBar({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
-      className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--bg-glass-strong)] shadow-[0_-10px_40px_-16px_rgba(61,38,64,0.2)] backdrop-blur-md lg:hidden"
+      className={cn(
+        "fixed inset-x-0 z-40 border-t border-[var(--plum)]/10 bg-[var(--bg-glass-strong)] shadow-[0_-10px_40px_-16px_rgba(61,38,64,0.2)] backdrop-blur-md lg:hidden",
+        className,
+      )}
       style={{
         bottom: "calc(4.75rem + env(safe-area-inset-bottom))",
       }}
     >
-      <div className="mx-auto max-w-6xl px-4 py-3">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6">{children}</div>
     </div>
   );
 }

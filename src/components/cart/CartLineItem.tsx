@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ProductMedia } from "@/components/shop/ProductMedia";
+import { storefrontProductCardImageUrl } from "@/lib/catalog-mapper";
 import { getProductBrand } from "@/lib/product-brand";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import {
   IconPlus,
   IconTrash,
 } from "@/components/cart/CartIcons";
+import "./cart-bag.css";
 
 type Props = {
   item: CartItem;
@@ -19,6 +21,12 @@ type Props = {
   onRemove: (productId: string) => void;
   isLast?: boolean;
 };
+
+function resolveCartImageUrl(product: CartItem["product"]) {
+  const stored = product.imageUrl?.trim();
+  if (stored) return stored;
+  return storefrontProductCardImageUrl(product.id);
+}
 
 export function CartLineItem({
   item,
@@ -30,6 +38,10 @@ export function CartLineItem({
   const [removing, setRemoving] = useState(false);
   const brand = getProductBrand(product.name, product.nameAr);
   const lineTotal = product.price * quantity;
+  const imageUrl = resolveCartImageUrl(product);
+  const hasDiscount =
+    typeof product.originalPrice === "number" &&
+    product.originalPrice > product.price;
 
   function handleRemove() {
     setRemoving(true);
@@ -43,49 +55,47 @@ export function CartLineItem({
         removing ? "scale-[0.98] opacity-0" : "opacity-100",
       )}
     >
-      <article className="flex gap-4 py-5 sm:gap-5 sm:py-6">
-        <Link
-          href={`/shop/${product.slug}`}
-          className="group shrink-0 transition-transform duration-200 hover:scale-[1.01] sm:hover:-translate-y-0.5"
-        >
+      <article className="bag-line">
+        <Link href={`/shop/${product.slug}`} className="bag-line__media">
           <ProductMedia
             name={product.nameAr}
             imageTone={product.imageTone}
-            imageUrl={product.imageUrl}
-            aspectClassName="h-[7.5rem] w-[7.5rem] sm:h-[7.75rem] sm:w-[7.75rem]"
-            className="rounded-[18px] border border-[var(--plum)]/6"
-            fit="contain"
-            sizes="120px"
+            imageUrl={imageUrl}
+            aspectClassName="h-full w-full"
+            className="!h-full !w-full"
+            /* Cover + slight scale: bag thumbnail only — shop/PDP stay contain */
+            imageClassName="bag-line__photo"
+            fit="cover"
+            sizes="140px"
           />
         </Link>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="bag-line__body">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p
-                className="font-latin t1 font-medium tracking-[0.14em] text-[var(--muted)] uppercase"
-                dir="ltr"
-              >
+              <p className="bag-line__brand" dir="ltr">
                 {brand}
               </p>
-              <Link
-                href={`/shop/${product.slug}`}
-                className="font-display mt-1 block text-[1.05rem] font-medium leading-snug text-[var(--ink)] transition-colors hover:text-[var(--plum)]"
-              >
+              <Link href={`/shop/${product.slug}`} className="bag-line__name">
                 {product.nameAr}
               </Link>
               {product.size ? (
-                <p className="t3 mt-1.5 text-[var(--muted)]">{product.size}</p>
+                <p className="bag-line__size">{product.size}</p>
               ) : null}
             </div>
-            <p className="font-price t4 shrink-0 font-medium text-[var(--plum)]">
+            <p className="bag-line__price font-price">
               {formatPrice(lineTotal)}
+              {hasDiscount ? (
+                <span className="bag-line__price-was font-price">
+                  {formatPrice((product.originalPrice as number) * quantity)}
+                </span>
+              ) : null}
             </p>
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-3 pt-4">
             <div
-              className="inline-flex h-11 items-center rounded-[12px] border border-[var(--plum)]/12 bg-[var(--surface)]"
+              className="bag-qty"
               role="group"
               aria-label={`الكمية — ${product.nameAr}`}
             >
@@ -93,21 +103,16 @@ export function CartLineItem({
                 type="button"
                 disabled={quantity <= 1}
                 onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                className="flex h-full w-10 items-center justify-center text-[var(--plum)] transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label="تقليل الكمية"
               >
                 <IconMinus />
               </button>
-              <span
-                className="t3 min-w-[2rem] text-center font-medium text-[var(--ink)]"
-                aria-live="polite"
-              >
+              <span className="bag-qty__value" aria-live="polite">
                 {quantity}
               </span>
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                className="flex h-full w-10 items-center justify-center text-[var(--plum)] transition-all active:scale-90"
                 aria-label="زيادة الكمية"
               >
                 <IconPlus />
@@ -117,18 +122,15 @@ export function CartLineItem({
             <button
               type="button"
               onClick={handleRemove}
-              className="group inline-flex items-center gap-1.5 t2 text-[var(--muted)] transition-colors hover:text-[var(--plum)]"
+              className="bag-remove"
               aria-label={`حذف ${product.nameAr}`}
             >
-              <IconTrash className="transition-opacity group-hover:opacity-80" />
-              <span>حذف</span>
+              <IconTrash />
             </button>
           </div>
         </div>
       </article>
-      {!isLast ? (
-        <div className="h-px bg-[var(--plum)]/8" aria-hidden />
-      ) : null}
+      {!isLast ? <div className="bag-divider" aria-hidden /> : null}
     </li>
   );
 }

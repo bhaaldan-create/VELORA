@@ -19,6 +19,7 @@ import {
   CheckoutProgress,
   type CheckoutProgressStep,
 } from "@/components/checkout/CheckoutProgress";
+import { CheckoutWizardProgress } from "@/components/checkout/CheckoutWizardProgress";
 import { CheckoutCountdown } from "@/components/checkout/CheckoutCountdown";
 import { CheckoutProcessing } from "@/components/checkout/CheckoutProcessing";
 import {
@@ -37,6 +38,7 @@ import {
   CheckoutNotesField,
   ShippingEditForm,
 } from "@/components/checkout/ShippingEditForm";
+import "@/components/checkout/checkout-wizard.css";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
@@ -428,7 +430,10 @@ export function CheckoutForm({
   return (
     <div
       className={cn(
-        "bg-[var(--ivory)] pb-[calc(10.5rem+env(safe-area-inset-bottom))] lg:pb-16",
+        "pb-[calc(10.5rem+env(safe-area-inset-bottom))] lg:pb-16",
+        step === "review"
+          ? "bg-[var(--ivory)]"
+          : "checkout-wizard bg-[var(--ivory)]",
       )}
     >
       <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
@@ -439,7 +444,11 @@ export function CheckoutForm({
           <h1 className="font-display mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-medium leading-tight text-[var(--plum)]">
             {header.title}
           </h1>
-          <CheckoutProgress active={step} />
+          {step === "review" ? (
+            <CheckoutProgress active={step} />
+          ) : (
+            <CheckoutWizardProgress active={step} />
+          )}
         </header>
 
         <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -451,8 +460,8 @@ export function CheckoutForm({
             noValidate={false}
           >
             {!customer ? (
-              <div className="rounded-[16px] border border-[var(--plum)]/8 bg-[var(--surface)]/80 px-4 py-3.5">
-                <p className="t3 text-[var(--ink)]/80">
+              <div className="checkout-wizard rounded-[18px] border border-[var(--plum)]/10 bg-[var(--surface)] px-4 py-3.5 shadow-[0_8px_28px_-18px_rgba(61,38,64,0.14)]">
+                <p className="text-[0.9rem] leading-relaxed text-[var(--ink)]/80">
                   لديكِ حساب؟{" "}
                   <Link
                     href="/login?next=/checkout"
@@ -473,7 +482,7 @@ export function CheckoutForm({
             ) : null}
 
             {step === "details" ? (
-              <>
+              <div className="checkout-wizard space-y-5">
                 {usingAccount && !editingShipping ? (
                   <ShippingAddressCard
                     fullName={fullName}
@@ -485,21 +494,16 @@ export function CheckoutForm({
                 ) : null}
 
                 {showShippingForm ? (
-                  <div
-                    className={cn(
-                      usingAccount &&
-                        "rounded-[20px] border border-[var(--plum)]/8 bg-[var(--surface)] p-5 sm:p-6",
-                    )}
-                  >
+                  <div className="cw-panel">
                     {usingAccount ? (
-                      <div className="mb-5 flex items-center justify-between gap-3 border-b border-[var(--plum)]/8 pb-4">
-                        <p className="t3 text-[var(--muted)]">
+                      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--plum)]/8 pb-4">
+                        <p className="text-[0.88rem] text-[var(--muted)]">
                           عدّلي بيانات التوصيل لهذا الطلب
                         </p>
                         <button
                           type="button"
                           onClick={restoreFromAccount}
-                          className="t2 shrink-0 font-medium text-[var(--plum)] underline-offset-4 hover:underline"
+                          className="cw-restore"
                         >
                           استعادة من الحساب
                         </button>
@@ -532,7 +536,7 @@ export function CheckoutForm({
                   disabled={false}
                   onChange={setNotes}
                 />
-              </>
+              </div>
             ) : null}
 
             {step === "payment" ? (
@@ -596,7 +600,11 @@ export function CheckoutForm({
         </div>
       </div>
 
-      <CheckoutStickyBar>{mobileFlowCta}</CheckoutStickyBar>
+      <CheckoutStickyBar
+        className={step !== "review" ? "cw-sticky" : undefined}
+      >
+        {mobileFlowCta}
+      </CheckoutStickyBar>
     </div>
   );
 }

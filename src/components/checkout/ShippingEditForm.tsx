@@ -1,11 +1,63 @@
+"use client";
+
+import type { ReactNode } from "react";
+import {
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  UserRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IconPenLine } from "@/components/checkout/CheckoutIcons";
+import "./checkout-wizard.css";
 
-const fieldClass =
-  "t3 w-full rounded-[14px] border border-[var(--plum)]/10 bg-[var(--ivory)]/60 px-4 py-3 text-[var(--ink)] outline-none transition-colors duration-200 placeholder:text-[var(--muted)]/70 focus:border-[var(--plum)]/35 focus:bg-[var(--surface)] disabled:opacity-60";
+type FieldProps = {
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+  className?: string;
+  span?: boolean;
+  textarea?: boolean;
+  address?: boolean;
+};
 
-const labelClass =
-  "t2 mb-2 block font-medium tracking-[0.04em] text-[var(--muted)]";
+function FieldShell({
+  label,
+  icon,
+  children,
+  className,
+  span,
+  textarea,
+  address,
+}: FieldProps) {
+  return (
+    <label
+      className={cn(
+        "cw-field",
+        textarea && "cw-field--textarea",
+        address && "cw-field--address",
+        span && "cw-field--span",
+        className,
+      )}
+    >
+      <span className="cw-field__shell">
+        <span className="cw-field__icon" aria-hidden>
+          {icon}
+        </span>
+        <span className="cw-field__body">
+          <span className="cw-field__label">{label}</span>
+          {children}
+        </span>
+      </span>
+    </label>
+  );
+}
+
+const iconProps = {
+  size: 18,
+  strokeWidth: 1.5,
+  "aria-hidden": true as const,
+};
 
 type Props = {
   fullName: string;
@@ -35,77 +87,85 @@ export function ShippingEditForm({
   showHeading = true,
 }: Props) {
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("checkout-wizard", className)}>
       {showHeading ? (
-        <div className="mb-1">
-          <h2 className="font-display text-[1.25rem] font-medium text-[var(--plum)]">
-            بيانات الشحن
-          </h2>
-          <p className="t3 mt-1 text-[var(--muted)]">
-            معلومات التوصيل الخاصة بطلبك
-          </p>
+        <div className="cw-panel__head">
+          <h2 className="cw-panel__title">بيانات الشحن</h2>
+          <p className="cw-panel__sub">معلومات التوصيل الخاصة بطلبك</p>
         </div>
       ) : null}
 
-      <label className="block">
-        <span className={labelClass}>الاسم الكامل</span>
-        <input
-          name="fullName"
-          required
-          disabled={disabled}
-          value={fullName}
-          onChange={(e) => onFullNameChange(e.target.value)}
-          className={fieldClass}
-          autoComplete="name"
-        />
-      </label>
+      <div className="cw-stack cw-stack--split">
+        <FieldShell
+          label="الاسم الكامل"
+          icon={<UserRound {...iconProps} />}
+        >
+          <input
+            name="fullName"
+            required
+            disabled={disabled}
+            value={fullName}
+            onChange={(e) => onFullNameChange(e.target.value)}
+            className="cw-field__control"
+            autoComplete="name"
+            placeholder="الاسم كما سيظهر على الطلب"
+          />
+        </FieldShell>
 
-      <label className="block">
-        <span className={labelClass}>البريد الإلكتروني</span>
-        <input
-          name="email"
-          type="email"
-          required
-          disabled={disabled}
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          dir="ltr"
-          className={cn(fieldClass, "text-start")}
-          autoComplete="email"
-        />
-      </label>
+        <FieldShell label="البريد الإلكتروني" icon={<Mail {...iconProps} />}>
+          <input
+            name="email"
+            type="email"
+            required
+            disabled={disabled}
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            dir="ltr"
+            className="cw-field__control text-start"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="name@example.com"
+          />
+        </FieldShell>
 
-      <label className="block">
-        <span className={labelClass}>رقم الهاتف</span>
-        <input
-          name="phone"
-          required
-          disabled={disabled}
-          value={phone}
-          onChange={(e) => onPhoneChange(e.target.value)}
-          placeholder="07XXXXXXXXX"
-          pattern="07[0-9]{9}"
-          title="رقم جوال عراقي: 07XXXXXXXXX"
-          dir="ltr"
-          className={cn(fieldClass, "text-start")}
-          autoComplete="tel"
-        />
-      </label>
+        <FieldShell label="رقم الهاتف" icon={<Phone {...iconProps} />}>
+          <input
+            name="phone"
+            type="tel"
+            required
+            disabled={disabled}
+            value={phone}
+            onChange={(e) => onPhoneChange(e.target.value)}
+            placeholder="07XXXXXXXXX"
+            pattern="07[0-9]{9}"
+            title="رقم جوال عراقي: 07XXXXXXXXX"
+            dir="ltr"
+            className="cw-field__control text-start"
+            autoComplete="tel"
+            inputMode="tel"
+          />
+        </FieldShell>
 
-      <label className="block">
-        <span className={labelClass}>العنوان</span>
-        <textarea
-          name="address"
-          required
-          rows={3}
-          disabled={disabled}
-          value={address}
-          onChange={(e) => onAddressChange(e.target.value)}
-          placeholder="المحافظة، المنطقة، أقرب نقطة دالة…"
-          className={cn(fieldClass, "resize-none leading-relaxed")}
-          autoComplete="street-address"
-        />
-      </label>
+        <FieldShell
+          label="العنوان"
+          icon={<MapPin {...iconProps} />}
+          span
+          textarea
+          address
+        >
+          <textarea
+            name="address"
+            required
+            rows={4}
+            disabled={disabled}
+            value={address}
+            onChange={(e) => onAddressChange(e.target.value)}
+            placeholder="المحافظة، المنطقة، أقرب نقطة دالة…"
+            className="cw-field__control"
+            autoComplete="street-address"
+          />
+        </FieldShell>
+      </div>
     </div>
   );
 }
@@ -118,23 +178,24 @@ type NotesProps = {
 
 export function CheckoutNotesField({ value, disabled, onChange }: NotesProps) {
   return (
-    <label className="block">
-      <span className="flex items-center gap-2 t2 font-medium tracking-[0.04em] text-[var(--muted)]">
-        <IconPenLine className="text-[var(--plum)]/70" />
-        ملاحظات (اختياري)
-      </span>
-      <textarea
-        name="notes"
-        rows={3}
-        disabled={disabled}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="مثلاً: وقت التوصيل المفضل، تفاصيل الموقع، أو أي ملاحظات أخرى…"
-        className={cn(
-          fieldClass,
-          "mt-2.5 resize-none leading-relaxed",
-        )}
-      />
-    </label>
+    <div className="checkout-wizard">
+      <div className="cw-notes">
+        <FieldShell
+          label="ملاحظات (اختياري)"
+          icon={<MessageSquare {...iconProps} />}
+          textarea
+        >
+          <textarea
+            name="notes"
+            rows={3}
+            disabled={disabled}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="وقت التوصيل المفضل، تفاصيل الموقع، أو أي ملاحظات أخرى…"
+            className="cw-field__control"
+          />
+        </FieldShell>
+      </div>
+    </div>
   );
 }

@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod, PaymentMethodId } from "@/data/payments";
-import { IconCheck, IconPackageCheck } from "@/components/checkout/CheckoutIcons";
+import { IconCheck } from "@/components/checkout/CheckoutIcons";
+import { IconSoftParcel } from "@/components/cart/CartIcons";
+import "./checkout-wizard.css";
 
 type Props = {
   methods: PaymentMethod[];
@@ -19,24 +21,18 @@ export function PremiumPaymentPicker({
   disabled,
 }: Props) {
   return (
-    <section className="space-y-5" aria-labelledby="checkout-payment-heading">
-      <div>
-        <h2
-          id="checkout-payment-heading"
-          className="font-display text-[1.35rem] font-medium text-[var(--plum)] sm:text-[1.5rem]"
-        >
+    <section
+      className="checkout-wizard space-y-5"
+      aria-labelledby="checkout-payment-heading"
+    >
+      <div className="cw-panel__head mb-0">
+        <h2 id="checkout-payment-heading" className="cw-panel__title">
           طريقة الدفع
         </h2>
-        <p className="t3 mt-1.5 text-[var(--muted)]">
-          اختاري الطريقة المناسبة لإتمام طلبك
-        </p>
+        <p className="cw-panel__sub">اختاري الطريقة المناسبة لإتمام طلبك</p>
       </div>
 
-      <div
-        className="space-y-3"
-        role="radiogroup"
-        aria-label="طريقة الدفع"
-      >
+      <div className="space-y-3" role="radiogroup" aria-label="طريقة الدفع">
         {methods.map((method) => (
           <PaymentOptionCard
             key={method.id}
@@ -68,13 +64,9 @@ function PaymentOptionCard({
   return (
     <label
       htmlFor={inputId}
-      className={cn(
-        "group relative block cursor-pointer rounded-[18px] border bg-[var(--surface)] p-4 transition-all duration-200 sm:p-5",
-        selected
-          ? "border-[var(--plum)] bg-[var(--plum)]/[0.03] shadow-[0_8px_28px_-12px_rgba(61,38,64,0.22)]"
-          : "border-[var(--plum)]/10 shadow-[0_2px_12px_-8px_rgba(61,38,64,0.12)] hover:border-[var(--plum)]/20",
-        disabled && "pointer-events-none opacity-60",
-      )}
+      className="cw-pay-card"
+      data-selected={selected ? "true" : "false"}
+      aria-disabled={disabled || undefined}
     >
       <input
         id={inputId}
@@ -90,14 +82,12 @@ function PaymentOptionCard({
       <div className="flex items-start gap-4">
         <div
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border transition-all duration-200",
-            isWayl
-              ? selected
-                ? "border-[#0F766E]/25 bg-[#0F766E]/[0.06]"
-                : "border-[var(--plum)]/8 bg-[var(--mist)]/50"
-              : selected
-                ? "border-[var(--plum)]/20 bg-[var(--plum)]/[0.05]"
-                : "border-[var(--plum)]/8 bg-[var(--mist)]/50",
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
+            selected
+              ? isWayl
+                ? "border-[#0F766E]/25 bg-[#0F766E]/[0.07]"
+                : "border-[var(--plum)]/20 bg-[var(--plum)]/[0.06]"
+              : "border-[var(--plum)]/8 bg-[var(--mist)]/45",
           )}
         >
           {isWayl ? (
@@ -112,7 +102,7 @@ function PaymentOptionCard({
               )}
             />
           ) : (
-            <IconPackageCheck
+            <IconSoftParcel
               className={cn(
                 "text-[var(--plum)] transition-colors duration-200",
                 selected ? "opacity-100" : "opacity-70",
@@ -124,26 +114,18 @@ function PaymentOptionCard({
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="t4 font-medium text-[var(--ink)]">
+              <p className="text-[1rem] font-medium leading-snug text-[var(--ink)]">
                 {method.nameAr}
               </p>
               <p
-                className="t2 mt-0.5 tracking-[0.04em] text-[var(--muted)]"
+                className="mt-0.5 text-[0.72rem] tracking-[0.05em] text-[var(--muted)]"
                 dir="ltr"
               >
                 {method.name}
               </p>
             </div>
 
-            <span
-              className={cn(
-                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
-                selected
-                  ? "scale-100 border-[var(--plum)] bg-[var(--plum)] text-[var(--ivory)] opacity-100"
-                  : "scale-100 border-[var(--plum)]/25 bg-transparent opacity-80 group-hover:border-[var(--plum)]/40",
-              )}
-              aria-hidden
-            >
+            <span className="cw-pay-mark mt-0.5 shrink-0" aria-hidden>
               <IconCheck
                 className={cn(
                   "transition-all duration-200",
@@ -153,12 +135,12 @@ function PaymentOptionCard({
             </span>
           </div>
 
-          <p className="t3 leading-relaxed text-[var(--muted)]">
+          <p className="text-[0.88rem] leading-relaxed text-[var(--muted)]">
             {method.descriptionAr}
           </p>
 
           {selected ? (
-            <p className="t2 pt-1 font-medium tracking-[0.06em] text-[var(--plum)]/80">
+            <p className="pt-1 text-[0.72rem] font-medium tracking-[0.06em] text-[var(--plum)]/80">
               طريقة الدفع المختارة
             </p>
           ) : null}

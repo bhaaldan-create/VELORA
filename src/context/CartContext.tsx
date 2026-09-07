@@ -8,7 +8,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { storefrontProductCardImageUrl } from "@/lib/catalog-mapper";
 import type { CartItem, Product } from "@/types";
+
+function withCartImage(product: Product): Product {
+  const imageUrl =
+    product.imageUrl?.trim() || storefrontProductCardImageUrl(product.id);
+  return imageUrl === product.imageUrl ? product : { ...product, imageUrl };
+}
 
 interface CartContextValue {
   items: CartItem[];
@@ -30,7 +37,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw) as CartItem[]);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CartItem[];
+        const loaded = parsed.map((item) => ({
+          ...item,
+          product: withCartImage(item.product),
+        }));
+        // Merge if the shopper added items before hydration finished
+        setItems((current) => {
+          if (current.length === 0) return loaded;
+          const byId = new Map(
+            loaded.map((item) => [item.product.id, item] as const),
+          );
+          for (const item of current) {
+            const existing = byId.get(item.product.id);
+            if (existing) {
+              byId.set(item.product.id, {
+                product: withCartImage({
+                  ...existing.product,
+                  ...item.product,
+                  imageUrl:
+                    item.product.imageUrl || existing.product.imageUrl,
+                }),
+                quantity: existing.quantity + item.quantity,
+              });
+            } else {
+              byId.set(item.product.id, {
+                ...item,
+                product: withCartImage(item.product),
+              });
+            }
+          }
+          return Array.from(byId.values());
+        });
+      }
     } catch {
       /* ignore */
     }
@@ -44,16 +84,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const addItem = (product: Product, quantity = 1) => {
+      const snapshot = withCartImage(product);
       setItems((prev) => {
-        const existing = prev.find((i) => i.product.id === product.id);
+        const existing = prev.find((i) => i.product.id === snapshot.id);
         if (existing) {
           return prev.map((i) =>
-            i.product.id === product.id
-              ? { ...i, quantity: i.quantity + quantity }
+            i.product.id === snapshot.id
+              ? {
+                  ...i,
+                  product: withCartImage({
+                    ...snapshot,
+                    ...i.product,
+                    imageUrl: i.product.imageUrl || snapshot.imageUrl,
+                  }),
+                  quantity: i.quantity + quantity,
+                }
               : i,
           );
         }
-        return [...prev, { product, quantity }];
+        return [...prev, { product: snapshot, quantity }];
       });
     };
 

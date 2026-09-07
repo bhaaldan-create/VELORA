@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { WASEET_CARRIER } from "@/lib/shipping";
 import { IconArrowStart, IconTruck } from "@/components/cart/CartIcons";
+import { IconCheck } from "@/components/checkout/CheckoutIcons";
+import "./cart-bag.css";
 
 type Props = {
   subtotal: number;
@@ -24,84 +26,61 @@ export function CartOrderSummary({
 }: Props) {
   return (
     <aside
-      className={cn(
-        "rounded-[20px] border border-[var(--plum)]/8 bg-[var(--surface)] p-5 shadow-[0_4px_24px_-12px_rgba(61,38,64,0.1)] sm:p-6",
-        className,
-      )}
+      className={cn("bag-summary", className)}
       aria-label="ملخص الحقيبة"
     >
-      {!compact ? (
-        <h2 className="font-display text-[1.2rem] font-medium text-[var(--plum)]">
-          ملخص الطلب
-        </h2>
-      ) : null}
+      {!compact ? <h2 className="bag-summary__title">ملخص الطلب</h2> : null}
 
-      <dl className={cn("space-y-3.5", !compact && "mt-5")}>
-        <SummaryRow label="المجموع الفرعي" value={formatPrice(subtotal)} />
-        <SummaryRow label="أجور التوصيل" value={formatPrice(deliveryFee)} />
+      <dl className={cn("bag-summary__rows", compact && "!mt-0")}>
+        <div className="bag-summary__row">
+          <dt>المجموع الفرعي</dt>
+          <dd className="font-price">{formatPrice(subtotal)}</dd>
+        </div>
+        <div className="bag-summary__row">
+          <dt>أجور التوصيل</dt>
+          <dd className="font-price">{formatPrice(deliveryFee)}</dd>
+        </div>
       </dl>
 
-      <div
-        className="my-5 flex items-center justify-between gap-3 rounded-[14px] border border-[var(--plum)]/6 bg-[var(--ivory)]/70 px-3.5 py-3"
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--mist)] text-[var(--plum)]/70">
+      <div className="bag-carrier" role="group" aria-label="طريقة التوصيل">
+        <div className="bag-carrier__meta">
+          <span className="bag-carrier__icon">
             <IconTruck />
           </span>
           <div className="min-w-0">
-            <p className="t2 text-[var(--muted)]">التوصيل</p>
-            <p className="t3 mt-0.5 font-medium text-[var(--ink)]/85">
-              {WASEET_CARRIER.nameAr}
-            </p>
+            <p className="bag-carrier__name">{WASEET_CARRIER.nameAr}</p>
+            <p className="bag-carrier__eta">2 – 4 أيام عمل</p>
           </div>
         </div>
-        <span className="inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-[#1B4F9C] px-1.5">
-          <Image
-            src={WASEET_CARRIER.logoBadge}
-            alt={WASEET_CARRIER.nameEn}
-            width={72}
-            height={20}
-            className="h-[16px] w-auto object-contain"
-          />
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1B4F9C] px-2">
+            <Image
+              src={WASEET_CARRIER.logoBadge}
+              alt={WASEET_CARRIER.nameEn}
+              width={72}
+              height={20}
+              className="h-[16px] w-auto object-contain"
+            />
+          </span>
+          <span className="bag-carrier__mark" aria-hidden>
+            <IconCheck className="h-3 w-3" />
+          </span>
+        </div>
       </div>
 
-      <div
-        className="h-px bg-[var(--plum)]/10"
-        role="separator"
-        aria-hidden
-      />
-
-      <div className="mt-5 flex items-baseline justify-between gap-4">
-        <span className="font-display text-[1.05rem] font-medium text-[var(--plum)]">
-          الإجمالي
-        </span>
-        <span className="font-price text-[1.4rem] font-semibold text-[var(--plum)]">
+      <div className="bag-summary__total">
+        <span className="bag-summary__total-label">الإجمالي</span>
+        <span className="bag-summary__total-value font-price">
           {formatPrice(total)}
         </span>
       </div>
 
       {showCta ? (
-        <Link
-          href="/checkout"
-          className={cn(
-            "t3 mt-6 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--plum)] px-6 py-3.5 font-medium text-[var(--ivory)] shadow-[0_6px_20px_-8px_rgba(61,38,64,0.45)] transition-all duration-200",
-            "hover:bg-[var(--plum-soft)] active:scale-[0.99]",
-          )}
-        >
+        <Link href="/checkout" className="bag-cta">
           <span>إتمام الطلب</span>
           <IconArrowStart />
         </Link>
       ) : null}
     </aside>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="t3 text-[var(--muted)]">{label}</dt>
-      <dd className="font-price t3 font-medium text-[var(--ink)]/90">{value}</dd>
-    </div>
   );
 }

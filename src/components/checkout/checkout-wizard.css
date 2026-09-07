@@ -1,0 +1,383 @@
+/* Checkout wizard — DATA + PAYMENT only (scoped). Do not apply to Review. */
+
+.checkout-wizard {
+  --cw-surface: var(--surface);
+  --cw-elevated: color-mix(in srgb, var(--surface) 88%, var(--mist));
+  --cw-border: color-mix(in srgb, var(--plum) 10%, transparent);
+  --cw-border-strong: color-mix(in srgb, var(--plum) 28%, transparent);
+  --cw-focus-ring: 0 0 0 3px color-mix(in srgb, var(--plum) 12%, transparent);
+  --cw-radius: 18px;
+  --cw-radius-lg: 22px;
+  --cw-input-fs: 1rem; /* 16px — prevents iOS Safari auto-zoom */
+  --cw-label: var(--muted);
+  --cw-ink: var(--ink);
+  --cw-icon: color-mix(in srgb, var(--plum) 70%, var(--muted));
+  --cw-shadow: 0 10px 32px -18px rgba(61, 38, 64, 0.16);
+  --cw-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  background-image:
+    radial-gradient(720px 360px at 10% -6%, rgba(186, 164, 198, 0.12), transparent 58%),
+    radial-gradient(520px 260px at 94% 0%, rgba(212, 181, 184, 0.08), transparent 55%);
+  background-repeat: no-repeat;
+}
+
+[data-theme="dark"] .checkout-wizard {
+  --cw-elevated: color-mix(in srgb, var(--bg-elevated) 70%, var(--mist));
+  --cw-border: rgba(243, 235, 230, 0.1);
+  --cw-border-strong: rgba(226, 210, 213, 0.28);
+  --cw-focus-ring: 0 0 0 3px rgba(226, 210, 213, 0.16);
+  --cw-shadow: 0 14px 36px -16px rgba(0, 0, 0, 0.5);
+  --cw-icon: color-mix(in srgb, var(--plum) 80%, var(--muted));
+  background-image:
+    radial-gradient(720px 360px at 10% -6%, rgba(120, 90, 130, 0.16), transparent 58%),
+    radial-gradient(520px 260px at 94% 0%, rgba(90, 60, 80, 0.12), transparent 55%);
+}
+
+/* Premium input card */
+.cw-field {
+  display: block;
+  position: relative;
+}
+
+.cw-field__shell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: var(--cw-radius);
+  border: 1px solid var(--cw-border);
+  background: var(--cw-elevated);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--cw-shadow);
+  transition:
+    border-color 200ms var(--cw-ease),
+    box-shadow 200ms var(--cw-ease),
+    background 200ms var(--cw-ease);
+}
+
+.cw-field__shell:focus-within {
+  border-color: var(--cw-border-strong);
+  background: var(--cw-surface);
+  box-shadow: var(--cw-focus-ring), var(--cw-shadow);
+}
+
+.cw-field__icon {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--cw-icon);
+  opacity: 0.85;
+  transition:
+    color 200ms var(--cw-ease),
+    opacity 200ms var(--cw-ease),
+    transform 200ms var(--cw-ease);
+}
+
+.cw-field__shell:focus-within .cw-field__icon {
+  color: var(--plum);
+  opacity: 1;
+  transform: translateY(-0.5px);
+}
+
+.cw-field__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.cw-field__label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 520;
+  letter-spacing: 0.06em;
+  color: var(--cw-label);
+  transition: color 200ms var(--cw-ease);
+}
+
+.cw-field__shell:focus-within .cw-field__label {
+  color: var(--plum);
+}
+
+.cw-field__control {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: var(--cw-input-fs);
+  line-height: 1.45;
+  color: var(--cw-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+.cw-field__control::placeholder {
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+}
+
+.cw-field__control:disabled {
+  opacity: 0.6;
+}
+
+.cw-field--textarea .cw-field__shell {
+  align-items: flex-start;
+}
+
+.cw-field--textarea .cw-field__control {
+  min-height: 5.5rem;
+  resize: none;
+  line-height: 1.65;
+}
+
+.cw-field--address .cw-field__control {
+  min-height: 6.25rem;
+}
+
+/* Section chrome */
+.cw-panel {
+  border-radius: var(--cw-radius-lg);
+  border: 1px solid var(--cw-border);
+  background: var(--cw-surface);
+  box-shadow: var(--cw-shadow);
+  padding: 1.25rem 1.15rem;
+}
+
+@media (min-width: 640px) {
+  .cw-panel {
+    padding: 1.5rem 1.4rem;
+  }
+}
+
+.cw-panel__head {
+  margin-bottom: 1.15rem;
+}
+
+.cw-panel__title {
+  font-family: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
+  font-size: clamp(1.2rem, 3.5vw, 1.4rem);
+  font-weight: 550;
+  color: var(--plum);
+  letter-spacing: -0.01em;
+}
+
+.cw-panel__sub {
+  margin-top: 0.35rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.cw-restore {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--cw-border);
+  background: color-mix(in srgb, var(--mist) 55%, var(--surface));
+  padding: 0.4rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 520;
+  color: var(--plum);
+  transition:
+    background 180ms var(--cw-ease),
+    border-color 180ms var(--cw-ease);
+}
+
+.cw-restore:hover {
+  background: color-mix(in srgb, var(--mist) 75%, var(--surface));
+  border-color: var(--cw-border-strong);
+}
+
+.cw-stack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .cw-stack--split {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cw-stack--split .cw-field--span {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Notes card */
+.cw-notes {
+  border-radius: var(--cw-radius-lg);
+  border: 1px dashed color-mix(in srgb, var(--plum) 16%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, var(--mist));
+  padding: 1.1rem 1.05rem;
+}
+
+.cw-notes .cw-field__shell {
+  box-shadow: none;
+  background: var(--cw-surface);
+}
+
+/* Payment cards */
+.cw-pay-card {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  border-radius: var(--cw-radius-lg);
+  border: 1px solid var(--cw-border);
+  background: var(--cw-surface);
+  padding: 1.1rem 1.05rem;
+  box-shadow: var(--cw-shadow);
+  transition:
+    border-color 220ms var(--cw-ease),
+    background 220ms var(--cw-ease),
+    box-shadow 220ms var(--cw-ease),
+    transform 180ms var(--cw-ease);
+}
+
+.cw-pay-card:hover {
+  border-color: color-mix(in srgb, var(--plum) 18%, transparent);
+}
+
+.cw-pay-card[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--plum) 42%, transparent);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--plum) 5%, var(--surface)) 0%,
+      var(--cw-surface) 100%
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--plum) 10%, transparent),
+    0 16px 40px -20px rgba(61, 38, 64, 0.28);
+}
+
+.cw-pay-card:active {
+  transform: scale(0.992);
+}
+
+.cw-pay-card[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.cw-pay-mark {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--plum) 22%, transparent);
+  transition:
+    background 200ms var(--cw-ease),
+    border-color 200ms var(--cw-ease);
+}
+
+.cw-pay-card[data-selected="true"] .cw-pay-mark {
+  border-color: var(--plum-fill, var(--plum));
+  background: var(--plum-fill, var(--plum));
+  color: var(--ivory-fixed, #f8f4f1);
+}
+
+/* Sticky CTA polish for wizard (shared shell already exists) */
+.cw-sticky {
+  border-top-color: color-mix(in srgb, var(--plum) 8%, transparent) !important;
+  background: color-mix(in srgb, var(--bg-glass-strong) 92%, transparent) !important;
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+}
+
+/* Prevent iOS rubber-band + horizontal spill on checkout wizard surfaces */
+.checkout-wizard,
+.checkout-wizard * {
+  max-width: 100%;
+}
+
+.checkout-wizard input,
+.checkout-wizard textarea,
+.checkout-wizard select {
+  font-size: var(--cw-input-fs) !important;
+}
+
+/* —— Wizard progress (DATA + PAYMENT only) —— */
+.cw-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-progress__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: center;
+}
+
+.cw-progress__line {
+  position: absolute;
+  top: 0.85rem;
+  inset-inline-end: calc(50% + 1.1rem);
+  width: calc(100% - 2.2rem);
+  height: 1px;
+  background: color-mix(in srgb, var(--plum) 12%, transparent);
+  transition: background 280ms var(--cw-ease);
+}
+
+.cw-progress__line.is-on {
+  background: color-mix(in srgb, var(--plum) 45%, transparent);
+}
+
+.cw-progress__dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--plum) 14%, transparent);
+  background: var(--cw-surface);
+  color: var(--muted);
+  transition:
+    background 240ms var(--cw-ease),
+    border-color 240ms var(--cw-ease),
+    color 240ms var(--cw-ease),
+    box-shadow 240ms var(--cw-ease);
+}
+
+.cw-progress__dot.is-active {
+  border-color: color-mix(in srgb, var(--plum) 40%, transparent);
+  background: var(--plum-fill, var(--plum));
+  color: var(--ivory-fixed, #f8f4f1);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--plum) 10%, transparent);
+}
+
+.cw-progress__dot.is-done {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--plum-fill, var(--plum)) 88%, #fff);
+  color: var(--ivory-fixed, #f8f4f1);
+}
+
+.cw-progress__num {
+  font-family: var(--font-latin), system-ui, sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.cw-progress__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  transition: color 240ms var(--cw-ease);
+}
+
+.cw-progress__label.is-active {
+  color: var(--plum);
+  font-weight: 600;
+}
+
+.cw-progress__label.is-done {
+  color: color-mix(in srgb, var(--plum) 72%, var(--muted));
+  font-weight: 520;
+}

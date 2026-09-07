@@ -1,5 +1,7 @@
+import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconEdit, IconMapPin } from "@/components/checkout/CheckoutIcons";
+import "./checkout-wizard.css";
 
 type Props = {
   fullName: string;
@@ -24,21 +26,17 @@ export function ShippingAddressCard({
 }: Props) {
   return (
     <section
-      className="rounded-[20px] border border-[var(--plum)]/8 bg-[var(--surface)] p-5 shadow-[0_4px_24px_-12px_rgba(61,38,64,0.08)] sm:p-6"
+      className="checkout-wizard cw-panel"
       aria-label="بيانات الشحن"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border border-[var(--plum)]/8 bg-[var(--mist)]/60 text-[var(--plum)]">
+          <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--plum)]/10 bg-[var(--mist)]/55 text-[var(--plum)]">
             <IconMapPin />
           </span>
           <div>
-            <h2 className="font-display text-[1.25rem] font-medium text-[var(--plum)]">
-              بيانات الشحن
-            </h2>
-            <p className="t3 mt-1 text-[var(--muted)]">
-              معلومات التوصيل الخاصة بطلبك
-            </p>
+            <h2 className="cw-panel__title text-[1.25rem]">بيانات الشحن</h2>
+            <p className="cw-panel__sub mt-1">معلومات التوصيل الخاصة بطلبك</p>
           </div>
         </div>
 
@@ -46,17 +44,14 @@ export function ShippingAddressCard({
           <button
             type="button"
             onClick={onEdit}
-            className="group inline-flex shrink-0 items-center gap-1.5 t2 font-medium text-[var(--plum)] transition-opacity hover:opacity-75"
+            className="group inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[var(--plum)]/12 bg-[var(--mist)]/40 px-3.5 text-[0.78rem] font-medium text-[var(--plum)] transition-opacity hover:opacity-80"
           >
             <span>تعديل البيانات</span>
             <IconEdit className="transition-transform duration-200 group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5" />
           </button>
-        ) : showRestore ? (
-          <button
-            type="button"
-            onClick={onRestore}
-            className="t2 shrink-0 font-medium text-[var(--plum)]/80 underline-offset-4 transition-opacity hover:opacity-75 hover:underline"
-          >
+        ) : showRestore && onRestore ? (
+          <button type="button" onClick={onRestore} className="cw-restore">
+            <RotateCcw size={14} strokeWidth={1.6} aria-hidden />
             استعادة من الحساب
           </button>
         ) : null}
@@ -68,16 +63,16 @@ export function ShippingAddressCard({
             {fullName || "—"}
           </p>
           <div className="space-y-1">
-            <p className="t3 text-[var(--muted)]" dir="ltr">
+            <p className="text-[0.9rem] text-[var(--muted)]" dir="ltr">
               {phone || "—"}
             </p>
-            <p className="t3 text-[var(--muted)]" dir="ltr">
+            <p className="text-[0.9rem] text-[var(--muted)]" dir="ltr">
               {email || "—"}
             </p>
           </div>
           <p
             className={cn(
-              "t4 leading-relaxed text-[var(--ink)]/90",
+              "text-[1rem] leading-relaxed text-[var(--ink)]/90",
               !address && "text-[var(--muted)]",
             )}
           >
