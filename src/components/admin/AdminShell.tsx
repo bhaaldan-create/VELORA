@@ -82,11 +82,16 @@ function NavLink({
     <Link
       href={href}
       title={title}
-      prefetch
+      prefetch={false}
       className={className}
       onClick={onNavigate}
-      onMouseEnter={() => router.prefetch(href)}
-      onFocus={() => router.prefetch(href)}
+      onMouseEnter={() => {
+        try {
+          router.prefetch(href);
+        } catch {
+          /* ignore */
+        }
+      }}
     >
       {children}
     </Link>

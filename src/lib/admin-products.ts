@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { unstable_cache, revalidateTag } from "next/cache";
 import type {
   AdminProduct,
   AdminProductDetail,
@@ -29,6 +30,8 @@ export {
 const DEFAULT_TONE =
   "linear-gradient(145deg, #E8D5D8 0%, #C9A8B0 45%, #3D2640 100%)";
 
+const ADMIN_PRODUCTS_META_TAG = "velora-admin-products-meta";
+
 /** List queries must NEVER select imageUrl/brandLogoUrl (may be multi-MB data URLs). */
 const adminListSelect = {
   id: true,
@@ -47,7 +50,48 @@ const adminListSelect = {
   updatedAt: true,
 } as const;
 
+/** Detail without image blobs — media served via /api/media. */
+const adminDetailSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  nameAr: true,
+  categorySlug: true,
+  price: true,
+  discountPercent: true,
+  stock: true,
+  isActive: true,
+  isBestseller: true,
+  isNew: true,
+  size: true,
+  brandName: true,
+  updatedAt: true,
+  description: true,
+  descriptionAr: true,
+  benefitsJson: true,
+  benefitsArJson: true,
+  ingredientsJson: true,
+  concernsJson: true,
+  skinTypesJson: true,
+  productType: true,
+  featureTagsJson: true,
+  supplierId: true,
+  costCurrency: true,
+  costExchangeRate: true,
+  purchasePrice: true,
+  shippingCostIqd: true,
+  customsCostIqd: true,
+  brokerageCostIqd: true,
+  handlingCostIqd: true,
+  otherCostIqd: true,
+  landedCostIqd: true,
+  minMarginPct: true,
+} as const;
+
 type AdminListRow = Prisma.ProductGetPayload<{ select: typeof adminListSelect }>;
+type AdminDetailRow = Prisma.ProductGetPayload<{
+  select: typeof adminDetailSelect;
+}>;
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -125,46 +169,27 @@ function toAdminProduct(row: {
   };
 }
 
-function toAdminProductDetail(row: {
-  id: string;
-  slug: string;
-  name: string;
-  nameAr: string;
-  categorySlug: string;
-  price: number;
-  discountPercent: number;
-  stock: number;
-  isActive: boolean;
-  isBestseller: boolean;
-  isNew: boolean;
-  size: string;
-  imageUrl: string | null;
-  brandName: string | null;
-  brandLogoUrl: string | null;
-  updatedAt: Date;
-  description: string;
-  descriptionAr: string;
-  benefitsJson: unknown;
-  benefitsArJson: unknown;
-  ingredientsJson: unknown;
-  concernsJson: unknown;
-  skinTypesJson: unknown;
-  productType: string | null;
-  featureTagsJson: unknown;
-  supplierId: string | null;
-  costCurrency: string;
-  costExchangeRate: number;
-  purchasePrice: number;
-  shippingCostIqd: number;
-  customsCostIqd: number;
-  brokerageCostIqd: number;
-  handlingCostIqd: number;
-  otherCostIqd: number;
-  landedCostIqd: number;
-  minMarginPct: number;
-}): AdminProductDetail {
+function toAdminProductDetail(row: AdminDetailRow): AdminProductDetail {
+  const discountPercent = row.discountPercent || 0;
+  const bust = row.updatedAt.getTime();
   return {
-    ...toAdminProduct(row),
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    categorySlug: row.categorySlug,
+    price: row.price,
+    discountPercent,
+    salePrice: salePriceFromBase(row.price, discountPercent),
+    stock: row.stock,
+    isActive: row.isActive,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    size: row.size,
+    imageUrl: productMediaUrl(row.id, "product", bust),
+    brandName: row.brandName,
+    brandLogoUrl: productMediaUrl(row.id, "brandLogo", bust),
+    updatedAt: row.updatedAt.toISOString(),
     description: row.description,
     descriptionAr: row.descriptionAr,
     benefits: asStringArray(row.benefitsJson),
@@ -239,6 +264,65 @@ function buildAdminListWhere(
   return and.length ? { AND: and } : {};
 }
 
+/** Global filter chips + category tiles — cached so every list page isn't 8 DB hits. */
+const getAdminProductsMeta = unstable_cache(
+  async () => {
+    const [
+      allCount,
+      activeCount,
+      hiddenCount,
+      lowCount,
+      outCount,
+      saleCount,
+      grouped,
+    ] = await Promise.all([
+      prisma.product.count(),
+      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { isActive: false } }),
+      prisma.product.count({ where: { stock: { gt: 0, lte: 10 } } }),
+      prisma.product.count({ where: { stock: { lte: 0 } } }),
+      prisma.product.count({ where: { discountPercent: { gt: 0 } } }),
+      prisma.product.groupBy({
+        by: ["categorySlug"],
+        _count: { _all: true },
+      }),
+    ]);
+
+    const categoryCounts: Record<string, number> = {
+      all: allCount,
+      skincare: 0,
+      makeup: 0,
+      "hair-care": 0,
+      "body-care": 0,
+    };
+    for (const g of grouped) {
+      categoryCounts[g.categorySlug] = g._count._all;
+    }
+
+    return {
+      stats: {
+        all: allCount,
+        active: activeCount,
+        hidden: hiddenCount,
+        lowStock: lowCount,
+        outOfStock: outCount,
+        onSale: saleCount,
+      } satisfies AdminProductStats,
+      categoryCounts,
+    };
+  },
+  ["admin-products-meta-v1"],
+  { revalidate: 60, tags: [ADMIN_PRODUCTS_META_TAG] },
+);
+
+function bustAdminProductsMeta() {
+  try {
+    revalidateTag(ADMIN_PRODUCTS_META_TAG, { expire: 0 });
+  } catch {
+    /* ignore outside request context */
+  }
+}
+
 /** Lightweight list — never loads image blobs. Prefer paginated query. */
 export async function listAdminProducts(): Promise<AdminProduct[]> {
   const rows = await prisma.product.findMany({
@@ -262,17 +346,7 @@ export async function listAdminProductsPage(
   const page = Math.max(params.page ?? 1, 1);
   const where = buildAdminListWhere(params);
 
-  const [
-    total,
-    rows,
-    allCount,
-    activeCount,
-    hiddenCount,
-    lowCount,
-    outCount,
-    saleCount,
-    grouped,
-  ] = await Promise.all([
+  const [total, rows, meta] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -281,50 +355,26 @@ export async function listAdminProductsPage(
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.product.count(),
-    prisma.product.count({ where: { isActive: true } }),
-    prisma.product.count({ where: { isActive: false } }),
-    prisma.product.count({ where: { stock: { gt: 0, lte: 10 } } }),
-    prisma.product.count({ where: { stock: { lte: 0 } } }),
-    prisma.product.count({ where: { discountPercent: { gt: 0 } } }),
-    prisma.product.groupBy({
-      by: ["categorySlug"],
-      _count: { _all: true },
-    }),
+    getAdminProductsMeta(),
   ]);
-
-  const categoryCounts: Record<string, number> = {
-    all: allCount,
-    skincare: 0,
-    makeup: 0,
-    "hair-care": 0,
-    "body-care": 0,
-  };
-  for (const g of grouped) {
-    categoryCounts[g.categorySlug] = g._count._all;
-  }
 
   return {
     products: rows.map(toAdminProductLight),
     total,
     page,
     pageSize,
-    stats: {
-      all: allCount,
-      active: activeCount,
-      hidden: hiddenCount,
-      lowStock: lowCount,
-      outOfStock: outCount,
-      onSale: saleCount,
-    },
-    categoryCounts,
+    stats: meta.stats,
+    categoryCounts: meta.categoryCounts,
   };
 }
 
 export async function getAdminProductById(
   id: string,
 ): Promise<AdminProductDetail | null> {
-  const row = await prisma.product.findUnique({ where: { id } });
+  const row = await prisma.product.findUnique({
+    where: { id },
+    select: adminDetailSelect,
+  });
   if (!row) return null;
   return toAdminProductDetail(row);
 }
@@ -469,7 +519,23 @@ export async function createAdminProduct(
   });
 
   revalidateStorefront({ slug: row.slug });
-  return toAdminProduct(row);
+  bustAdminProductsMeta();
+  return toAdminProductLight({
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameAr: row.nameAr,
+    categorySlug: row.categorySlug,
+    price: row.price,
+    discountPercent: row.discountPercent,
+    stock: row.stock,
+    isActive: row.isActive,
+    isBestseller: row.isBestseller,
+    isNew: row.isNew,
+    size: row.size,
+    brandName: row.brandName,
+    updatedAt: row.updatedAt,
+  });
 }
 
 export async function updateAdminProduct(
@@ -635,7 +701,23 @@ export async function updateAdminProduct(
   }
 
   revalidateStorefront({ slug: finalRow.slug, oldSlug: existing.slug });
-  return toAdminProduct(finalRow);
+  bustAdminProductsMeta();
+  return toAdminProductLight({
+    id: finalRow.id,
+    slug: finalRow.slug,
+    name: finalRow.name,
+    nameAr: finalRow.nameAr,
+    categorySlug: finalRow.categorySlug,
+    price: finalRow.price,
+    discountPercent: finalRow.discountPercent,
+    stock: finalRow.stock,
+    isActive: finalRow.isActive,
+    isBestseller: finalRow.isBestseller,
+    isNew: finalRow.isNew,
+    size: finalRow.size,
+    brandName: finalRow.brandName,
+    updatedAt: finalRow.updatedAt,
+  });
 }
 
 export async function deleteAdminProduct(id: string): Promise<boolean> {
@@ -643,5 +725,6 @@ export async function deleteAdminProduct(id: string): Promise<boolean> {
   if (!existing) return false;
   await prisma.product.delete({ where: { id } });
   revalidateStorefront({ slug: existing.slug });
+  bustAdminProductsMeta();
   return true;
 }

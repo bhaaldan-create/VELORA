@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { productMediaUrl } from "@/lib/admin/media-url";
 
 export type RankedProductCard = {
   id: string;
@@ -27,10 +28,10 @@ export async function getAdminProductRanks(
       id: true,
       nameAr: true,
       brandName: true,
-      imageUrl: true,
       slug: true,
+      updatedAt: true,
     },
-    take: 400,
+    take: 200,
   });
 
   const ranked: RankedProductCard[] = products.map((p) => {
@@ -39,7 +40,7 @@ export async function getAdminProductRanks(
       id: p.id,
       nameAr: hit?.name || p.nameAr,
       brandName: p.brandName || "—",
-      imageUrl: p.imageUrl,
+      imageUrl: productMediaUrl(p.id, "product", p.updatedAt.getTime()),
       slug: p.slug,
       units: hit?.units ?? 0,
       revenue: hit?.revenue ?? 0,

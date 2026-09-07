@@ -18,11 +18,11 @@ import { shopBrands } from "@/data/shop-brands";
 type Visibility = "all" | "active" | "hidden" | "low" | "out" | "sale";
 
 const PRODUCT_SECTIONS = [
-  { id: "all", label: "?? ????????", slug: null },
-  { id: "skincare", label: "??????? ???????", slug: "skincare" },
-  { id: "makeup", label: "???????", slug: "makeup" },
-  { id: "hair-care", label: "??????? ??????", slug: "hair-care" },
-  { id: "body-care", label: "??????? ??????", slug: "body-care" },
+  { id: "all", label: "كل المنتجات", slug: null },
+  { id: "skincare", label: "العناية بالبشرة", slug: "skincare" },
+  { id: "makeup", label: "المكياج", slug: "makeup" },
+  { id: "hair-care", label: "العناية بالشعر", slug: "hair-care" },
+  { id: "body-care", label: "العناية بالجسم", slug: "body-care" },
 ] as const;
 
 type SectionId = (typeof PRODUCT_SECTIONS)[number]["id"];
@@ -62,9 +62,33 @@ function recallPositiveStock(id: string, fallback = 1): number {
   return Math.max(1, fallback);
 }
 
+function adjustStockStats(
+  prev: AdminProductStats,
+  prevStock: number,
+  nextStock: number,
+): AdminProductStats {
+  const wasOut = prevStock <= 0;
+  const nowOut = nextStock <= 0;
+  const wasLow = prevStock > 0 && prevStock <= 10;
+  const nowLow = nextStock > 0 && nextStock <= 10;
+
+  let outOfStock = prev.outOfStock;
+  let lowStock = prev.lowStock;
+
+  if (wasOut !== nowOut) {
+    outOfStock = Math.max(0, outOfStock + (nowOut ? 1 : -1));
+  }
+  if (wasLow !== nowLow) {
+    lowStock = Math.max(0, lowStock + (nowLow ? 1 : -1));
+  }
+
+  return { ...prev, outOfStock, lowStock };
+}
+
 type Props = {
   initialProducts?: AdminProduct[];
   initialStats?: AdminProductStats;
+  initialCategoryCounts?: Record<string, number>;
 };
 
 type ListResponse = {
@@ -87,21 +111,30 @@ const emptyStats: AdminProductStats = {
   onSale: 0,
 };
 
-export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
+export function ProductsAdmin({
+  initialProducts = [],
+  initialStats,
+  initialCategoryCounts,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [products, setProducts] = useState(initialProducts);
   const [stats, setStats] = useState<AdminProductStats>(
     initialStats ?? emptyStats,
   );
-  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({
-    all: initialStats?.all ?? 0,
-    skincare: 0,
-    makeup: 0,
-    "hair-care": 0,
-    "body-care": 0,
-  });
-  const [total, setTotal] = useState(initialProducts.length);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>(
+    () => ({
+      all: initialStats?.all ?? 0,
+      skincare: 0,
+      makeup: 0,
+      "hair-care": 0,
+      "body-care": 0,
+      ...initialCategoryCounts,
+    }),
+  );
+  const [total, setTotal] = useState(
+    initialStats?.all ?? initialProducts.length,
+  );
   const [page, setPage] = useState(1);
   const [section, setSection] = useState<SectionId>(() =>
     parseSection(searchParams.get("category")),
@@ -117,6 +150,10 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
   const [stockFlash, setStockFlash] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const requestId = useRef(0);
+  const skipFirstLoad = useRef(
+    initialProducts.length > 0 &&
+      parseSection(searchParams.get("category")) === "all",
+  );
 
   useEffect(() => {
     for (const p of initialProducts) {
@@ -148,7 +185,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
       const json = (await res.json()) as ListResponse;
       if (id !== requestId.current) return;
       if (!res.ok || !json.ok || !json.products) {
-        throw new Error(json.error || "????? ????? ????????.");
+        throw new Error(json.error || "تعذّر تحميل المنتجات.");
       }
       for (const p of json.products) rememberPositiveStock(p.id, p.stock);
       setProducts(json.products);
@@ -157,18 +194,30 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
       if (json.categoryCounts) setCategoryCounts(json.categoryCounts);
     } catch (err) {
       if (id !== requestId.current) return;
-      setError(err instanceof Error ? err.message : "????? ????? ????????.");
+      setError(err instanceof Error ? err.message : "تعذّر تحميل المنتجات.");
     } finally {
       if (id === requestId.current) setLoading(false);
     }
   }, [page, visibility, section, brand, debouncedQ]);
 
   useEffect(() => {
+    if (skipFirstLoad.current) {
+      skipFirstLoad.current = false;
+      const atDefaults =
+        page === 1 &&
+        visibility === "all" &&
+        section === "all" &&
+        brand === "" &&
+        debouncedQ === "";
+      if (atDefaults && initialProducts.length > 0) {
+        return;
+      }
+    }
     const handle = window.setTimeout(() => {
       void load();
     }, 0);
     return () => window.clearTimeout(handle);
-  }, [load]);
+  }, [load, page, visibility, section, brand, debouncedQ, initialProducts.length]);
 
   async function toggleSoldOut(product: AdminProduct) {
     if (stockBusyId) return;
@@ -186,6 +235,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
     setProducts((prev) =>
       prev.map((p) => (p.id === product.id ? { ...p, stock: nextStock } : p)),
     );
+    setStats((prev) => adjustStockStats(prev, product.stock, nextStock));
 
     try {
       const res = await fetch("/api/admin/products", {
@@ -199,25 +249,32 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
         error?: string;
       };
       if (!res.ok || !json.ok || !json.product) {
-        throw new Error(json.error || "????? ????? ???? ??????.");
+        throw new Error(json.error || "تعذّر تحديث حالة النفاذ.");
       }
       rememberPositiveStock(json.product.id, json.product.stock);
       setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, ...json.product! } : p)),
+        prev.map((p) =>
+          p.id === product.id ? { ...p, ...json.product!, stock: json.product!.stock } : p,
+        ),
       );
+      if (json.product.stock !== nextStock) {
+        setStats((prev) =>
+          adjustStockStats(prev, nextStock, json.product!.stock),
+        );
+      }
       setStockFlash(
         json.product.stock <= 0
-          ? `?${product.nameAr}? ???? ?????? ? ???? ???? ????? ?????`
-          : `?${product.nameAr}? ????? ??????`,
+          ? `«${product.nameAr}» أصبح نافذاً — ظاهر بدون إضافة للسلة`
+          : `«${product.nameAr}» متوفر مجدداً`,
       );
-      void load();
     } catch (err) {
       setProducts((prev) =>
         prev.map((p) =>
           p.id === product.id ? { ...p, stock: product.stock } : p,
         ),
       );
-      setError(err instanceof Error ? err.message : "????? ????? ???? ??????.");
+      setStats((prev) => adjustStockStats(prev, nextStock, product.stock));
+      setError(err instanceof Error ? err.message : "تعذّر تحديث حالة النفاذ.");
     } finally {
       setStockBusyId(null);
     }
@@ -258,12 +315,12 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
     PRODUCT_SECTIONS.find((s) => s.id === section) ?? PRODUCT_SECTIONS[0];
 
   const filters: { id: Visibility; label: string; count: number }[] = [
-    { id: "all", label: "????", count: stats.all },
-    { id: "active", label: "????", count: stats.active },
-    { id: "hidden", label: "????", count: stats.hidden },
-    { id: "sale", label: "???", count: stats.onSale },
-    { id: "low", label: "????? ?????", count: stats.lowStock },
-    { id: "out", label: "???", count: stats.outOfStock },
+    { id: "all", label: "الكل", count: stats.all },
+    { id: "active", label: "ظاهر", count: stats.active },
+    { id: "hidden", label: "مخفي", count: stats.hidden },
+    { id: "sale", label: "خصم", count: stats.onSale },
+    { id: "low", label: "مخزون منخفض", count: stats.lowStock },
+    { id: "out", label: "نفذ", count: stats.outOfStock },
   ];
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -285,12 +342,12 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[1.35rem] font-semibold tracking-tight text-[var(--admin-text)]">
-            {section === "all" ? "????????" : activeSection.label}
+            {section === "all" ? "المنتجات" : activeSection.label}
           </h1>
           <p className="mt-1 text-[13px] text-[var(--admin-text-secondary)]">
             {section === "all"
-              ? "????? ????? ???? ??????? ????? ????? ? ?????? ???? ??????."
-              : `?????? ??? ${activeSection.label} ? ${total} ?????.`}
+              ? "اضغطي «نفذ» بنقرة واحدة لمنع الإضافة للسلة فوراً — المنتج يبقى ظاهراً."
+              : `منتجات قسم ${activeSection.label} — ${total} نتيجة. اضغطي «نفذ» بنقرة واحدة.`}
           </p>
         </div>
         <button
@@ -298,7 +355,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
           onClick={() => setShowCreate(true)}
           className="inline-flex h-9 items-center rounded-[8px] bg-[var(--admin-plum)] px-3.5 text-[13px] font-medium text-white"
         >
-          ????? ????
+          إضافة منتج
         </button>
       </div>
 
@@ -324,7 +381,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                   active ? "text-white/80" : "text-[var(--admin-text-muted)]"
                 }`}
               >
-                {categoryCounts[s.id] ?? 0} ????
+                {categoryCounts[s.id] ?? 0} منتج
               </span>
             </button>
           );
@@ -364,8 +421,8 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
           }}
           placeholder={
             section === "all"
-              ? "?????? ???????? ????????"
-              : `????? ???? ${activeSection.label}?`
+              ? "الاسم، البراند، المعرّف…"
+              : `ابحثي داخل ${activeSection.label}…`
           }
           className="h-11 w-full rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 text-[14px] outline-none focus:border-[var(--admin-plum-soft)]"
         />
@@ -378,7 +435,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
           className="h-11 w-full rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-[13px] outline-none focus:border-[var(--admin-plum-soft)]"
           dir="ltr"
         >
-          <option value="">?? ?????????</option>
+          <option value="">كل البراندات</option>
           {shopBrands.map((b) => (
             <option key={b.id} value={b.name}>
               {b.name}
@@ -401,7 +458,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
             onClick={() => void load()}
             className="ms-3 font-medium underline"
           >
-            ????? ????????
+            إعادة المحاولة
           </button>
         </div>
       ) : null}
@@ -418,7 +475,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
       ) : products.length === 0 ? (
         <div className="rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-bg-elevated)] px-6 py-14 text-center">
           <p className="text-[15px] font-medium text-[var(--admin-text)]">
-            ?? ???? ?????? ??????
+            لا توجد منتجات مطابقة
           </p>
           {section !== "all" ? (
             <button
@@ -426,7 +483,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
               onClick={() => selectSection("all")}
               className="mt-3 text-[13px] font-medium text-[var(--admin-plum)]"
             >
-              ??? ?? ????????
+              عرض كل المنتجات
             </button>
           ) : null}
         </div>
@@ -472,11 +529,11 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                           p.imageUrl ? "hidden" : ""
                         }`}
                       >
-                        {p.imageUrl ? "???? ??? ?????" : "???? ????"}
+                        {p.imageUrl ? "صورة غير متاحة" : "بدون صورة"}
                       </div>
                       {soldOut ? (
                         <span className="absolute inset-x-1 bottom-1 rounded-full bg-[linear-gradient(145deg,#c45a5a,#a63d45)] px-1.5 py-0.5 text-center text-[9px] font-semibold tracking-[0.06em] text-white shadow-sm">
-                          ???
+                          نفذ
                         </span>
                       ) : null}
                     </Link>
@@ -490,11 +547,11 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                               : "bg-[var(--admin-surface-mute)] text-[var(--admin-text-muted)]"
                           }`}
                         >
-                          {p.isActive ? "????" : "????"}
+                          {p.isActive ? "ظاهر" : "مخفي"}
                         </span>
                         {soldOut ? (
                           <span className="rounded-full bg-[var(--admin-danger-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--admin-danger)]">
-                            ??? ? ?? ????? ?????
+                            نفذ — لا يُضاف للسلة
                           </span>
                         ) : null}
                         {p.brandName ? (
@@ -507,7 +564,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                         ) : null}
                         {p.discountPercent > 0 ? (
                           <span className="rounded-full bg-[var(--admin-plum)]/8 px-2 py-0.5 text-[11px] font-medium text-[var(--admin-plum)]">
-                            ??? {p.discountPercent}%
+                            خصم {p.discountPercent}%
                           </span>
                         ) : null}
                         {section === "all" ? (
@@ -524,7 +581,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                           className="truncate text-[12.5px] text-[var(--admin-text-secondary)]"
                           dir="ltr"
                         >
-                          {p.name} ? {p.size}
+                          {p.name} · {p.size}
                         </p>
                       </Link>
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-[12.5px]">
@@ -538,7 +595,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                               : "text-[var(--admin-text-muted)]"
                           }
                         >
-                          ????? {p.stock}
+                          مخزون {p.stock}
                         </span>
                       </div>
                     </div>
@@ -555,17 +612,17 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                         }`}
                         title={
                           soldOut
-                            ? "????? ?????? ?? ??????"
-                            : "????? ?????? ? ???? ?????? ???? ????? ?????"
+                            ? "إعادة التوفر في المتجر"
+                            : "تعيين نافذاً — يبقى ظاهراً بدون إضافة للسلة"
                         }
                       >
-                        {busy ? "?" : soldOut ? "?????" : "???"}
+                        {busy ? "…" : soldOut ? "متوفر" : "نفذ"}
                       </button>
                       <Link
                         href={`/admin/products/${p.id}`}
                         className="hidden text-center text-[12px] font-medium text-[var(--admin-plum)] sm:block"
                       >
-                        ?????
+                        تعديل
                       </Link>
                     </div>
                   </article>
@@ -582,10 +639,10 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="h-9 rounded-[8px] border border-[var(--admin-border)] bg-white px-3 text-[13px] disabled:opacity-40"
               >
-                ??????
+                السابق
               </button>
               <span className="text-[13px] text-[var(--admin-text-secondary)]">
-                ???? {page} ?? {totalPages}
+                صفحة {page} من {totalPages}
               </span>
               <button
                 type="button"
@@ -593,7 +650,7 @@ export function ProductsAdmin({ initialProducts = [], initialStats }: Props) {
                 onClick={() => setPage((p) => p + 1)}
                 className="h-9 rounded-[8px] border border-[var(--admin-border)] bg-white px-3 text-[13px] disabled:opacity-40"
               >
-                ??????
+                التالي
               </button>
             </div>
           ) : null}

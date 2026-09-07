@@ -25,6 +25,7 @@ export default async function AdminProductsPage() {
         <ProductsAdmin
           initialProducts={first.products}
           initialStats={first.stats}
+          initialCategoryCounts={first.categoryCounts}
         />
       </Suspense>
     </AdminShell>

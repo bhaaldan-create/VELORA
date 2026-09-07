@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminOrdersPage() {
   const [orders, statusGroups] = await Promise.all([
-    listStoredOrders({ take: 400 }),
+    listStoredOrders({ take: 80 }),
     prisma.order.groupBy({
       by: ["status"],
       _count: { _all: true },
