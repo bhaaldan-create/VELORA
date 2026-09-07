@@ -10,6 +10,7 @@ import {
 } from "@/components/shop/ProductBadge";
 import { ProductMedia } from "@/components/shop/ProductMedia";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
+import { isProductInStock } from "@/lib/inventory";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -58,13 +59,14 @@ export function ProductCardMediaFrame({
   children,
 }: Props) {
   const title = locale === "en" ? product.name : product.nameAr;
+  const soldOut = !isProductInStock(product);
   const badges = showAllBadges
     ? productDetailBadges(product, locale)
     : (() => {
-        const label = productOverlayBadgeLabel(product, locale);
-        return label
-          ? [{ key: "primary", label }]
-          : ([] as { key: string; label: string }[]);
+        const badge = productOverlayBadgeLabel(product, locale);
+        return badge
+          ? [{ key: "primary", label: badge.label, tone: badge.tone }]
+          : ([] as { key: string; label: string; tone: "default" | "soldOut" }[]);
       })();
 
   const media = (
@@ -76,7 +78,7 @@ export function ProductCardMediaFrame({
       sizes={sizes}
       priority={priority}
       fit="contain"
-      imageClassName={imageClassName}
+      imageClassName={cn(imageClassName, soldOut && "opacity-[0.72]")}
     />
   );
 
@@ -98,6 +100,13 @@ export function ProductCardMediaFrame({
 
       {/* Overlay layer: absolute, zero layout contribution */}
       <div className="pointer-events-none absolute inset-0 z-[1]">
+        {soldOut ? (
+          <span
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,18,20,0.08),rgba(28,18,20,0.22))]"
+          />
+        ) : null}
+
         {badges.length > 0 ? (
           <div
             className={cn(
@@ -106,7 +115,12 @@ export function ProductCardMediaFrame({
             )}
           >
             {badges.map((b) => (
-              <ProductBadge key={b.key} label={b.label} size="sm" />
+              <ProductBadge
+                key={b.key}
+                label={b.label}
+                size="sm"
+                tone={b.tone}
+              />
             ))}
           </div>
         ) : null}

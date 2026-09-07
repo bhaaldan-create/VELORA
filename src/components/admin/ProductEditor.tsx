@@ -172,6 +172,9 @@ export function ProductEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const brandFileRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  const lastPositiveStockRef = useRef(
+    Math.max(1, initialProduct.stock > 0 ? initialProduct.stock : 1),
+  );
 
   const [product, setProduct] = useState(initialProduct);
   const [draft, setDraft] = useState(() => draftFromProduct(initialProduct));
@@ -968,6 +971,54 @@ export function ProductEditor({
 
         {/* Inventory */}
         <SectionCard title="المخزون">
+          <div
+            className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border px-4 py-3 ${
+              stockStatus === "out"
+                ? "border-[var(--admin-danger)]/25 bg-[var(--admin-danger-bg)]"
+                : "border-[var(--admin-border)] bg-[var(--admin-surface-soft)]"
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-semibold text-[var(--admin-text)]">
+                نفاذ المنتج في المتجر
+              </p>
+              <p className="mt-0.5 text-[11.5px] text-[var(--admin-text-muted)]">
+                المنتج يبقى ظاهراً، لكن الزبونة لا تستطيع إضافته للحقيبة وتظهر شارة
+                «نفذ»
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={stockStatus === "out"}
+              onClick={() => {
+                const current = Math.round(Number(draft.stock) || 0);
+                if (current > 0) {
+                  lastPositiveStockRef.current = current;
+                  patchDraft({ stock: "0" });
+                } else {
+                  patchDraft({
+                    stock: String(lastPositiveStockRef.current || 1),
+                  });
+                }
+              }}
+              className={`relative h-9 w-[4.5rem] shrink-0 rounded-full transition ${
+                stockStatus === "out"
+                  ? "bg-[var(--admin-danger)]"
+                  : "bg-[var(--admin-border)]"
+              }`}
+            >
+              <span
+                className={`absolute top-1 size-7 rounded-full bg-white shadow transition ${
+                  stockStatus === "out" ? "start-1" : "end-1"
+                }`}
+              />
+              <span className="sr-only">
+                {stockStatus === "out" ? "إلغاء نفاذ المنتج" : "تعيين المنتج نافذاً"}
+              </span>
+            </button>
+          </div>
+
           <div className="grid gap-3.5 sm:grid-cols-2">
             <Field label="المخزون الحالي" error={errors.stock}>
               <input
@@ -977,7 +1028,12 @@ export function ProductEditor({
                 min={0}
                 step={1}
                 value={draft.stock}
-                onChange={(e) => patchDraft({ stock: e.target.value })}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  const n = Math.round(Number(next) || 0);
+                  if (n > 0) lastPositiveStockRef.current = n;
+                  patchDraft({ stock: next });
+                }}
               />
             </Field>
             <div>
@@ -998,7 +1054,7 @@ export function ProductEditor({
                   ? "متوفر"
                   : stockStatus === "low"
                     ? "مخزون منخفض"
-                    : "نفد المخزون"}
+                    : "نفذ — ظاهر بدون إضافة للسلة"}
               </div>
             </div>
             <Field label="الحد الأدنى للمخزون" hint="للتنبيه البصري فقط">
@@ -1022,6 +1078,9 @@ export function ProductEditor({
           </div>
           <p className="mt-3 text-[12px] text-[var(--admin-text-muted)]">
             {Number(draft.stock) || 0} وحدة حالياً
+            {stockStatus === "out"
+              ? " · اضغطي المفتاح أعلاه لإعادة التوفر"
+              : ""}
           </p>
         </SectionCard>
       </div>

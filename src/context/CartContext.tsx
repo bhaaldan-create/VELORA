@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { storefrontProductCardImageUrl } from "@/lib/catalog-mapper";
+import { isProductInStock } from "@/lib/inventory";
 import type { CartItem, Product } from "@/types";
 
 function withCartImage(product: Product): Product {
@@ -84,10 +85,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const addItem = (product: Product, quantity = 1) => {
+      if (!isProductInStock(product)) return;
       const snapshot = withCartImage(product);
       setItems((prev) => {
         const existing = prev.find((i) => i.product.id === snapshot.id);
         if (existing) {
+          const nextQty = existing.quantity + quantity;
+          const max = Math.max(0, product.stock ?? nextQty);
+          if (max <= 0) return prev;
           return prev.map((i) =>
             i.product.id === snapshot.id
               ? {
@@ -96,13 +101,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     ...snapshot,
                     ...i.product,
                     imageUrl: i.product.imageUrl || snapshot.imageUrl,
+                    stock: product.stock,
                   }),
-                  quantity: i.quantity + quantity,
+                  quantity: Math.min(nextQty, max),
                 }
               : i,
           );
         }
-        return [...prev, { product: snapshot, quantity }];
+        const max = Math.max(1, product.stock ?? quantity);
+        return [
+          ...prev,
+          { product: snapshot, quantity: Math.min(quantity, max) },
+        ];
       });
     };
 
@@ -116,9 +126,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
       setItems((prev) =>
-        prev.map((i) =>
-          i.product.id === productId ? { ...i, quantity } : i,
-        ),
+        prev.map((i) => {
+          if (i.product.id !== productId) return i;
+          const max = i.product.stock;
+          const next =
+            typeof max === "number" && max >= 0
+              ? Math.min(quantity, Math.max(max, 0))
+              : quantity;
+          if (next <= 0) return i;
+          return { ...i, quantity: next };
+        }).filter((i) => i.quantity > 0),
       );
     };
 

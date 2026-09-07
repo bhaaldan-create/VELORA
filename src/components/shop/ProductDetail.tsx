@@ -7,6 +7,7 @@ import { ProductPrice } from "@/components/shop/ProductPrice";
 import { ProductWhatsAppButton } from "@/components/shop/ProductWhatsAppButton";
 import { useCart } from "@/context/CartContext";
 import { useLocale } from "@/context/LocaleContext";
+import { isProductInStock } from "@/lib/inventory";
 import { getProductWhatsAppUrl } from "@/lib/social-links";
 import { cn } from "@/lib/utils";
 import { ProductHeroImage } from "./product-detail/ProductHeroImage";
@@ -90,7 +91,7 @@ export function ProductDetail({ product, related, routine }: Props) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const waProductUrl = getProductWhatsAppUrl(product, ar ? "ar" : "en");
-  const inStock = (product.stock ?? 1) > 0;
+  const inStock = isProductInStock(product);
 
   const handleAdd = () => {
     if (!inStock) return;
@@ -196,7 +197,7 @@ export function ProductDetail({ product, related, routine }: Props) {
                   />
                 </div>
               ) : (
-                <p className="inline-flex min-h-11 items-center rounded-full border border-[var(--plum)]/12 bg-[var(--mist)]/80 px-5 text-[0.84rem] font-medium text-[var(--muted)]">
+                <p className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#c45a5a]/28 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] px-6 text-[0.88rem] font-medium tracking-[0.08em] text-[#fff8f7] shadow-[0_10px_24px_-12px_rgba(166,61,69,0.55)]">
                   {copy.outOfStock}
                 </p>
               )}

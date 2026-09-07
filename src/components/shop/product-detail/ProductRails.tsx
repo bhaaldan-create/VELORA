@@ -7,9 +7,11 @@ import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { useCart } from "@/context/CartContext";
+import { isProductInStock, soldOutLabel } from "@/lib/inventory";
 import type { Product } from "@/types";
 import { productCopy } from "./copy";
 import { cn } from "@/lib/utils";
+import { ProductBadge } from "@/components/shop/ProductBadge";
 
 export function ProductRoutine({
   current,
@@ -111,7 +113,7 @@ export function ProductRoutine({
 
 function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
   const { addItem } = useCart();
-  const inStock = (product.stock ?? 1) > 0;
+  const inStock = isProductInStock(product);
 
   return (
     <article className="group relative flex h-full w-[38vw] max-w-[168px] shrink-0 flex-col sm:w-auto sm:max-w-none">
@@ -123,11 +125,29 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
             imageUrl={product.imageUrl}
             aspectClassName="aspect-[3/4]"
             fit="contain"
-            imageClassName="transition-transform duration-500 group-hover:scale-[1.03]"
+            imageClassName={cn(
+              "transition-transform duration-500 group-hover:scale-[1.03]",
+              !inStock && "opacity-[0.72]",
+            )}
             sizes="(max-width: 640px) 38vw, 180px"
           />
         </Link>
         <div className="pointer-events-none absolute inset-0 z-[1]">
+          {!inStock ? (
+            <>
+              <span
+                aria-hidden
+                className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,18,20,0.06),rgba(28,18,20,0.18))]"
+              />
+              <div className="absolute start-1.5 top-1.5">
+                <ProductBadge
+                  label={soldOutLabel(ar ? "ar" : "en")}
+                  size="sm"
+                  tone="soldOut"
+                />
+              </div>
+            </>
+          ) : null}
           <WishlistHeartButton
             productId={product.id}
             size="sm"
@@ -161,7 +181,14 @@ function RelatedCard({ product, ar }: { product: Product; ar: boolean }) {
             flashAdded
             onClick={() => addItem(product, 1)}
           />
-        ) : null}
+        ) : (
+          <span
+            aria-disabled
+            className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#c45a5a]/28 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] text-[0.72rem] font-medium tracking-[0.08em] text-[#fff8f7]"
+          >
+            {soldOutLabel(ar ? "ar" : "en")}
+          </span>
+        )}
       </div>
     </article>
   );

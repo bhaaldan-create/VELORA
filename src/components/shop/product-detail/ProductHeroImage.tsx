@@ -5,6 +5,7 @@ import { ProductMedia } from "@/components/shop/ProductMedia";
 import { ProductBadge, productDetailBadges } from "@/components/shop/ProductBadge";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
+import { isProductInStock } from "@/lib/inventory";
 import type { Product } from "@/types";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 
 export function ProductHeroImage({ product, ar }: Props) {
   const badges = productDetailBadges(product, ar ? "ar" : "en");
+  const soldOut = !isProductInStock(product);
 
   return (
     <div className="motion-safe:animate-[velora-fade_0.95s_ease-out_both]">
@@ -27,10 +29,17 @@ export function ProductHeroImage({ product, ar }: Props) {
           sizes="(max-width: 1024px) 100vw, 46vw"
           priority
           fit="contain"
+          imageClassName={soldOut ? "opacity-[0.72]" : undefined}
         />
 
-        {/* Overlay layer — never participates in image sizing */}
         <div className="pointer-events-none absolute inset-0 z-[2]">
+          {soldOut ? (
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,18,20,0.08),rgba(28,18,20,0.2))]"
+            />
+          ) : null}
+
           <WishlistHeartButton
             productId={product.id}
             className="pointer-events-auto absolute end-3.5 top-3.5 rounded-full border border-[var(--border-glass)] bg-[var(--bg-glass)] p-2.5 text-[var(--plum)] shadow-[var(--shadow-md)] backdrop-blur-md sm:end-4 sm:top-4"
@@ -39,7 +48,12 @@ export function ProductHeroImage({ product, ar }: Props) {
           {badges.length > 0 ? (
             <div className="absolute start-3.5 top-3.5 flex max-w-[72%] flex-wrap gap-1.5 sm:start-4 sm:top-4">
               {badges.map((b) => (
-                <ProductBadge key={b.key} label={b.label} size="md" />
+                <ProductBadge
+                  key={b.key}
+                  label={b.label}
+                  size="md"
+                  tone={b.tone}
+                />
               ))}
             </div>
           ) : null}

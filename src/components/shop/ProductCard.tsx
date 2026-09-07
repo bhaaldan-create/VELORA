@@ -8,6 +8,7 @@ import { AddToBagButton } from "@/components/shop/AddToBagButton";
 import { ProductCardMediaFrame } from "@/components/shop/ProductCardMediaFrame";
 import { ProductPrice } from "@/components/shop/ProductPrice";
 import { getProductBrand } from "@/lib/product-brand";
+import { isProductInStock, soldOutLabel } from "@/lib/inventory";
 import { cn } from "@/lib/utils";
 
 export function ProductCard({
@@ -27,6 +28,7 @@ export function ProductCard({
   const { locale } = useLocale();
   const brand = getProductBrand(product.name, product.nameAr);
   const title = locale === "en" ? product.name : product.nameAr;
+  const inStock = isProductInStock(product);
 
   return (
     <article
@@ -67,11 +69,20 @@ export function ProductCard({
         />
 
         <div className="mt-auto pt-3.5">
-          <AddToBagButton
-            size="md"
-            flashAdded
-            onClick={() => addItem(product)}
-          />
+          {inStock ? (
+            <AddToBagButton
+              size="md"
+              flashAdded
+              onClick={() => addItem(product)}
+            />
+          ) : (
+            <div
+              className="flex min-h-11 w-full items-center justify-center rounded-full border border-[#c45a5a]/22 bg-[linear-gradient(145deg,rgba(196,90,90,0.1),rgba(166,61,69,0.06))] text-[0.84rem] font-medium tracking-[0.06em] text-[#a63d45]"
+              aria-label={soldOutLabel(locale)}
+            >
+              {soldOutLabel(locale)}
+            </div>
+          )}
         </div>
       </div>
     </article>

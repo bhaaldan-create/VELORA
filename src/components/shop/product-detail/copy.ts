@@ -30,7 +30,7 @@ export function productCopy(ar: boolean) {
     askLarsa: ar ? "اسألي لارسا" : "Ask Larsa",
     addToBag: "أضف للحقيبة",
     added: "أُضيفت",
-    outOfStock: ar ? "غير متوفر حالياً" : "Out of Stock",
+    outOfStock: ar ? "نفذ" : "Sold out",
     orderWhatsApp: ar ? "اطلب عبر WhatsApp" : "Order via WhatsApp",
     qty: ar ? "الكمية" : "Quantity",
     decrease: ar ? "تقليل الكمية" : "Decrease quantity",
