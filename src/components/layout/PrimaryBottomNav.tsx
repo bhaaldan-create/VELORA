@@ -182,9 +182,10 @@ export function PrimaryBottomNav() {
     >
       <ul
         className={cn(
-          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[24px] px-1.5 py-1.5",
-          "surface-glass border border-[var(--border-glass)] backdrop-blur-xl theme-shadow-md",
-          "ring-1 ring-[var(--plum)]/[0.06]",
+          "mx-auto grid max-w-md grid-cols-5 gap-0.5 rounded-[30px] px-1.5 py-1.5",
+          "border border-[var(--border-glass)] backdrop-blur-xl",
+          "bg-[var(--bg-glass-strong)] shadow-[var(--shadow-md)]",
+          "ring-1 ring-[var(--plum)]/[0.05]",
         )}
       >
         {bottomNavLinks.map((link) => {
@@ -209,11 +210,11 @@ export function PrimaryBottomNav() {
                 href={href}
                 prefetch
                 className={cn(
-                  "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-full px-0.5 py-1.5",
-                  "transition-colors duration-200",
+                  "relative flex min-h-[2.85rem] flex-col items-center justify-center gap-0.5 rounded-full px-0.5 py-1.5",
+                  "transition-all duration-220",
                   active
-                    ? "bg-[var(--plum)]/[0.09] text-[var(--plum)]"
-                    : "text-[var(--ink)]/55 hover:text-[var(--ink)]",
+                    ? "bg-[var(--plum-fill)] text-[var(--ivory-fixed)] shadow-[0_8px_20px_-10px_rgba(61,38,64,0.55)]"
+                    : "text-[var(--ink)]/50 hover:text-[var(--ink)]",
                 )}
               >
                 <Icon active={active} />

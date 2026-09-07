@@ -165,7 +165,7 @@ export function CardPaymentSection(props: Props) {
   }
 
   return (
-    <div className="space-y-4 border border-[var(--plum)]/15 bg-white p-4">
+    <div className="space-y-4 border border-[var(--plum)]/15 bg-[var(--bg-elevated)] p-4">
       <div>
         <p className="t1 font-medium tracking-[0.12em] text-[var(--muted)]">
           بيانات البطاقة

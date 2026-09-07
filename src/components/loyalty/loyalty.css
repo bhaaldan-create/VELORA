@@ -119,9 +119,23 @@
   --vl-plum: #4a2a45;
   --vl-muted: color-mix(in srgb, var(--vl-plum) 55%, #888);
   --vl-border: color-mix(in srgb, var(--vl-plum) 14%, transparent);
+  --vl-surface: #ffffff;
+  --vl-section: color-mix(in srgb, #fff 88%, #f7f2f6);
+  --vl-soft: color-mix(in srgb, var(--vl-plum) 6%, #fff);
+  --vl-hover: color-mix(in srgb, var(--vl-plum) 8%, #fff);
   max-width: 40rem;
   margin: 0 auto;
   padding: 1.25rem 1rem 3rem;
+}
+
+[data-theme="dark"] .vl-rewards {
+  --vl-plum: #e8dce0;
+  --vl-muted: #9a8a92;
+  --vl-border: rgba(243, 235, 230, 0.12);
+  --vl-surface: #241f26;
+  --vl-section: #1c181b;
+  --vl-soft: color-mix(in srgb, var(--vl-plum) 10%, #1c181b);
+  --vl-hover: color-mix(in srgb, var(--vl-plum) 14%, #221e22);
 }
 
 .vl-rewards__header {
@@ -158,7 +172,7 @@
   padding: 1.15rem 1.05rem;
   border-radius: 1.15rem;
   border: 1px solid var(--vl-border);
-  background: color-mix(in srgb, #fff 88%, #f7f2f6);
+  background: var(--vl-section);
 }
 
 .vl-rewards__section h2 {
@@ -205,7 +219,7 @@
   margin-top: 0.5rem;
   padding: 0.7rem 0.8rem;
   border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--vl-plum) 6%, #fff);
+  background: var(--vl-soft);
   border: 1px dashed var(--vl-border);
   font-size: 0.78rem;
   word-break: break-all;
@@ -223,7 +237,7 @@
 .vl-rewards__qr-form button,
 .vl-rewards__qr-btn {
   border: 1px solid var(--vl-border);
-  background: #fff;
+  background: var(--vl-surface);
   color: var(--vl-plum);
   border-radius: 999px;
   padding: 0.55rem 0.95rem;
@@ -235,7 +249,7 @@
 .vl-rewards__actions button:hover,
 .vl-rewards__qr-form button:hover,
 .vl-rewards__qr-btn:hover {
-  background: color-mix(in srgb, var(--vl-plum) 8%, #fff);
+  background: var(--vl-hover);
 }
 
 .vl-rewards__hint,
@@ -287,7 +301,7 @@
   border-radius: 0.75rem;
   padding: 0.55rem 0.75rem;
   font-size: 0.86rem;
-  background: #fff;
+  background: var(--vl-surface);
   color: var(--vl-plum);
 }
 

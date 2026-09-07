@@ -228,26 +228,26 @@ export function MyVeloraPreview({
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col bg-[#F6F0F8] px-4 pb-8 pt-4">
+    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col bg-[var(--account-bg)] px-4 pb-8 pt-4">
       <header className="mb-4 flex items-center justify-between">
         <Link
           href="/account/my-velora"
-          className="text-[0.9rem] text-[#5E4A66] transition-opacity hover:opacity-70"
+          className="text-[0.9rem] text-[var(--account-plum)] transition-opacity hover:opacity-70"
         >
           {ar ? "← رجوع" : "← Back"}
         </Link>
-        <p className="font-latin text-[0.72rem] tracking-[0.32em] text-[#8B7A92]">
+        <p className="font-latin text-[0.72rem] tracking-[0.32em] text-[var(--account-muted)]">
           MY VELORA
         </p>
       </header>
 
       <div className="mx-auto flex w-full flex-1 flex-col items-center">
-        <div className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] bg-[#E8DDF0] shadow-[0_24px_80px_rgba(61,38,64,0.18)]">
+        <div className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] bg-[var(--account-lilac)] shadow-[var(--shadow-lg)]">
           <div className="relative w-full" style={{ aspectRatio: "1080 / 1920" }}>
             {loadingCard ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#3D2640]/20 border-t-[#3D2640]" />
-                <p className="text-[0.82rem] text-[#7A6880]">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--account-plum)]/20 border-t-[var(--account-plum)]" />
+                <p className="text-[0.82rem] text-[var(--account-muted)]">
                   {ar
                     ? "الخادم يجهّز بطاقتكِ الآن…"
                     : "Preparing your card on the server…"}
@@ -260,7 +260,7 @@ export function MyVeloraPreview({
                 <button
                   type="button"
                   onClick={() => setBust((n) => n + 1)}
-                  className="rounded-full bg-[#3D2640] px-4 py-2 text-[0.8rem] text-white"
+                  className="rounded-full bg-[var(--plum-fill)] px-4 py-2 text-[0.8rem] text-[var(--ivory-fixed)]"
                 >
                   {ar ? "إعادة المحاولة" : "Retry"}
                 </button>
@@ -280,7 +280,7 @@ export function MyVeloraPreview({
           </div>
         </div>
 
-        <p className="mt-3 text-center text-[0.75rem] text-[#8B7A92]">
+        <p className="mt-3 text-center text-[0.75rem] text-[var(--account-muted)]">
           {payload.productCount} {ar ? "منتج" : "products"} · {payload.brandCount}{" "}
           {ar ? "علامة" : "brands"} · +{payload.pointsEarned}{" "}
           {ar ? "نقطة" : "pts"}
@@ -306,7 +306,7 @@ export function MyVeloraPreview({
             <button
               type="button"
               onClick={() => setStyleOpen((v) => !v)}
-              className="rounded-full border border-[#D8CCE3] bg-white/80 px-4 py-2 text-[0.82rem] text-[#4A384F]"
+              className="rounded-full border border-[var(--account-border)] bg-[var(--bg-glass)] px-4 py-2 text-[0.82rem] text-[var(--account-plum)]"
             >
               {ar ? "الأسلوب" : "Style"}
             </button>
@@ -314,7 +314,7 @@ export function MyVeloraPreview({
               type="button"
               onClick={onSave}
               disabled={saving || sharingIg || !imgLoaded || loadingCard}
-              className="rounded-full bg-[#3D2640] px-5 py-2 text-[0.82rem] text-white disabled:opacity-60"
+              className="rounded-full bg-[var(--plum-fill)] px-5 py-2 text-[0.82rem] text-[var(--ivory-fixed)] disabled:opacity-60"
             >
               {saving ? "…" : ar ? "حفظ في الصور" : "Save to Photos"}
             </button>
@@ -322,14 +322,14 @@ export function MyVeloraPreview({
               type="button"
               onClick={onShare}
               disabled={sharing || sharingIg || !imgLoaded || loadingCard}
-              className="rounded-full border border-[#3D2640] bg-white/80 px-5 py-2 text-[0.82rem] text-[#3D2640]"
+              className="rounded-full border border-[var(--plum-fill)] bg-[var(--bg-glass)] px-5 py-2 text-[0.82rem] text-[var(--account-plum)]"
             >
               {sharing ? "…" : ar ? "مشاركة" : "Share"}
             </button>
             <button
               type="button"
               onClick={onCopyLink}
-              className="rounded-full px-3 py-2 text-[0.78rem] text-[#7A6880] underline-offset-2 hover:underline"
+              className="rounded-full px-3 py-2 text-[0.78rem] text-[var(--account-muted)] underline-offset-2 hover:underline"
             >
               {ar ? "نسخ الرابط" : "Copy link"}
             </button>
@@ -337,8 +337,8 @@ export function MyVeloraPreview({
         </div>
 
         {styleOpen ? (
-          <div className="mt-4 w-full rounded-[22px] border border-[#E5DAEE] bg-white/90 p-3">
-            <p className="mb-2 text-center text-[0.78rem] tracking-[0.2em] text-[#8B7A92]">
+          <div className="mt-4 w-full rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-glass-strong)] p-3">
+            <p className="mb-2 text-center text-[0.78rem] tracking-[0.2em] text-[var(--account-muted)]">
               {ar ? "اختاري أسلوبك" : "Choose your style"}
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -350,8 +350,8 @@ export function MyVeloraPreview({
                   className={cn(
                     "rounded-xl px-3 py-2.5 text-[0.78rem] transition-colors",
                     styleKey === opt.key
-                      ? "bg-[#3D2640] text-white"
-                      : "bg-[#F3ECF7] text-[#4A384F] hover:bg-[#EAE0F0]",
+                      ? "bg-[var(--plum-fill)] text-[var(--ivory-fixed)]"
+                      : "bg-[var(--account-lilac)] text-[var(--account-plum)] hover:opacity-90",
                   )}
                 >
                   {ar ? opt.nameAr : opt.nameEn}
@@ -362,15 +362,15 @@ export function MyVeloraPreview({
         ) : null}
 
         {message ? (
-          <p className="mt-4 text-center text-[0.85rem] leading-relaxed text-[#5E4A66]">
+          <p className="mt-4 text-center text-[0.85rem] leading-relaxed text-[var(--account-plum)]">
             {message}
           </p>
         ) : null}
       </div>
 
       {!reviewDone ? (
-        <section className="mt-8 rounded-[24px] border border-[#E5DAEE] bg-white/85 p-5">
-          <h2 className="text-center font-display text-[1.05rem] text-[#3D2640]">
+        <section className="mt-8 rounded-[24px] border border-[var(--account-border)] bg-[var(--bg-glass)] p-5">
+          <h2 className="text-center font-display text-[1.05rem] text-[var(--account-plum)]">
             {ar ? "كيف كانت تجربتك مع VELORA؟" : "How was your VELORA experience?"}
           </h2>
           <form onSubmit={onSubmitReview} className="mt-4 space-y-4">
@@ -382,7 +382,7 @@ export function MyVeloraPreview({
                   onClick={() => setRating(n)}
                   className={cn(
                     "transition-transform hover:scale-110",
-                    rating >= n ? "text-[#C9A227]" : "text-[#D8CCE3]",
+                    rating >= n ? "text-[#C9A227]" : "text-[var(--account-dust)]",
                   )}
                   aria-label={`${n}`}
                 >
@@ -394,10 +394,10 @@ export function MyVeloraPreview({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={ar ? "تعليق اختياري…" : "Optional comment…"}
-              className="min-h-[80px] w-full rounded-2xl border border-[#E5DAEE] bg-[#FBF8FC] px-4 py-3 text-[0.88rem] outline-none focus:border-[#C4B0D4]"
+              className="min-h-[80px] w-full rounded-2xl border border-[var(--account-border)] bg-[var(--bg-input)] px-4 py-3 text-[0.88rem] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--account-orchid)]"
             />
             {reviewRewardPoints > 0 ? (
-              <p className="text-center text-[0.78rem] text-[#8B7A92]">
+              <p className="text-center text-[0.78rem] text-[var(--account-muted)]">
                 {ar
                   ? `قد تحصلين على +${reviewRewardPoints} نقطة عند التقييم`
                   : `You may earn +${reviewRewardPoints} points for reviewing`}
@@ -406,7 +406,7 @@ export function MyVeloraPreview({
             <button
               type="submit"
               disabled={rating < 1 || reviewSubmitting}
-              className="w-full rounded-full bg-[#3D2640] py-3 text-[0.88rem] text-white disabled:opacity-50"
+              className="w-full rounded-full bg-[var(--plum-fill)] py-3 text-[0.88rem] text-[var(--ivory-fixed)] disabled:opacity-50"
             >
               {reviewSubmitting ? "…" : ar ? "إرسال التقييم" : "Submit review"}
             </button>

@@ -10,10 +10,10 @@ export default function MyVeloraPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F0F8]">
+    <div className="min-h-screen bg-[var(--account-bg)]">
       <Suspense
         fallback={
-          <p className="py-20 text-center text-[0.9rem] text-[#8B7A92]">
+          <p className="py-20 text-center text-[0.9rem] text-[var(--account-muted)]">
             Loading…
           </p>
         }

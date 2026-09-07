@@ -167,7 +167,7 @@ export function LarsaChat({
           ) : null}
 
           {messages.length === 0 ? (
-            <div className="rounded-[22px] border border-[var(--larsa-border)] bg-white p-6 text-center">
+            <div className="rounded-[22px] border border-[var(--larsa-border)] bg-[var(--larsa-white)] p-6 text-center">
               <p className="text-[0.95rem] leading-relaxed text-[var(--larsa-plum-soft)]">
                 مرحباً — أنا لارسا. احكي لي عن بشرتكِ أو شعركِ أو مناسبتكِ،
                 وأرتّب لكِ روتيناً من منتجات VELORA فقط.
@@ -207,7 +207,7 @@ export function LarsaChat({
                     "max-w-[92%] rounded-[20px] px-4 py-3 text-[0.925rem] leading-relaxed sm:max-w-[85%]",
                     isUser
                       ? "bg-[var(--larsa-plum)] text-white"
-                      : "border border-[var(--larsa-border)] bg-white text-[var(--larsa-plum)]",
+                      : "border border-[var(--larsa-border)] bg-[var(--larsa-white)] text-[var(--larsa-plum)]",
                   )}
                 >
                   {text ? (
@@ -229,7 +229,7 @@ export function LarsaChat({
 
           {busy && thinkingLabel ? (
             <div className="flex justify-end">
-              <div className="flex items-center gap-2 rounded-[20px] border border-[var(--larsa-border)] bg-white px-4 py-3 text-[0.875rem] text-[var(--larsa-muted)]">
+              <div className="flex items-center gap-2 rounded-[20px] border border-[var(--larsa-border)] bg-[var(--larsa-white)] px-4 py-3 text-[0.875rem] text-[var(--larsa-muted)]">
                 <span
                   className="inline-block size-1.5 animate-pulse rounded-full bg-[var(--larsa-plum)]"
                   aria-hidden

@@ -30,6 +30,7 @@
   --bg-elevated: #ffffff;
   --bg-sunken: #f1eae6;
   --bg-input: #ffffff;
+  --bg-interactive: #f7f2f6;
   --bg-glass: rgba(255, 255, 255, 0.82);
   --bg-glass-strong: rgba(255, 255, 255, 0.92);
   --bg-overlay: rgba(26, 18, 28, 0.45);
@@ -143,6 +144,7 @@
   --bg-elevated: #1c181b;
   --bg-sunken: #121014;
   --bg-input: #221e22;
+  --bg-interactive: #2a2428;
   --bg-glass: rgba(28, 24, 27, 0.88);
   --bg-glass-strong: rgba(34, 30, 34, 0.94);
   --bg-overlay: rgba(8, 6, 9, 0.62);
@@ -211,9 +213,40 @@
   --wa-cta-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
+[data-theme="dark"] .velora-launch__glow--c {
+  background: rgba(90, 70, 100, 0.35);
+}
+
 /* جسر: bg-white الصلب → سطح ثيم */
 [data-theme="dark"] .bg-white {
   background-color: var(--bg-elevated);
+}
+
+[data-theme="dark"] .bg-\[\#F6F0F8\],
+[data-theme="dark"] .bg-\[\#FBF8FC\],
+[data-theme="dark"] .bg-\[\#FAF9FC\],
+[data-theme="dark"] .bg-\[\#F3ECF7\],
+[data-theme="dark"] .bg-\[\#E8DDF0\] {
+  background-color: var(--account-lilac) !important;
+}
+
+[data-theme="dark"] .text-\[\#3D2640\],
+[data-theme="dark"] .text-\[\#24202B\],
+[data-theme="dark"] .text-\[\#4A384F\],
+[data-theme="dark"] .text-\[\#5E4A66\] {
+  color: var(--account-plum) !important;
+}
+
+[data-theme="dark"] .text-\[\#8B7A92\],
+[data-theme="dark"] .text-\[\#7A6880\],
+[data-theme="dark"] .text-\[\#777080\] {
+  color: var(--account-muted) !important;
+}
+
+/* Soft elevation border — charcoal depth instead of heavy black shadow */
+[data-theme="dark"] .shadow-\[0_24px_70px_rgba\(90\,74\,122\,0\.14\)\],
+[data-theme="dark"] .shadow-\[0_24px_80px_rgba\(61\,38\,64\,0\.18\)\] {
+  box-shadow: var(--shadow-lg) !important;
 }
 
 /* نص ivory على أزرار plum — يبقى فاتحاً دائماً */
@@ -967,6 +1000,21 @@ html[data-locale="en"] .font-display {
   color: var(--account-plum);
 }
 
+.acc-passport-hero,
+.mv-passport-cta {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--account-lilac) 88%, #fff) 0%,
+    var(--account-lilac) 48%,
+    color-mix(in srgb, var(--account-dust) 55%, var(--account-lilac)) 100%
+  );
+}
+
+[data-theme="dark"] .acc-passport-hero,
+[data-theme="dark"] .mv-passport-cta {
+  background: linear-gradient(135deg, #1c181b 0%, #241f26 48%, #2e2830 100%);
+}
+
 .account-input {
   width: 100%;
   border-radius: 14px;
@@ -1063,6 +1111,25 @@ html[data-locale="en"] .font-display {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.14) inset,
     0 12px 26px rgba(155, 52, 64, 0.28);
+}
+
+[data-theme="dark"] .account-logout-btn {
+  border-color: rgba(212, 138, 144, 0.22);
+  background: rgba(212, 138, 144, 0.1);
+  color: #d48a90;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .account-logout-btn:hover:not(:disabled) {
+  background: rgba(212, 138, 144, 0.16);
+  border-color: rgba(212, 138, 144, 0.32);
+  color: #e0a0a6;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .account-logout-btn--solid {
+  background: linear-gradient(180deg, #8a3a44 0%, #6e2e36 100%);
+  color: #f8f4f1;
 }
 
 /* ─── VELORA ADMIN OS ─── */
@@ -1245,6 +1312,10 @@ html[data-locale="en"] .font-display {
   transition: opacity 0.48s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="dark"] .velora-launch {
+  background: #141114;
+}
+
 html[data-launch="1"] .velora-launch {
   display: grid;
 }
@@ -1269,6 +1340,14 @@ html[data-launch="done"] .velora-launch {
     radial-gradient(ellipse 45% 38% at 88% 18%, rgba(196, 176, 212, 0.12), transparent 72%),
     linear-gradient(180deg, #ffffff 0%, #fbf8f6 48%, #f5f0f8 100%);
   animation: velora-launch-breathe 8s ease-in-out infinite alternate;
+}
+
+[data-theme="dark"] .velora-launch__atmosphere {
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 32%, rgba(120, 90, 140, 0.22), transparent 68%),
+    radial-gradient(ellipse 50% 40% at 18% 78%, rgba(90, 60, 80, 0.18), transparent 70%),
+    radial-gradient(ellipse 45% 38% at 88% 18%, rgba(100, 80, 120, 0.14), transparent 72%),
+    linear-gradient(180deg, #1c181b 0%, #141114 48%, #1a1619 100%);
 }
 
 .velora-launch__glow {

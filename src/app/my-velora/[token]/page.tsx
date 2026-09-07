@@ -37,26 +37,26 @@ export default async function MyVeloraReferralPage({ params }: Props) {
 
   return (
     <main
-      className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center bg-[#F6F0F8] px-6 py-16 text-center"
+      className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center bg-[var(--account-bg)] px-6 py-16 text-center"
       dir="rtl"
     >
-      <p className="font-latin text-[0.65rem] tracking-[0.38em] text-[#8B7A92]">
+      <p className="font-latin text-[0.65rem] tracking-[0.38em] text-[var(--account-muted)]">
         VELORA
       </p>
-      <h1 className="font-display mt-4 text-[1.6rem] font-semibold leading-snug text-[#3D2640]">
+      <h1 className="font-display mt-4 text-[1.6rem] font-semibold leading-snug text-[var(--account-plum)]">
         صديقتك شاركت للتو
         <br />
         لحظة جمال VELORA ✦
       </h1>
       {link.card ? (
-        <p className="mt-5 text-[0.92rem] text-[#7A6880]">
+        <p className="mt-5 text-[0.92rem] text-[var(--account-muted)]">
           {link.card.productCount} منتج · {link.card.brandCount} علامة · +
           {link.card.pointsEarned} نقطة
         </p>
       ) : null}
       <Link
         href="/shop"
-        className="mt-10 inline-flex rounded-full bg-[#3D2640] px-8 py-3 text-[0.9rem] text-white"
+        className="mt-10 inline-flex rounded-full bg-[var(--plum-fill)] px-8 py-3 text-[0.9rem] text-[var(--ivory-fixed)]"
       >
         استكشفي VELORA
       </Link>

@@ -57,7 +57,7 @@ export function AuthHeader({ className }: { className?: string }) {
         {open ? (
           <ul
             role="listbox"
-            className="absolute end-0 top-[calc(100%+0.35rem)] min-w-[9rem] overflow-hidden rounded-xl border border-[var(--velora-border)] bg-white py-1 shadow-[var(--velora-shadow-soft)]"
+            className="absolute end-0 top-[calc(100%+0.35rem)] min-w-[9rem] overflow-hidden rounded-xl border border-[var(--velora-border)] bg-[var(--velora-white)] py-1 shadow-[var(--velora-shadow-soft)]"
           >
             <li>
               <button

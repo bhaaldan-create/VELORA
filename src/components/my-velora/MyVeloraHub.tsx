@@ -65,7 +65,7 @@ export function MyVeloraHub() {
 
   if (loading) {
     return (
-      <p className="py-20 text-center text-[0.9rem] text-[#8B7A92]">
+      <p className="py-20 text-center text-[0.9rem] text-[var(--account-muted)]">
         {ar ? "جارٍ التحميل…" : "Loading…"}
       </p>
     );
@@ -83,32 +83,32 @@ export function MyVeloraHub() {
     <div className="mx-auto max-w-2xl px-4 py-10" dir={ar ? "rtl" : "ltr"}>
       <Link
         href="/account/my-velora/passport"
-        className="block overflow-hidden rounded-[8px] border border-[#DCD3F5] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-10 text-center shadow-[0_24px_70px_rgba(90,74,122,0.14)] transition hover:-translate-y-0.5"
+        className="mv-passport-cta block overflow-hidden rounded-[8px] border border-[var(--account-border)] px-5 py-10 text-center shadow-[var(--shadow-lg)] transition hover:-translate-y-0.5"
       >
-        <p className="font-latin text-[0.58rem] tracking-[0.42em] text-[#7E68B5]">
+        <p className="font-latin text-[0.58rem] tracking-[0.42em] text-[var(--account-orchid)]">
           MY VELORA PASSPORT
         </p>
-        <p className="font-display mt-3 text-[1.5rem] tracking-[0.06em] text-[#24202B]">
+        <p className="font-display mt-3 text-[1.5rem] tracking-[0.06em] text-[var(--account-plum)]">
           {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
         </p>
-        <p className="mx-auto mt-2 max-w-xs text-[0.8rem] leading-relaxed text-[#777080]">
+        <p className="mx-auto mt-2 max-w-xs text-[0.8rem] leading-relaxed text-[var(--account-muted)]">
           {ar
             ? "هويتكِ داخل عالم VELORA — المستوى، XP، الإنجازات، والتحقق."
             : "Your identity inside VELORA — level, XP, achievements, and verification."}
         </p>
-        <span className="mt-6 inline-flex rounded-full bg-[#24202B] px-7 py-2.5 font-latin text-[0.62rem] tracking-[0.28em] text-white uppercase">
+        <span className="mt-6 inline-flex rounded-full bg-[var(--plum-fill)] px-7 py-2.5 font-latin text-[0.62rem] tracking-[0.28em] text-[var(--ivory-fixed)] uppercase">
           {ar ? "فتح الجواز" : "Open Passport"}
         </span>
       </Link>
 
       <div className="mt-12 text-center">
-        <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#8B7A92]">
+        <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[var(--account-muted)]">
           MY VELORA CARDS
         </p>
-        <h1 className="font-display mt-2 text-[1.35rem] font-semibold text-[#3D2640]">
+        <h1 className="font-display mt-2 text-[1.35rem] font-semibold text-[var(--account-plum)]">
           {ar ? "بطاقات طلباتك" : "Your order cards"}
         </h1>
-        <p className="mx-auto mt-2 max-w-sm text-[0.82rem] text-[#8B7A92]">
+        <p className="mx-auto mt-2 max-w-sm text-[0.82rem] text-[var(--account-muted)]">
           {ar
             ? "لحظات جمالكِ الجاهزة للمشاركة بعد كل طلب."
             : "Share-ready beauty moments from your orders."}
@@ -116,21 +116,21 @@ export function MyVeloraHub() {
       </div>
 
       {!hasCards ? (
-        <div className="mv-fade-in mt-12 rounded-[28px] border border-[#E5DAEE] bg-white/80 px-8 py-16 text-center">
-          <p className="text-[1.4rem] text-[#C4A8D8]">✦</p>
-          <h2 className="mt-4 font-display text-[1.15rem] text-[#3D2640]">
+        <div className="mv-fade-in mt-12 rounded-[28px] border border-[var(--account-border)] bg-[var(--bg-glass)] px-8 py-16 text-center">
+          <p className="text-[1.4rem] text-[var(--account-orchid)]">✦</p>
+          <h2 className="mt-4 font-display text-[1.15rem] text-[var(--account-plum)]">
             {ar
               ? "أول لحظة VELORA بانتظارك ✦"
               : "Your first VELORA moment is waiting ✦"}
           </h2>
-          <p className="mx-auto mt-3 max-w-sm text-[0.9rem] text-[#8B7A92]">
+          <p className="mx-auto mt-3 max-w-sm text-[0.9rem] text-[var(--account-muted)]">
             {ar
               ? "عندما يصل طلبك، ستظهر بطاقتك الجاهزة للمشاركة هنا."
               : "When your order arrives, your share-ready card will appear here."}
           </p>
           <Link
             href="/shop"
-            className="mt-8 inline-flex rounded-full bg-[#3D2640] px-6 py-2.5 text-[0.85rem] text-white"
+            className="mt-8 inline-flex rounded-full bg-[var(--plum-fill)] px-6 py-2.5 text-[0.85rem] text-[var(--ivory-fixed)]"
           >
             {ar ? "اكتشفي VELORA" : "Discover VELORA"}
           </Link>
@@ -141,15 +141,15 @@ export function MyVeloraHub() {
             <Link
               key={card.id}
               href={`/account/my-velora/${card.orderId}`}
-              className="mv-slide-up block rounded-[22px] border border-[#E5DAEE] bg-white/85 px-5 py-5 transition-colors hover:bg-[#F8F2FB]"
+              className="mv-slide-up block rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-glass)] px-5 py-5 transition-colors hover:bg-[var(--account-lilac)]"
             >
-              <p className="font-latin text-[0.78rem] text-[#8B7A92]" dir="ltr">
+              <p className="font-latin text-[0.78rem] text-[var(--account-muted)]" dir="ltr">
                 #{card.orderId}
               </p>
-              <p className="mt-1 text-[1rem] font-medium text-[#3D2640]">
+              <p className="mt-1 text-[1rem] font-medium text-[var(--account-plum)]">
                 {ar ? "بطاقتك جاهزة ✦" : "Your VELORA Card is Ready ✦"}
               </p>
-              <p className="mt-2 text-[0.85rem] text-[#7A6880]">
+              <p className="mt-2 text-[0.85rem] text-[var(--account-muted)]">
                 {card.productCount} {ar ? "منتج" : "products"} · {card.brandCount}{" "}
                 {ar ? "علامة" : "brands"} · +{card.pointsEarned}{" "}
                 {ar ? "نقطة" : "pts"}
@@ -160,7 +160,7 @@ export function MyVeloraHub() {
       )}
 
       <section className="mt-14">
-        <h2 className="font-display text-center text-[1.2rem] text-[#3D2640]">
+        <h2 className="font-display text-center text-[1.2rem] text-[var(--account-plum)]">
           {ar ? "MY VELORA JOURNEY" : "MY VELORA JOURNEY"}
         </h2>
         {journey?.hasEligibleOrders ? (
@@ -173,19 +173,19 @@ export function MyVeloraHub() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-[18px] border border-[#E5DAEE] bg-white/80 px-3 py-4 text-center"
+                className="rounded-[18px] border border-[var(--account-border)] bg-[var(--bg-glass)] px-3 py-4 text-center"
               >
-                <p className="font-latin text-[1.35rem] font-semibold text-[#3D2640]">
+                <p className="font-latin text-[1.35rem] font-semibold text-[var(--account-plum)]">
                   {item.n.toLocaleString()}
                 </p>
-                <p className="mt-1 text-[0.72rem] tracking-[0.16em] text-[#8B7A92] uppercase">
+                <p className="mt-1 text-[0.72rem] tracking-[0.16em] text-[var(--account-muted)] uppercase">
                   {item.label}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-center text-[0.88rem] text-[#8B7A92]">
+          <p className="mt-4 text-center text-[0.88rem] text-[var(--account-muted)]">
             {ar
               ? "رحلتك مع VELORA ستنمو مع كل طلب."
               : "Your VELORA Journey will grow with every order."}
@@ -195,7 +195,7 @@ export function MyVeloraHub() {
 
       {achievements.length ? (
         <section className="mt-12">
-          <h2 className="font-display text-center text-[1.1rem] text-[#3D2640]">
+          <h2 className="font-display text-center text-[1.1rem] text-[var(--account-plum)]">
             {ar ? "إنجازاتك" : "Achievements"}
           </h2>
           <div className="mt-5 space-y-2">
@@ -204,12 +204,12 @@ export function MyVeloraHub() {
               return (
                 <div
                   key={a.achievementKey}
-                  className="rounded-[18px] border border-[#E5DAEE] bg-white/75 px-4 py-3"
+                  className="rounded-[18px] border border-[var(--account-border)] bg-[var(--bg-glass)] px-4 py-3"
                 >
-                  <p className="font-latin text-[0.82rem] font-semibold tracking-[0.12em] text-[#3D2640]">
+                  <p className="font-latin text-[0.82rem] font-semibold tracking-[0.12em] text-[var(--account-plum)]">
                     {def ? (ar ? def.nameAr : def.nameEn) : a.achievementKey}
                   </p>
-                  <p className="mt-1 text-[0.78rem] text-[#8B7A92]">
+                  <p className="mt-1 text-[0.78rem] text-[var(--account-muted)]">
                     {def ? (ar ? def.descAr : def.descEn) : ""}
                   </p>
                 </div>

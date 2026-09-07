@@ -7,6 +7,33 @@
   );
 }
 
+[data-theme="dark"] .mv-style-soft-beauty {
+  background: linear-gradient(
+    180deg,
+    rgba(90, 60, 100, 0.28) 0%,
+    rgba(50, 35, 60, 0.2) 45%,
+    rgba(20, 14, 24, 0.12) 100%
+  );
+}
+
+.mv-passport-cta {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--account-lilac) 88%, #fff) 0%,
+    var(--account-lilac) 48%,
+    color-mix(in srgb, var(--account-dust) 55%, var(--account-lilac)) 100%
+  );
+}
+
+[data-theme="dark"] .mv-passport-cta {
+  background: linear-gradient(
+    135deg,
+    #1c181b 0%,
+    #241f26 48%,
+    #2e2830 100%
+  );
+}
+
 .mv-style-dark-luxury {
   background: linear-gradient(
     180deg,

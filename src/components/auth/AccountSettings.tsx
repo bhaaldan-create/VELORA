@@ -396,25 +396,28 @@ export function AccountSettings() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Sidebar */}
         <aside className="shrink-0 lg:w-[240px]">
-          <div className="rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] px-5 py-6 lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
+          <div className="acc-side lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
             {/* dir=ltr يمنع عكس حرفَي My في الواجهة العربية */}
-            <div className="text-center" dir="ltr">
-              <p className="font-latin text-[0.62rem] font-medium tracking-[0.38em] text-[var(--account-muted)] uppercase">
+            <div className="acc-side-brand" dir="ltr">
+              <p className="font-latin text-[0.62rem] font-medium tracking-[0.38em] text-[var(--acc-muted)] uppercase">
                 My
               </p>
-              <p className="font-latin mt-1.5 text-[1.4rem] font-semibold leading-none tracking-[0.28em] text-[var(--account-plum)] uppercase">
+              <p className="font-latin mt-1.5 text-[1.35rem] font-semibold leading-none tracking-[0.28em] text-[var(--acc-plum)] uppercase">
                 Velora
               </p>
               <span
-                className="mx-auto mt-3 block h-px w-9 bg-[var(--account-orchid)]/50"
+                className="mx-auto mt-3 block h-px w-9 bg-[var(--acc-orchid)]/50"
                 aria-hidden
               />
-              <p className="mt-3 text-[0.78rem] leading-relaxed text-[var(--account-muted)]" dir={ar ? "rtl" : "ltr"}>
+              <p
+                className="mt-3 text-[0.78rem] leading-relaxed text-[var(--acc-muted)]"
+                dir={ar ? "rtl" : "ltr"}
+              >
                 {ar ? "مساحتك الخاصة" : "Your private space"}
               </p>
             </div>
 
-            <nav className="mt-7 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+            <nav className="acc-side-nav" aria-label={ar ? "أقسام الحساب" : "Account sections"}>
               {NAV.map((item) => {
                 const active = section === item.id;
                 return (
@@ -422,48 +425,28 @@ export function AccountSettings() {
                     key={item.id}
                     type="button"
                     onClick={() => goTo(item.id)}
-                    className={cn(
-                      "shrink-0 rounded-2xl px-4 py-2.5 text-center text-[0.9rem] transition-colors duration-200 lg:text-start",
-                      active
-                        ? "bg-[var(--account-lilac)] font-medium text-[var(--account-plum)]"
-                        : "text-[var(--account-muted)] hover:bg-[var(--account-lilac)]/50 hover:text-[var(--account-plum)]",
-                    )}
+                    className={cn("acc-side-link", active && "is-active")}
                   >
                     {ar ? item.ar : item.en}
                   </button>
                 );
               })}
               {isCustomerFeatureEnabled("myVelora") ? (
-                <Link
-                  href="/account/my-velora"
-                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-                >
-                  <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                    <span aria-hidden>✦</span>
-                    <span>{ar ? "MY VELORA" : "MY VELORA"}</span>
-                  </span>
+                <Link href="/account/my-velora" className="acc-side-feature">
+                  <span aria-hidden>✦</span>
+                  <span>MY VELORA</span>
                 </Link>
               ) : null}
               {isCustomerFeatureEnabled("passport") ? (
-                <Link
-                  href="/account/my-velora/passport"
-                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-white/70 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-                >
-                  <span className="inline-flex items-center justify-center gap-2 lg:justify-start">
-                    <span aria-hidden>◇</span>
-                    <span>{ar ? "جواز VELORA" : "My Passport"}</span>
-                  </span>
+                <Link href="/account/my-velora/passport" className="acc-side-feature">
+                  <span aria-hidden>◇</span>
+                  <span>{ar ? "جواز VELORA" : "My Passport"}</span>
                 </Link>
               ) : null}
               {isCustomerFeatureEnabled("club") ? (
-                <Link
-                  href="/account/club"
-                  className="shrink-0 rounded-2xl border border-[var(--account-border)] bg-[var(--account-lilac)]/40 px-3 py-2.5 text-center text-[0.86rem] font-medium text-[var(--account-plum)] transition-colors duration-200 hover:bg-[var(--account-lilac)] lg:text-start"
-                >
-                  <span className="inline-flex items-center justify-center gap-2.5 lg:justify-start">
-                    <ClubLogo height={26} />
-                    <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
-                  </span>
+                <Link href="/account/club" className="acc-side-feature">
+                  <ClubLogo height={26} />
+                  <span>{ar ? "نادي الجمال" : "Beauty Club"}</span>
                 </Link>
               ) : null}
             </nav>
@@ -479,21 +462,25 @@ export function AccountSettings() {
         </aside>
 
         {/* Main */}
-        <div className="min-w-0 flex-1 space-y-8">
+        <div className="min-w-0 flex-1 space-y-6 sm:space-y-8">
           {section === "overview" ? (
             <>
-              {/* Profile hero */}
+              {/* Profile Hero + Stats */}
               <section className="acc-hero">
                 <div className="acc-hero-inner">
-                  <div className="min-w-0 flex-1">
+                  <div className="acc-hero-copy">
                     <h1 className="acc-greeting">
                       {ar ? `مرحباً، ${name}` : `Welcome, ${name}`}
                     </h1>
                     <p className="acc-welcome">
-                      <AccIcon name="heart" size={14} />
                       {ar
-                        ? "يسعدنا أن نراك مجدداً في VELORA."
+                        ? "يسعدنا أن نراك مجددًا في VELORA."
                         : "We’re glad to see you again at VELORA."}
+                    </p>
+                    <p className="acc-tagline">
+                      {ar
+                        ? "الجمال يبدأ من الاهتمام بالنفس."
+                        : "Beauty begins with caring for yourself."}
                     </p>
                     <button
                       type="button"
@@ -516,7 +503,10 @@ export function AccountSettings() {
                         )}
                       </div>
                     </div>
-                    <label className="acc-avatar-cam" title={ar ? "صورة الملف" : "Profile photo"}>
+                    <label
+                      className="acc-avatar-cam"
+                      title={ar ? "صورة الملف" : "Profile photo"}
+                    >
                       <AccIcon name="camera" size={13} />
                       <input
                         type="file"
@@ -531,49 +521,10 @@ export function AccountSettings() {
                   </div>
                 </div>
 
-                <div className="acc-philosophy" aria-label="VELORA philosophy">
-                  <span>
-                    <AccIcon name="spark" size={13} />
-                    {ar ? "جمالكِ" : "Your beauty"}
-                  </span>
-                  <i aria-hidden />
-                  <span>
-                    <AccIcon name="leaf" size={13} />
-                    {ar ? "طقوسكِ" : "Your rituals"}
-                  </span>
-                  <i aria-hidden />
-                  <span>
-                    <AccIcon name="diamond" size={13} />
-                    {ar ? "فيلورا" : "Your VELORA"}
-                  </span>
-                </div>
-              </section>
-
-              {isCustomerFeatureEnabled("passport") ? (
-                <Link
-                  href="/account/my-velora/passport"
-                  className="acc-passport-hero block overflow-hidden rounded-[20px] border border-[var(--account-border)] bg-gradient-to-br from-[#FAF9FC] via-[#F5F1FB] to-[#E8E0F8] px-5 py-6 shadow-[0_18px_50px_rgba(90,74,122,0.1)] transition hover:-translate-y-0.5"
+                <div
+                  className="acc-hero-stats"
+                  data-cols={isCustomerFeatureEnabled("coupons") ? "4" : "3"}
                 >
-                  <p className="font-latin text-[0.58rem] tracking-[0.38em] text-[#7E68B5]">
-                    MY VELORA PASSPORT
-                  </p>
-                  <p className="font-display mt-2 text-[1.2rem] tracking-[0.04em] text-[#24202B]">
-                    {ar ? "جوازكِ الرقمي" : "Your Digital Passport"}
-                  </p>
-                  <p className="mt-2 max-w-md text-[0.82rem] leading-relaxed text-[#777080]">
-                    {ar
-                      ? "هويتكِ داخل VELORA — المستوى، XP، الإنجازات، والتحقق."
-                      : "Your identity inside VELORA — level, XP, achievements, and verification."}
-                  </p>
-                  <span className="mt-4 inline-flex rounded-full bg-[#24202B] px-5 py-2 font-latin text-[0.6rem] tracking-[0.24em] text-white uppercase">
-                    {ar ? "فتح الجواز" : "Open Passport"}
-                  </span>
-                </Link>
-              ) : null}
-
-              {/* Stats */}
-              <section className="acc-card mt-5 sm:mt-6">
-                <div className="acc-stats">
                   <button
                     type="button"
                     className="acc-stat"
@@ -585,19 +536,6 @@ export function AccountSettings() {
                     <p className="num">{wishCount}</p>
                     <p className="lbl">{ar ? "المفضلة" : "Saved"}</p>
                   </button>
-                  {isCustomerFeatureEnabled("coupons") ? (
-                    <button
-                      type="button"
-                      className="acc-stat"
-                      onClick={() => goTo("settings")}
-                    >
-                      <span className="ico">
-                        <AccIcon name="ticket" size={16} />
-                      </span>
-                      <p className="num">{couponCount}</p>
-                      <p className="lbl">{ar ? "الكوبونات" : "Coupons"}</p>
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     className="acc-stat"
@@ -622,11 +560,158 @@ export function AccountSettings() {
                     <p className="num">{myOrders.length}</p>
                     <p className="lbl">{ar ? "الطلبات" : "Orders"}</p>
                   </button>
+                  {isCustomerFeatureEnabled("coupons") ? (
+                    <button
+                      type="button"
+                      className="acc-stat"
+                      onClick={() => goTo("settings")}
+                    >
+                      <span className="ico">
+                        <AccIcon name="ticket" size={16} />
+                      </span>
+                      <p className="num">{couponCount}</p>
+                      <p className="lbl">{ar ? "الكوبونات" : "Coupons"}</p>
+                    </button>
+                  ) : null}
+                </div>
+              </section>
+
+              {isCustomerFeatureEnabled("passport") ? (
+                <Link href="/account/my-velora/passport" className="acc-passport">
+                  <p className="acc-passport__eyebrow">MY VELORA PASSPORT</p>
+                  <p className="acc-passport__title">
+                    {ar
+                      ? "جوازك الرقمي لعالم الجمال"
+                      : "Your digital passport to beauty"}
+                  </p>
+                  <p className="acc-passport__body">
+                    {ar
+                      ? "مكافآت، مزايا حصرية، وتجربة أكثر تميزًا."
+                      : "Rewards, exclusive privileges, and a more elevated experience."}
+                  </p>
+                  <span className="acc-passport__cta">
+                    {ar ? "عرض المزايا" : "View benefits"}
+                    <AccChevron />
+                  </span>
+                </Link>
+              ) : null}
+
+              {/* Quick actions */}
+              <section aria-label={ar ? "اختصارات الحساب" : "Account shortcuts"}>
+                <div className="acc-actions">
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("orders")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="package" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "الطلبات" : "Orders"}</span>
+                      <span className="sub">
+                        {ar ? "تتبّعي حالة طلباتك" : "Track your orders"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("wishlist")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="heart" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "المفضلة" : "Favorites"}</span>
+                      <span className="sub">
+                        {ar ? "قطعك المحفوظة" : "Your saved pieces"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("addresses")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="pin" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "عناويني" : "Addresses"}</span>
+                      <span className="sub">
+                        {ar ? "عنوان التوصيل الافتراضي" : "Default delivery address"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="card" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "طرق الدفع" : "Payments"}</span>
+                      <span className="sub">
+                        {ar ? "إدارة خيارات الدفع" : "Manage payment options"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => router.push("/account/notifications")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="bell" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "الإشعارات" : "Notifications"}</span>
+                      <span className="sub">
+                        {ar ? "آخر التحديثات لكِ" : "Your latest updates"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="acc-action"
+                    onClick={() => goTo("settings")}
+                  >
+                    <span className="bubble">
+                      <AccIcon name="settings" size={17} />
+                    </span>
+                    <span className="meta">
+                      <span className="title">{ar ? "الإعدادات" : "Settings"}</span>
+                      <span className="sub">
+                        {ar ? "المظهر والأمان" : "Appearance & security"}
+                      </span>
+                    </span>
+                    <span className="chev" aria-hidden>
+                      <AccChevron />
+                    </span>
+                  </button>
                 </div>
               </section>
 
               {/* Orders timeline */}
-              <section className="acc-card mt-5 sm:mt-6">
+              <section className="acc-card">
                 <div className="acc-section-head">
                   <h2>{ar ? "طلباتي" : "My orders"}</h2>
                   <button
@@ -638,7 +723,7 @@ export function AccountSettings() {
                   </button>
                 </div>
                 {ordersLoading ? (
-                  <p className="text-[0.85rem] text-[var(--account-muted)]">
+                  <p className="text-[0.85rem] text-[var(--acc-muted)]">
                     {ar ? "جارٍ التحميل…" : "Loading…"}
                   </p>
                 ) : (
@@ -690,14 +775,14 @@ export function AccountSettings() {
                 )}
                 {!ordersLoading && !myOrders.length ? (
                   <div className="mt-5 text-center">
-                    <p className="text-[0.85rem] text-[var(--account-muted)]">
+                    <p className="text-[0.85rem] text-[var(--acc-muted)]">
                       {ar
                         ? "لا توجد طلبات بعد — ابدئي رحلتكِ من المتجر."
                         : "No orders yet — begin your journey in the shop."}
                     </p>
                     <Link
                       href="/shop"
-                      className="mt-3 inline-block text-[0.8rem] text-[var(--account-plum)] underline underline-offset-4"
+                      className="mt-3 inline-block text-[0.8rem] text-[var(--acc-plum)] underline underline-offset-4"
                     >
                       {ar ? "تسوّقي الآن" : "Shop now"}
                     </Link>
@@ -705,106 +790,15 @@ export function AccountSettings() {
                 ) : null}
               </section>
 
-              {/* Quick actions */}
-              <section className="mt-5 sm:mt-6">
-                <div className="acc-actions">
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => router.push("/account/notifications")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="spark" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "الإشعارات" : "Notifications"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => goTo("wishlist")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="heart" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "المفضلة" : "Favorites"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => goTo("settings")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="card" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "طرق الدفع" : "Payments"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => goTo("addresses")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="pin" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "العناوين" : "Addresses"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => goTo("settings")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="settings" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "الإعدادات" : "Settings"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="acc-action"
-                    onClick={() => goTo("settings")}
-                  >
-                    <span className="bubble">
-                      <AccIcon name="shield" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "الخصوصية والأمان" : "Privacy"}
-                    </span>
-                  </button>
-                  <a
-                    href={helpUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="acc-action"
-                  >
-                    <span className="bubble">
-                      <AccIcon name="support" size={17} />
-                    </span>
-                    <span className="title">
-                      {ar ? "مركز المساعدة" : "Help center"}
-                    </span>
-                  </a>
-                </div>
-              </section>
-
               {/* Loyalty membership card — real ledger balance */}
-              <section className="mt-5 sm:mt-6">
+              <section>
                 <LoyaltyMembershipCard available={loyaltyAvailable} ar={ar} />
               </section>
 
               {/* Compact extras */}
-              <section className="mt-5 grid gap-4 sm:mt-6 lg:grid-cols-2">
+              <section className="grid gap-4 lg:grid-cols-2">
                 <div className="acc-card">
-                  <h3 className="text-[0.95rem] font-semibold text-[var(--account-plum)]">
+                  <h3 className="text-[0.95rem] font-semibold text-[var(--acc-plum)]">
                     {ar ? "محفوظاتك الجميلة" : "Your saved pieces"}
                   </h3>
                   <div className="mt-4 space-y-3">
@@ -818,7 +812,7 @@ export function AccountSettings() {
                       />
                     ))}
                     {!wishProducts.length ? (
-                      <p className="py-4 text-center text-[0.82rem] text-[var(--account-muted)]">
+                      <p className="py-4 text-center text-[0.82rem] text-[var(--acc-muted)]">
                         {ar ? "قائمتكِ فارغة حالياً." : "Your list is empty for now."}
                       </p>
                     ) : null}
@@ -826,55 +820,64 @@ export function AccountSettings() {
                   <button
                     type="button"
                     onClick={() => goTo("wishlist")}
-                    className="mt-3 text-[0.78rem] text-[var(--account-plum)] underline underline-offset-4"
+                    className="mt-3 text-[0.78rem] text-[var(--acc-plum)] underline underline-offset-4"
                   >
                     {ar ? "عرض الكل" : "View all"}
                   </button>
                 </div>
 
                 <div className="acc-card">
-                  <h3 className="text-[0.95rem] font-semibold text-[var(--account-plum)]">
+                  <h3 className="text-[0.95rem] font-semibold text-[var(--acc-plum)]">
                     {ar ? "لارسا" : "LARSA"}
                   </h3>
-                  <p className="mt-2 text-[0.84rem] text-[var(--account-muted)]">
+                  <p className="mt-2 text-[0.84rem] text-[var(--acc-muted)]">
                     {ar
                       ? "مستشارتك الشخصية لاكتشاف روتين جمالكِ."
                       : "Your personal guide to discovering your beauty ritual."}
                   </p>
-                  <Link
-                    href="/advisor"
-                    className="acc-edit-btn mt-4"
-                  >
+                  <Link href="/advisor" className="acc-soft-btn mt-4">
                     {ar ? "تحدثي مع لارسا" : "Talk to LARSA"}
                     <AccIcon name="spark" size={13} />
                   </Link>
                 </div>
               </section>
 
-              <section className="mt-5 rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] p-5 sm:mt-6 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-[0.95rem] font-semibold text-[var(--plum)]">
-                      {ar ? "إنهاء الجلسة" : "End session"}
-                    </p>
-                    <p className="mt-1 text-[0.8rem] text-[var(--account-muted)]">
-                      {ar
-                        ? "سجّلي الخروج بأمان من حسابكِ على هذا الجهاز."
-                        : "Sign out securely from your account on this device."}
-                    </p>
-                  </div>
-                  <div className="w-full sm:w-auto sm:min-w-[200px]">
-                    <AccountLogoutButton
-                      ar={ar}
-                      busy={loggingOut}
-                      variant="solid"
-                      onClick={() => void onLogout()}
-                    />
-                  </div>
-                </div>
-              </section>
+              {/* Support */}
+              <a
+                href={helpUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="acc-support"
+              >
+                <span className="bubble">
+                  <AccIcon name="support" size={18} />
+                </span>
+                <span className="meta">
+                  <span className="title">
+                    {ar ? "مركز المساعدة" : "Help center"}
+                  </span>
+                  <span className="sub">
+                    {ar
+                      ? "نحن هنا لمساعدتك دائمًا"
+                      : "We’re always here to help you"}
+                  </span>
+                </span>
+                <span className="chev" aria-hidden>
+                  <AccChevron />
+                </span>
+              </a>
 
-              <ServiceStrip ar={ar} />
+              {/* Logout */}
+              <div className="acc-logout">
+                <AccountLogoutButton
+                  ar={ar}
+                  busy={loggingOut}
+                  variant="minimal"
+                  onClick={() => void onLogout()}
+                />
+              </div>
+
+              <BrandClosing ar={ar} />
             </>
           ) : null}
 
@@ -1160,8 +1163,30 @@ function AccountLogoutButton({
   ar: boolean;
   busy?: boolean;
   onClick: () => void;
-  variant?: "soft" | "solid";
+  variant?: "soft" | "solid" | "minimal";
 }) {
+  if (variant === "minimal") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={busy}
+        className="acc-logout-btn"
+      >
+        <LogoutIcon />
+        <span>
+          {busy
+            ? ar
+              ? "جارٍ الخروج…"
+              : "Signing out…"
+            : ar
+              ? "تسجيل الخروج"
+              : "Sign out"}
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
@@ -1227,7 +1252,8 @@ function AccIcon({
     | "pin"
     | "settings"
     | "shield"
-    | "support";
+    | "support"
+    | "bell";
   size?: number;
 }) {
   const s = {
@@ -1238,6 +1264,13 @@ function AccIcon({
     strokeLinejoin: "round" as const,
   };
   switch (name) {
+    case "bell":
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
+          <path d="M6.5 9.5a5.5 5.5 0 0111 0c0 4.2 1.5 5.5 1.5 5.5H5s1.5-1.3 1.5-5.5z" />
+          <path d="M10 18.5a2 2 0 004 0" />
+        </svg>
+      );
     case "heart":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden {...s}>
@@ -1536,28 +1569,30 @@ function Empty({
   );
 }
 
-function ServiceStrip({ ar }: { ar: boolean }) {
-  const items = ar
-    ? [
-        { t: "تغليف فاخر", d: "نهتم بتفاصيل تجربتك" },
-        { t: "توصيل سريع وآمن", d: "إلى جميع مناطق العراق" },
-        { t: "منتجات أصلية 100%", d: "من أفضل العلامات العالمية" },
-        { t: "خدمة عملاء راقية", d: "نحن هنا لمساعدتك دائماً" },
-      ]
-    : [
-        { t: "Luxury wrapping", d: "We care for every detail" },
-        { t: "Fast & secure delivery", d: "Across all of Iraq" },
-        { t: "100% authentic", d: "From the world’s finest houses" },
-        { t: "Refined client care", d: "We’re always here for you" },
-      ];
+function AccChevron() {
   return (
-    <section className="grid gap-4 rounded-[22px] border border-[var(--account-border)] bg-[var(--bg-elevated)] p-6 sm:grid-cols-2 lg:grid-cols-4">
-      {items.map((item) => (
-        <div key={item.t} className="text-center sm:text-start">
-          <p className="text-[0.9rem] font-medium text-[var(--account-plum)]">{item.t}</p>
-          <p className="mt-1 text-[0.75rem] text-[var(--account-muted)]">{item.d}</p>
-        </div>
-      ))}
-    </section>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M9 5.5 15.5 12 9 18.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BrandClosing({ ar }: { ar: boolean }) {
+  return (
+    <footer className="acc-closing">
+      <p className="acc-closing__quote">
+        {ar
+          ? "لأن جمالكِ… حكايتنا دائمًا"
+          : "Because your beauty… is always our story"}
+      </p>
+      <div className="acc-closing__rule" aria-hidden />
+      <p className="acc-closing__brand">VELORA</p>
+    </footer>
   );
 }

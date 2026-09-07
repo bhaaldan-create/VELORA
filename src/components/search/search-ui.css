@@ -2,6 +2,7 @@
 .vs-root {
   --vs-pearl: #fdfcfe;
   --vs-paper: #f8f6fc;
+  --vs-surface: #ffffff;
   --vs-lavender: #7e68b5;
   --vs-lavender-soft: #ebe6f4;
   --vs-lavender-deep: #5a4a7a;
@@ -10,12 +11,42 @@
   --vs-border: rgba(126, 104, 181, 0.14);
   --vs-gold: #c4b08a;
   --vs-radius: 14px;
+  --vs-shadow: 0 8px 28px rgba(90, 74, 122, 0.06);
+  --vs-shadow-lg: 0 18px 50px rgba(90, 74, 122, 0.12);
+  --vs-backdrop: #f7f5fb;
+  --vs-backdrop-grad: linear-gradient(165deg, #fdfcfe 0%, #f8f6fc 48%, #f0ebf7 100%);
+  --vs-panel-grad: linear-gradient(180deg, #ffffff 0%, #fdfcfe 55%, #f8f6fc 100%);
+  --vs-chrome-grad: linear-gradient(180deg, #fff, rgba(253, 252, 254, 0.98));
+  --vs-searchbar-grad: linear-gradient(180deg, #fff, var(--vs-paper));
+  --vs-sidebar-grad: linear-gradient(165deg, #fff, var(--vs-paper));
+  --vs-on-primary: #ffffff;
 
   /* Layer ladder (local + drawers). Focus layer uses body portal vars below. */
   --vs-z-base: 0;
   --vs-z-content: 1;
   --vs-z-drawer-backdrop: 60;
   --vs-z-drawer: 61;
+}
+
+[data-theme="dark"] .vs-root {
+  --vs-pearl: #1c181b;
+  --vs-paper: #221e22;
+  --vs-surface: #241f26;
+  --vs-lavender: #a894d4;
+  --vs-lavender-soft: #2e2830;
+  --vs-lavender-deep: #d4cae8;
+  --vs-ink: #f3ebe6;
+  --vs-muted: #9a8a92;
+  --vs-border: rgba(168, 148, 212, 0.18);
+  --vs-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --vs-shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --vs-backdrop: #141114;
+  --vs-backdrop-grad: linear-gradient(165deg, #1a1619 0%, #141114 48%, #1c181b 100%);
+  --vs-panel-grad: linear-gradient(180deg, #1c181b 0%, #1a1619 55%, #221e22 100%);
+  --vs-chrome-grad: linear-gradient(180deg, #221e22, rgba(28, 24, 27, 0.98));
+  --vs-searchbar-grad: linear-gradient(180deg, #241f26, var(--vs-paper));
+  --vs-sidebar-grad: linear-gradient(165deg, #241f26, var(--vs-paper));
+  --vs-on-primary: #f8f4f1;
 }
 
 /*
@@ -26,6 +57,7 @@
 .vs-focus {
   --vs-pearl: #fdfcfe;
   --vs-paper: #f8f6fc;
+  --vs-surface: #ffffff;
   --vs-lavender: #7e68b5;
   --vs-lavender-soft: #ebe6f4;
   --vs-lavender-deep: #5a4a7a;
@@ -34,6 +66,15 @@
   --vs-border: rgba(126, 104, 181, 0.16);
   --vs-gold: #c4b08a;
   --vs-radius: 16px;
+  --vs-shadow: 0 8px 28px rgba(90, 74, 122, 0.06);
+  --vs-shadow-lg: 0 18px 50px rgba(90, 74, 122, 0.12);
+  --vs-backdrop: #f7f5fb;
+  --vs-backdrop-grad: linear-gradient(165deg, #fdfcfe 0%, #f8f6fc 48%, #f0ebf7 100%);
+  --vs-panel-grad: linear-gradient(180deg, #ffffff 0%, #fdfcfe 55%, #f8f6fc 100%);
+  --vs-chrome-grad: linear-gradient(180deg, #fff, rgba(253, 252, 254, 0.98));
+  --vs-searchbar-grad: linear-gradient(180deg, #fff, var(--vs-paper));
+  --vs-sidebar-grad: linear-gradient(165deg, #fff, var(--vs-paper));
+  --vs-on-primary: #ffffff;
   --vs-z-focus-backdrop: 70;
   --vs-z-focus-panel: 71;
 
@@ -48,6 +89,27 @@
   max-height: 100dvh;
   box-sizing: border-box;
   animation: vs-focus-in 200ms ease-out both;
+}
+
+[data-theme="dark"] .vs-focus {
+  --vs-pearl: #1c181b;
+  --vs-paper: #221e22;
+  --vs-surface: #241f26;
+  --vs-lavender: #a894d4;
+  --vs-lavender-soft: #2e2830;
+  --vs-lavender-deep: #d4cae8;
+  --vs-ink: #f3ebe6;
+  --vs-muted: #9a8a92;
+  --vs-border: rgba(168, 148, 212, 0.2);
+  --vs-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --vs-shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --vs-backdrop: #141114;
+  --vs-backdrop-grad: linear-gradient(165deg, #1a1619 0%, #141114 48%, #1c181b 100%);
+  --vs-panel-grad: linear-gradient(180deg, #1c181b 0%, #1a1619 55%, #221e22 100%);
+  --vs-chrome-grad: linear-gradient(180deg, #221e22, rgba(28, 24, 27, 0.98));
+  --vs-searchbar-grad: linear-gradient(180deg, #241f26, var(--vs-paper));
+  --vs-sidebar-grad: linear-gradient(165deg, #241f26, var(--vs-paper));
+  --vs-on-primary: #f8f4f1;
 }
 
 @media (min-width: 768px) {
@@ -86,14 +148,8 @@
   padding: 0;
   cursor: default;
   /* Solid enough that brand logos cannot read through */
-  background: #f7f5fb;
-  background-image:
-    linear-gradient(
-      165deg,
-      #fdfcfe 0%,
-      #f8f6fc 48%,
-      #f0ebf7 100%
-    );
+  background: var(--vs-backdrop);
+  background-image: var(--vs-backdrop-grad);
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
   backdrop-filter: blur(18px) saturate(1.08);
 }
@@ -110,7 +166,7 @@
   margin-inline: 0;
   border-radius: 0;
   border: none;
-  background: #fdfcfe;
+  background: var(--vs-pearl);
   box-shadow: none;
   overflow: hidden;
   animation: vs-focus-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -138,7 +194,7 @@
     0.55rem
     max(0.75rem, env(safe-area-inset-left, 0px));
   border-bottom: 1px solid var(--vs-border);
-  background: #fff;
+  background: var(--vs-surface);
 }
 
 .vs-focus__back {
@@ -150,10 +206,10 @@
   flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid var(--vs-border);
-  background: #fff;
+  background: var(--vs-surface);
   color: var(--vs-lavender-deep);
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(90, 74, 122, 0.06);
+  box-shadow: var(--vs-shadow);
 }
 
 .vs-focus__back:focus-visible {
@@ -177,7 +233,7 @@
     max(0.45rem, env(safe-area-inset-right, 0px))
     max(1rem, env(safe-area-inset-bottom, 0px))
     max(0.45rem, env(safe-area-inset-left, 0px));
-  background: #fdfcfe;
+  background: var(--vs-pearl);
 }
 
 @media (min-width: 768px) {
@@ -196,14 +252,14 @@
     margin-inline: auto;
     border-radius: calc(var(--vs-radius) + 4px);
     border: 1px solid var(--vs-border);
-    background: linear-gradient(180deg, #ffffff 0%, #fdfcfe 55%, #f8f6fc 100%);
+    background: var(--vs-panel-grad);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.85) inset,
-      0 18px 48px rgba(90, 74, 122, 0.12);
+      0 1px 0 color-mix(in srgb, var(--vs-surface) 85%, transparent) inset,
+      var(--vs-shadow-lg);
   }
 
   .vs-focus__chrome {
-    background: linear-gradient(180deg, #fff, rgba(253, 252, 254, 0.98));
+    background: var(--vs-chrome-grad);
   }
 }
 
@@ -216,8 +272,8 @@
   padding: 0.7rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--vs-border);
-  background: linear-gradient(180deg, #fff, var(--vs-paper));
-  box-shadow: 0 8px 28px rgba(90, 74, 122, 0.06);
+  background: var(--vs-searchbar-grad);
+  box-shadow: var(--vs-shadow);
 }
 
 .vs-searchbar__icon {
@@ -268,8 +324,8 @@
   overflow: auto;
   border-radius: var(--vs-radius);
   border: 1px solid var(--vs-border);
-  background: #fff;
-  box-shadow: 0 18px 50px rgba(90, 74, 122, 0.12);
+  background: var(--vs-surface);
+  box-shadow: var(--vs-shadow-lg);
   padding: 0.65rem 0.55rem;
 }
 
@@ -339,7 +395,7 @@
   gap: 0.4rem;
   border-radius: 999px;
   border: 1px solid var(--vs-border);
-  background: #fff;
+  background: var(--vs-surface);
   color: var(--vs-lavender-deep);
   font-size: 0.8rem;
   font-weight: 500;
@@ -350,7 +406,7 @@
 .vs-btn--primary {
   background: var(--vs-lavender-deep);
   border-color: var(--vs-lavender-deep);
-  color: #fff;
+  color: var(--vs-on-primary);
 }
 
 .vs-btn--ghost {
@@ -403,7 +459,7 @@
   flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid var(--vs-border);
-  background: #fff;
+  background: var(--vs-surface);
   color: var(--vs-muted);
   font-size: 0.74rem;
   padding: 0.38rem 0.8rem;
@@ -443,7 +499,7 @@
   padding: 0.85rem;
   border-radius: var(--vs-radius);
   border: 1px solid var(--vs-border);
-  background: linear-gradient(165deg, #fff, var(--vs-paper));
+  background: var(--vs-sidebar-grad);
 }
 
 @media (min-width: 960px) {
@@ -502,7 +558,8 @@
   border: 1px solid var(--vs-border);
   padding: 0.4rem 0.55rem;
   font-size: 0.8rem;
-  background: #fff;
+  background: var(--vs-surface);
+  color: var(--vs-ink);
 }
 
 .vs-price__range {
@@ -517,6 +574,8 @@
   border: 1px solid var(--vs-border);
   padding: 0.4rem 0.55rem;
   font-size: 0.8rem;
+  background: var(--vs-surface);
+  color: var(--vs-ink);
 }
 
 .vs-drawer-backdrop {
@@ -585,7 +644,7 @@
 .vs-sort select {
   border-radius: 999px;
   border: 1px solid var(--vs-border);
-  background: #fff;
+  background: var(--vs-surface);
   padding: 0.45rem 0.85rem;
   font-size: 0.8rem;
   color: var(--vs-lavender-deep);

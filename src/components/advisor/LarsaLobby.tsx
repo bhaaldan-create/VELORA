@@ -76,7 +76,7 @@ export function LarsaLobby({
           <button
             type="button"
             onClick={onOpenChat}
-            className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--larsa-plum)]/25 bg-white px-6 py-3 text-[0.9rem] font-medium text-[var(--larsa-plum)] shadow-sm transition hover:border-[var(--larsa-plum)]/45 hover:bg-[var(--larsa-lavender)]/40"
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--larsa-plum)]/25 bg-[var(--larsa-white)] px-6 py-3 text-[0.9rem] font-medium text-[var(--larsa-plum)] shadow-sm transition hover:border-[var(--larsa-plum)]/45 hover:bg-[var(--larsa-lavender)]/40"
           >
             <span className="font-latin text-[11px] tracking-[0.18em]">CHAT</span>
             <span>تحدّثي مع لارسا مباشرة</span>
@@ -91,7 +91,7 @@ export function LarsaLobby({
               onClick={() =>
                 onQuickPrompt ? onQuickPrompt(topic.prompt) : onOpenChat()
               }
-              className="rounded-full bg-white px-3.5 py-2 text-[12px] text-[var(--larsa-plum-soft)] ring-1 ring-[var(--larsa-border)] transition hover:bg-[var(--larsa-lavender)]/50 hover:text-[var(--larsa-plum)]"
+              className="rounded-full bg-[var(--larsa-white)] px-3.5 py-2 text-[12px] text-[var(--larsa-plum-soft)] ring-1 ring-[var(--larsa-border)] transition hover:bg-[var(--larsa-lavender)]/50 hover:text-[var(--larsa-plum)]"
             >
               {topic.titleAr}
             </button>

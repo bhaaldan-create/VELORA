@@ -54,7 +54,7 @@ export function LarsaAvatar({
         />
       </div>
       {thinking ? (
-        <span className="absolute -bottom-1 -start-1 rounded-full bg-white p-1 shadow-[0_4px_16px_rgba(58,24,54,0.08)] ring-1 ring-[var(--larsa-border)]">
+        <span className="absolute -bottom-1 -start-1 rounded-full bg-[var(--larsa-white)] p-1 shadow-[0_4px_16px_rgba(58,24,54,0.08)] ring-1 ring-[var(--larsa-border)]">
           <LarsaMark size={22} spinning />
         </span>
       ) : null}

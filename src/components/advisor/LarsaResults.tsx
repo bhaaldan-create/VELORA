@@ -137,7 +137,7 @@ export function LarsaResults({
               <article
                 key={item.id}
                 className={cn(
-                  "flex flex-col gap-4 rounded-[22px] border border-[var(--larsa-border)] bg-white p-4 sm:flex-row sm:items-stretch sm:gap-5 sm:p-5",
+                  "flex flex-col gap-4 rounded-[22px] border border-[var(--larsa-border)] bg-[var(--larsa-white)] p-4 sm:flex-row sm:items-stretch sm:gap-5 sm:p-5",
                   "motion-safe:animate-[velora-rise_0.6s_ease-out_both]",
                 )}
                 style={{ animationDelay: `${i * 90}ms` }}

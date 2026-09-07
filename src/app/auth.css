@@ -97,7 +97,7 @@
   width: 100%;
   max-width: 640px;
   margin-inline: auto;
-  background: rgba(255, 255, 255, 0.92);
+  background: color-mix(in srgb, var(--velora-white) 92%, transparent);
   border: 1px solid var(--velora-border);
   border-radius: calc(var(--velora-radius) + 4px);
   box-shadow: var(--velora-shadow);

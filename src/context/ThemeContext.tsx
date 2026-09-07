@@ -40,6 +40,7 @@ function applyTheme(mode: ThemeMode, animate = false) {
   }
   root.setAttribute("data-theme", mode);
   root.style.colorScheme = mode;
+  root.style.backgroundColor = mode === "dark" ? "#141114" : "#F8F4F1";
 
   /* مزامنة لون شريط المتصفح مع اختيار المستخدم (لا مع نظام OS) */
   const meta = document.querySelector('meta[name="theme-color"]');

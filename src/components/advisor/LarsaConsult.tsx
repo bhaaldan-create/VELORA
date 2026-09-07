@@ -163,7 +163,7 @@ export function LarsaConsult({
               {understood.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full bg-white px-3 py-1 text-[11px] text-[var(--larsa-plum)] ring-1 ring-[var(--larsa-border)]"
+                  className="rounded-full bg-[var(--larsa-white)] px-3 py-1 text-[11px] text-[var(--larsa-plum)] ring-1 ring-[var(--larsa-border)]"
                 >
                   {t}
                 </span>
@@ -191,7 +191,7 @@ export function LarsaConsult({
                   "rounded-[22px] border px-5 py-5 text-start transition-all duration-[200ms] ease-out",
                   isSelected
                     ? "border-[var(--larsa-plum)] bg-[var(--larsa-lavender)]"
-                    : "border-[var(--larsa-border)] bg-white hover:border-[var(--larsa-border-strong)] hover:bg-[var(--larsa-wash)]",
+                    : "border-[var(--larsa-border)] bg-[var(--larsa-white)] hover:border-[var(--larsa-border-strong)] hover:bg-[var(--larsa-wash)]",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">

@@ -39,7 +39,7 @@ export default async function TrackOrderPage({ params }: Props) {
         #{entry.orderId}
       </p>
 
-      <div className="mt-8 border border-[var(--plum)]/15 bg-white p-6">
+      <div className="mt-8 border border-[var(--plum)]/15 bg-[var(--bg-elevated)] p-6">
         <p className="t2 text-[var(--muted)]">الحالة الحالية</p>
         <p className="font-display t6 mt-2 text-[var(--plum)]">
           {ORDER_STATUS_LABELS[entry.status]}
@@ -95,7 +95,7 @@ export default async function TrackOrderPage({ params }: Props) {
       {isCustomerFeatureEnabled("myVelora") && entry.status === "delivered" ? (
         <Link
           href={`/account/my-velora/${entry.orderId}`}
-          className="mt-6 block rounded-[18px] border border-[var(--plum)]/15 bg-[#F6F0F8] px-5 py-4 text-center transition-colors hover:bg-[#EDE4F3]"
+          className="mt-6 block rounded-[18px] border border-[var(--account-border)] bg-[var(--account-lilac)] px-5 py-4 text-center transition-colors hover:bg-[var(--account-dust)]/30"
         >
           <p className="font-display text-[1.05rem] text-[var(--plum)]">
             بطاقتك VELORA جاهزة ✦
