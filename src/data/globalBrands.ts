@@ -96,6 +96,7 @@ export const globalBrandProducts: GlobalBrandProduct[] = [
 export const featuredBrandNames = [
   "L'Oréal Paris",
   "Maybelline New York",
+  "Fenty Beauty",
   "La Roche-Posay",
   "Vichy",
   "CeraVe",

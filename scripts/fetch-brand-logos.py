@@ -41,6 +41,7 @@ BRANDS: dict[str, tuple[str | None, str]] = {
     "estee-lauder": ("Estée Lauder Companies logo.svg", "esteelauder.com"),
     "la-girl": ("L.A. Girl logo", "lagirlusa.com"),
     "maybelline": (None, "maybelline.com"),  # already have svg
+    "fenty-beauty": (None, "fentybeauty.com"),  # official PNG already in public
     "nars": (None, "narscosmetics.com"),
     "nyx": (None, "nyxcosmetics.com"),
     "ofra": ("OFRA Cosmetics logo", "ofracosmetics.com"),

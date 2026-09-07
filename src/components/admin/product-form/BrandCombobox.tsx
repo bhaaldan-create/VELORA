@@ -134,7 +134,7 @@ export function BrandCombobox({ value, onChange, required, id }: Props) {
           <img
             src={selected.logo}
             alt=""
-            className="size-7 rounded-full object-cover"
+            className="size-7 rounded-[7px] bg-white object-contain"
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-[var(--admin-text)]" dir="ltr">
@@ -178,7 +178,7 @@ export function BrandCombobox({ value, onChange, required, id }: Props) {
                     <img
                       src={b.logo}
                       alt=""
-                      className="size-8 rounded-full object-cover"
+                      className="size-8 rounded-[8px] bg-[var(--admin-surface-soft)] object-contain"
                     />
                     <span className="min-w-0 flex-1">
                       <span

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { shopBrands } from "@/data/shop-brands";
 import { writeAuditLog } from "@/lib/finance/audit";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,27 @@ export async function GET() {
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
-  return Response.json({ ok: true, brands, suppliers });
+
+  const profileBySlug = new Map(brands.map((b) => [b.slug, b]));
+  const storefront = shopBrands.map((b) => ({
+    id: b.id,
+    slug: b.slug,
+    name: b.name,
+    nameAr: b.nameAr,
+    country: b.country,
+    countryAr: b.countryAr,
+    countryCode: b.countryCode,
+    logo: b.logo,
+    profileId: profileBySlug.get(b.slug)?.id ?? null,
+  }));
+
+  return Response.json({
+    ok: true,
+    brands,
+    suppliers,
+    storefront,
+    storefrontCount: shopBrands.length,
+  });
 }
 
 const schema = z.object({
@@ -42,6 +63,55 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   const body = await req.json();
+
+  /** Sync all official shop brands into BrandProfile (idempotent). */
+  if (body?.action === "sync-shop") {
+    let created = 0;
+    let updated = 0;
+    for (const b of shopBrands) {
+      const existing = await prisma.brandProfile.findUnique({
+        where: { slug: b.slug },
+      });
+      if (existing) {
+        await prisma.brandProfile.update({
+          where: { slug: b.slug },
+          data: {
+            name: b.name,
+            countryOfOrigin: b.countryAr || b.country,
+            notes:
+              existing.notes?.trim() ||
+              `براند المتجر الرسمي · ${b.nameAr}`,
+          },
+        });
+        updated += 1;
+      } else {
+        await prisma.brandProfile.create({
+          data: {
+            name: b.name,
+            slug: b.slug,
+            countryOfOrigin: b.countryAr || b.country,
+            officialWebsite: "",
+            notes: `براند المتجر الرسمي · ${b.nameAr}`,
+            currency: "USD",
+          },
+        });
+        created += 1;
+      }
+    }
+    await writeAuditLog({
+      action: "brand.sync-shop",
+      entityType: "BrandProfile",
+      entityId: "shop-brands",
+      after: { created, updated, total: shopBrands.length },
+    });
+    return Response.json({
+      ok: true,
+      created,
+      updated,
+      total: shopBrands.length,
+    });
+  }
+
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ ok: false, error: "بيانات غير صالحة" }, { status: 400 });

@@ -3,6 +3,8 @@ const KNOWN_BRANDS = [
   "L'Oreal Paris",
   "Maybelline New York",
   "Maybelline",
+  "Fenty Beauty",
+  "Fenty",
   "La Roche-Posay",
   "CeraVe",
   "Neutrogena",
@@ -18,7 +20,9 @@ export function getProductBrand(name: string, nameAr?: string): string {
   const hay = `${name} ${nameAr ?? ""}`;
   for (const brand of KNOWN_BRANDS) {
     if (hay.toLowerCase().includes(brand.toLowerCase())) {
-      return brand === "L'Oreal Paris" ? "L'Oréal Paris" : brand;
+      if (brand === "L'Oreal Paris") return "L'Oréal Paris";
+      if (brand === "Fenty") return "Fenty Beauty";
+      return brand;
     }
   }
   // First 1–3 Title Case tokens before a dash / Arabic name
