@@ -180,6 +180,7 @@ export function ProductEditor({
   const [draft, setDraft] = useState(() => draftFromProduct(initialProduct));
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [soldOutBusy, setSoldOutBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [brandBusy, setBrandBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -324,6 +325,49 @@ export function ProductEditor({
     }
     setErrors(next);
     return next;
+  }
+
+  async function toggleSoldOutNow() {
+    if (soldOutBusy || saving) return;
+    const current = Math.round(Number(draft.stock) || 0);
+    const nextStock =
+      current > 0 ? 0 : Math.max(1, lastPositiveStockRef.current || 1);
+    if (current > 0) lastPositiveStockRef.current = current;
+
+    setSoldOutBusy(true);
+    patchDraft({ stock: String(nextStock) });
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id, stock: nextStock }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        product?: AdminProductDetail;
+        error?: string;
+      };
+      if (!res.ok || !json.ok || !json.product) {
+        throw new Error(json.error || "تعذّر تحديث حالة النفاذ.");
+      }
+      setProduct(json.product);
+      setDraft((d) => ({ ...d, stock: String(json.product!.stock) }));
+      if (json.product.stock > 0) {
+        lastPositiveStockRef.current = json.product.stock;
+      }
+      toast.success(
+        json.product.stock <= 0
+          ? "تم تعيين المنتج نافذاً — ظاهر بدون إضافة للسلة"
+          : "تم إلغاء النفاذ وإعادة التوفر",
+      );
+    } catch (err) {
+      patchDraft({ stock: String(current) });
+      toast.error(
+        err instanceof Error ? err.message : "تعذّر تحديث حالة النفاذ.",
+      );
+    } finally {
+      setSoldOutBusy(false);
+    }
   }
 
   async function saveAll() {
@@ -636,6 +680,28 @@ export function ProductEditor({
               />
               {draft.isActive ? "ظاهر في المتجر" : "مخفي من المتجر"}
             </span>
+
+            <button
+              type="button"
+              disabled={soldOutBusy || saving}
+              onClick={() => void toggleSoldOutNow()}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-[10px] px-3 text-[12.5px] font-semibold tracking-[0.04em] transition disabled:opacity-50 ${
+                stockStatus === "out"
+                  ? "border border-[var(--admin-danger)]/30 bg-[var(--admin-danger-bg)] text-[var(--admin-danger)]"
+                  : "border border-[#c45a5a]/28 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] text-[#fff8f7] shadow-[0_8px_18px_-12px_rgba(166,61,69,0.5)]"
+              }`}
+              title={
+                stockStatus === "out"
+                  ? "إلغاء النفاذ وإعادة المخزون فوراً"
+                  : "تعيين نفذ فوراً — يبقى ظاهراً بدون إضافة للسلة"
+              }
+            >
+              {soldOutBusy
+                ? "…"
+                : stockStatus === "out"
+                  ? "نافذ · إلغاء"
+                  : "نفذ"}
+            </button>
 
             <button
               type="button"
@@ -970,9 +1036,9 @@ export function ProductEditor({
         </SectionCard>
 
         {/* Inventory */}
-        <SectionCard title="المخزون">
+        <SectionCard title="المخزون والنفاذ">
           <div
-            className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border px-4 py-3 ${
+            className={`mb-4 flex flex-col gap-3 rounded-[14px] border px-4 py-4 sm:flex-row sm:items-center sm:justify-between ${
               stockStatus === "out"
                 ? "border-[var(--admin-danger)]/25 bg-[var(--admin-danger-bg)]"
                 : "border-[var(--admin-border)] bg-[var(--admin-surface-soft)]"
@@ -980,42 +1046,31 @@ export function ProductEditor({
           >
             <div className="min-w-0">
               <p className="text-[13.5px] font-semibold text-[var(--admin-text)]">
-                نفاذ المنتج في المتجر
+                {stockStatus === "out"
+                  ? "المنتج نافذ حالياً"
+                  : "تعيين المنتج نافذاً"}
               </p>
               <p className="mt-0.5 text-[11.5px] text-[var(--admin-text-muted)]">
-                المنتج يبقى ظاهراً، لكن الزبونة لا تستطيع إضافته للحقيبة وتظهر شارة
-                «نفذ»
+                المنتج يبقى ظاهراً في المتجر، لكن الزبونة لا تستطيع إضافته
+                للحقيبة وتظهر شارة حمراء «نفذ». يُطبَّق فوراً بدون انتظار حفظ
+                باقي الحقول.
               </p>
             </div>
             <button
               type="button"
-              role="switch"
-              aria-checked={stockStatus === "out"}
-              onClick={() => {
-                const current = Math.round(Number(draft.stock) || 0);
-                if (current > 0) {
-                  lastPositiveStockRef.current = current;
-                  patchDraft({ stock: "0" });
-                } else {
-                  patchDraft({
-                    stock: String(lastPositiveStockRef.current || 1),
-                  });
-                }
-              }}
-              className={`relative h-9 w-[4.5rem] shrink-0 rounded-full transition ${
+              disabled={soldOutBusy || saving}
+              onClick={() => void toggleSoldOutNow()}
+              className={`inline-flex h-10 shrink-0 items-center justify-center rounded-[11px] px-5 text-[13px] font-semibold tracking-[0.05em] transition disabled:opacity-50 ${
                 stockStatus === "out"
-                  ? "bg-[var(--admin-danger)]"
-                  : "bg-[var(--admin-border)]"
+                  ? "border border-[var(--admin-border)] bg-white text-[var(--admin-text)]"
+                  : "border border-[#c45a5a]/30 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] text-[#fff8f7] shadow-[0_10px_22px_-12px_rgba(166,61,69,0.55)]"
               }`}
             >
-              <span
-                className={`absolute top-1 size-7 rounded-full bg-white shadow transition ${
-                  stockStatus === "out" ? "start-1" : "end-1"
-                }`}
-              />
-              <span className="sr-only">
-                {stockStatus === "out" ? "إلغاء نفاذ المنتج" : "تعيين المنتج نافذاً"}
-              </span>
+              {soldOutBusy
+                ? "جاري التطبيق…"
+                : stockStatus === "out"
+                  ? "إلغاء النفاذ"
+                  : "نفذ الآن"}
             </button>
           </div>
 
