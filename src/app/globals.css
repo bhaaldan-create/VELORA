@@ -474,6 +474,46 @@ textarea::placeholder {
   opacity: 1;
 }
 
+/**
+ * Radical iOS / Capacitor WKWebView zoom kill-switch.
+ * Safari auto-zooms focused fields under 16px — force ≥16px everywhere
+ * on touch/native surfaces (overrides component-level rem sizes).
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ):not([type="button"]):not([type="submit"]):not([type="reset"]):not(
+      [type="image"]
+    ):not([type="hidden"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+html[data-native]
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ):not([type="button"]):not([type="submit"]):not([type="reset"]):not(
+    [type="image"]
+  ):not([type="hidden"]):not([type="color"]),
+html[data-native] textarea,
+html[data-native] select {
+  font-size: 16px !important;
+  touch-action: manipulation;
+}
+
+html[data-native],
+html[data-native] body {
+  touch-action: pan-x pan-y;
+  overscroll-behavior: none;
+}
+
 /* هوامش آمنة — أعلى الشاشة يخصّ الـHeader الثابت؛ الباقي على body */
 html[data-native] body {
   padding-top: 0;
@@ -1021,7 +1061,7 @@ html[data-locale="en"] .font-display {
   border: 1px solid var(--account-border);
   background: var(--account-lilac);
   padding: 0.75rem 1rem;
-  font-size: 0.925rem;
+  font-size: 16px;
   color: var(--account-plum);
   outline: none;
   transition: border-color 0.2s ease;

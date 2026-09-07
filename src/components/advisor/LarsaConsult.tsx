@@ -253,7 +253,7 @@ export function LarsaConsult({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="اكتبي للارسا ما تبحثين عنه…"
-              className="flex-1 rounded-[16px] border border-[var(--larsa-border)] bg-[var(--larsa-wash)] px-4 py-3.5 text-[0.925rem] text-[var(--larsa-plum)] outline-none transition-[border-color] duration-[200ms] placeholder:text-[var(--larsa-muted)] focus:border-[var(--larsa-border-strong)]"
+              className="flex-1 rounded-[16px] border border-[var(--larsa-border)] bg-[var(--larsa-wash)] px-4 py-3.5 text-[16px] text-[var(--larsa-plum)] outline-none transition-[border-color] duration-[200ms] placeholder:text-[var(--larsa-muted)] focus:border-[var(--larsa-border-strong)]"
             />
             <button
               type="submit"

@@ -97,13 +97,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  minimumScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   /* يُحدَّث ديناميكياً عبر ThemeContext ليتوافق مع اختيار المستخدم */
   themeColor: "#F8F4F1",
 };
 
-const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");var dark=t==="dark";if(dark){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute("content",dark?"#141114":"#F8F4F1");}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}var C=window.Capacitor;var native=!!(C&&((C.isNativePlatform&&C.isNativePlatform())||(C.getPlatform&&C.getPlatform()!=="web")));if(!native){try{native=/Capacitor/i.test(navigator.userAgent)||!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.bridge);}catch(e2){}}if(!native)return;document.documentElement.setAttribute("data-native",C&&C.getPlatform?C.getPlatform():"ios");document.documentElement.style.backgroundColor=dark?"#141114":"#F8F4F1";var launchDone=false;try{launchDone=sessionStorage.getItem("velora-launch-done")==="1"||!!window.__VELORA_LAUNCH_DONE__;}catch(e3){}if(launchDone){document.documentElement.setAttribute("data-launch","done");}else{document.documentElement.setAttribute("data-launch","1");}}catch(e){}})();`;
+const themeBootScript = `(function(){try{var t=localStorage.getItem("velora-theme");var dark=t==="dark";if(dark){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark";}var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute("content",dark?"#141114":"#F8F4F1");}var l=localStorage.getItem("velora-locale");if(l==="en"){document.documentElement.lang="en";document.documentElement.dir="ltr";document.documentElement.setAttribute("data-locale","en");}else{document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-locale","ar");}var C=window.Capacitor;var native=!!(C&&((C.isNativePlatform&&C.isNativePlatform())||(C.getPlatform&&C.getPlatform()!=="web")));if(!native){try{native=/Capacitor/i.test(navigator.userAgent)||!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.bridge);}catch(e2){}}var vp=document.querySelector('meta[name="viewport"]');var vpContent="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover";if(vp){vp.setAttribute("content",vpContent);}if(!native)return;document.documentElement.setAttribute("data-native",C&&C.getPlatform?C.getPlatform():"ios");document.documentElement.style.backgroundColor=dark?"#141114":"#F8F4F1";var launchDone=false;try{launchDone=sessionStorage.getItem("velora-launch-done")==="1"||!!window.__VELORA_LAUNCH_DONE__;}catch(e3){}if(launchDone){document.documentElement.setAttribute("data-launch","done");}else{document.documentElement.setAttribute("data-launch","1");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

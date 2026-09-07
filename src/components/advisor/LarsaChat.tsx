@@ -260,7 +260,7 @@ export function LarsaChat({
             onChange={(e) => setInput(e.target.value)}
             placeholder="اكتبي سؤالكِ…"
             disabled={busy}
-            className="flex-1 rounded-full border border-[var(--larsa-border)] bg-[var(--larsa-wash)] px-5 py-3 text-[0.925rem] text-[var(--larsa-plum)] outline-none focus:border-[var(--larsa-border-strong)] disabled:opacity-60"
+            className="flex-1 rounded-full border border-[var(--larsa-border)] bg-[var(--larsa-wash)] px-5 py-3 text-[16px] text-[var(--larsa-plum)] outline-none focus:border-[var(--larsa-border-strong)] disabled:opacity-60"
           />
           {busy ? (
             <button

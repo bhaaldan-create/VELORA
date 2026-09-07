@@ -288,7 +288,7 @@
   border: none;
   background: transparent;
   outline: none;
-  font-size: 0.92rem;
+  font-size: 16px;
   color: var(--vs-ink);
 }
 
@@ -557,7 +557,7 @@
   border-radius: 10px;
   border: 1px solid var(--vs-border);
   padding: 0.4rem 0.55rem;
-  font-size: 0.8rem;
+  font-size: 16px;
   background: var(--vs-surface);
   color: var(--vs-ink);
 }
@@ -573,7 +573,7 @@
   border-radius: 10px;
   border: 1px solid var(--vs-border);
   padding: 0.4rem 0.55rem;
-  font-size: 0.8rem;
+  font-size: 16px;
   background: var(--vs-surface);
   color: var(--vs-ink);
 }

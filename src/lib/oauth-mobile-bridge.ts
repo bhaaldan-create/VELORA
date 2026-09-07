@@ -105,7 +105,7 @@ export function mobileOAuthHandoffResponse(appUrl: string) {
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>VELORA</title>
 <style>
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F8F4F1;color:#3d2640;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:1.5rem}

@@ -8,7 +8,7 @@
   --cw-focus-ring: 0 0 0 3px color-mix(in srgb, var(--plum) 12%, transparent);
   --cw-radius: 18px;
   --cw-radius-lg: 22px;
-  --cw-input-fs: 1rem; /* 16px — prevents iOS Safari auto-zoom */
+  --cw-input-fs: 16px; /* absolute px — prevents iOS/WKWebView auto-zoom */
   --cw-label: var(--muted);
   --cw-ink: var(--ink);
   --cw-icon: color-mix(in srgb, var(--plum) 70%, var(--muted));
