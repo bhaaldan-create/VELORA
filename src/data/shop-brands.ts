@@ -296,7 +296,7 @@ export const shopBrands: ShopBrand[] = [
     countryCode: "US",
     match: ["fenty beauty", "fenty", "rihanna"],
     logo: "/brands/logos/fenty-beauty.png",
-    opticalScale: 0.92,
+    opticalScale: 0.9,
     wash: "linear-gradient(160deg,#f6f6f6 0%,#ececec 55%,#ffffff 100%)",
   },
   {
