@@ -22,7 +22,7 @@ const serverUrl = (
 
 const config: CapacitorConfig = {
   appId: "beauty.velora.app",
-  appName: "VELORA",
+  appName: "VELORA Beauty",
   webDir: "mobile-www",
   backgroundColor: "#F8F4F1",
   android: {
