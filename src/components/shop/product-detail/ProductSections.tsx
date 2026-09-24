@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowUpRight, Check, Sparkles, Star } from "lucide-react";
+import { ArrowUpRight, BookOpen, Check, Sparkles, Star } from "lucide-react";
 import { LarsaAvatar } from "@/components/advisor/LarsaAvatar";
 import { categoryLabels } from "@/constants/brand";
 import type { Product } from "@/types";
@@ -135,11 +135,6 @@ export function ProductAbout({
   const text = (ar ? product.descriptionAr : product.description).trim();
   if (!isPresentValue(text)) return null;
 
-  const benefits = (ar ? product.benefitsAr : product.benefits)
-    .map((t) => t.trim())
-    .filter(isPresentValue)
-    .slice(0, 3);
-
   const [open, setOpen] = useState(false);
   const id = useId();
   const long = text.length > 220;
@@ -153,12 +148,17 @@ export function ProductAbout({
 
   return (
     <section className="pdp-section">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="pdp-section__title">{ar ? copy.aboutAr : copy.about}</h2>
-        <span className="text-[0.72rem] tracking-[0.06em] text-[var(--muted)]" dir="ltr">
-          {ar ? copy.aboutEn : copy.aboutAr}
+      <header className="pdp-about__header">
+        <span className="pdp-about__icon" aria-hidden>
+          <BookOpen className="h-[18px] w-[18px]" strokeWidth={1.4} />
         </span>
-      </div>
+        <div className="min-w-0">
+          <h2 className="pdp-about__title">{ar ? copy.aboutAr : copy.about}</h2>
+          <p className="pdp-about__eyebrow" dir="ltr">
+            {ar ? copy.aboutEn : copy.aboutAr}
+          </p>
+        </div>
+      </header>
 
       <div
         id={id}
@@ -174,27 +174,6 @@ export function ProductAbout({
           ) : null}
         </p>
       </div>
-
-      {benefits.length > 0 ? (
-        <ul className="mt-5 space-y-2">
-          {benefits.map((b, i) => {
-            const { title } = benefitParts(b);
-            return (
-              <li
-                key={`${title}-${i}`}
-                className="flex items-start gap-2 text-[0.82rem] text-[var(--plum)]/85"
-              >
-                <Check
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--blush)]"
-                  strokeWidth={1.6}
-                  aria-hidden
-                />
-                <span>{title}</span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
 
       {long ? (
         <button
