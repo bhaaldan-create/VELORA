@@ -1,7 +1,22 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowUpRight, BookOpen, Check, Sparkles, Star } from "lucide-react";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  BookOpen,
+  Check,
+  ClipboardList,
+  Droplets,
+  Layers,
+  LayoutGrid,
+  Ruler,
+  Shield,
+  Sparkles,
+  Star,
+  Tag,
+  type LucideIcon,
+} from "lucide-react";
 import { LarsaAvatar } from "@/components/advisor/LarsaAvatar";
 import { categoryLabels } from "@/constants/brand";
 import type { Product } from "@/types";
@@ -379,57 +394,106 @@ export function ProductDetails({
     /لمسة|finish|matte|dew|glow|طبيع|natural/i,
   );
 
-  const rows: { key: string; label: string; value: string; ltr?: boolean }[] = [];
+  const rows: {
+    key: string;
+    label: string;
+    value: string;
+    Icon: LucideIcon;
+    ltr?: boolean;
+  }[] = [];
 
   if (isPresentValue(product.size)) {
-    rows.push({ key: "size", label: copy.detailSize, value: product.size.trim(), ltr: true });
+    rows.push({
+      key: "size",
+      label: copy.detailSize,
+      value: product.size.trim(),
+      Icon: Ruler,
+      ltr: true,
+    });
   }
   if (isPresentValue(product.productType || undefined)) {
     rows.push({
       key: "type",
       label: copy.detailType,
       value: product.productType!.trim(),
+      Icon: Tag,
       ltr: true,
     });
   }
   if (category) {
-    rows.push({ key: "cat", label: copy.detailCategory, value: category });
+    rows.push({
+      key: "cat",
+      label: copy.detailCategory,
+      value: category,
+      Icon: LayoutGrid,
+    });
   }
   if (isPresentValue(product.brandName || undefined)) {
     rows.push({
       key: "brand",
       label: copy.detailBrand,
       value: product.brandName!.trim(),
+      Icon: BadgeCheck,
       ltr: true,
     });
   }
   if (coverage) {
-    rows.push({ key: "cov", label: copy.detailCoverage, value: coverage });
+    rows.push({
+      key: "cov",
+      label: copy.detailCoverage,
+      value: coverage,
+      Icon: Layers,
+    });
   }
   if (finish) {
-    rows.push({ key: "fin", label: copy.detailFinish, value: finish });
+    rows.push({
+      key: "fin",
+      label: copy.detailFinish,
+      value: finish,
+      Icon: Droplets,
+    });
   }
   if (spf) {
-    rows.push({ key: "spf", label: copy.detailSpf, value: spf, ltr: true });
+    rows.push({
+      key: "spf",
+      label: copy.detailSpf,
+      value: spf,
+      Icon: Shield,
+      ltr: true,
+    });
   }
 
   if (!rows.length) return null;
 
   return (
     <section className="pdp-section">
-      <h2 className="pdp-section__title">{copy.details}</h2>
-      <dl className="mt-4">
-        {rows.map((row) => (
-          <div key={row.key} className="pdp-spec-row">
-            <dt className="text-[0.78rem] text-[var(--muted)]">{row.label}</dt>
-            <dd
-              className="text-end text-[0.88rem] font-medium text-[var(--plum)]"
-              dir={row.ltr ? "ltr" : undefined}
-            >
-              {row.value}
-            </dd>
-          </div>
-        ))}
+      <header className="pdp-details__header">
+        <span className="pdp-details__icon" aria-hidden>
+          <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.4} />
+        </span>
+        <h2 className="pdp-details__title">{copy.details}</h2>
+      </header>
+
+      <dl className="pdp-details__glass mt-4">
+        {rows.map((row) => {
+          const Icon = row.Icon;
+          return (
+            <div key={row.key} className="pdp-spec-row">
+              <dt className="pdp-spec-row__label">
+                <span className="pdp-spec-row__icon" aria-hidden>
+                  <Icon className="h-3.5 w-3.5" strokeWidth={1.45} />
+                </span>
+                <span>{row.label}</span>
+              </dt>
+              <dd
+                className="pdp-spec-row__value"
+                dir={row.ltr ? "ltr" : undefined}
+              >
+                {row.value}
+              </dd>
+            </div>
+          );
+        })}
       </dl>
     </section>
   );
