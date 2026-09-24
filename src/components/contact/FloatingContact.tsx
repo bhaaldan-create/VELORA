@@ -63,7 +63,7 @@ export function FloatingContact() {
   const bottomOffset = isCartPage || isCheckoutPage
     ? "calc(7.5rem + env(safe-area-inset-bottom))"
     : isProductPage
-      ? "calc(5.75rem + var(--pdp-sticky-offset, 0px) + env(safe-area-inset-bottom))"
+      ? "calc(5.9rem + var(--pdp-sticky-offset, 0px) + env(safe-area-inset-bottom))"
       : "calc(4.75rem + env(safe-area-inset-bottom))";
 
   return (
@@ -71,8 +71,9 @@ export function FloatingContact() {
       ref={rootRef}
       style={{ bottom: bottomOffset }}
       className={cn(
-        "fixed z-[60] flex flex-col items-end gap-2.5",
-        "end-3.5 lg:end-6 lg:bottom-8",
+        "fixed z-[60] flex flex-col items-end gap-2",
+        isProductPage ? "end-3 lg:end-6" : "end-3.5 lg:end-6",
+        "lg:bottom-8",
         "transition-[opacity,transform] duration-500 ease-out",
         visible
           ? "translate-y-0 opacity-100"
@@ -157,7 +158,19 @@ export function FloatingContact() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
+      <div className="group/fab relative flex flex-col items-center gap-1">
+        <span
+          className={cn(
+            "pointer-events-none absolute -top-8 end-0 whitespace-nowrap rounded-full",
+            "bg-[var(--bg-glass-strong)] px-2.5 py-1 text-[0.62rem] font-medium text-[var(--plum)]",
+            "ring-1 ring-[var(--plum)]/10 shadow-[var(--shadow-sm)] backdrop-blur-md",
+            "opacity-0 transition-opacity duration-200",
+            "group-hover/fab:opacity-100 group-focus-within/fab:opacity-100",
+            isProductPage ? "hidden lg:inline-flex" : "hidden sm:inline-flex",
+          )}
+        >
+          {ar ? "تواصلي معنا" : "Contact us"}
+        </span>
         <button
           type="button"
           aria-expanded={open}
@@ -168,28 +181,31 @@ export function FloatingContact() {
                 ? "إغلاق قائمة التواصل"
                 : "Close contact menu"
               : ar
-                ? "فتح تواصل VELORA"
-                : "Open VELORA contact"
+                ? "تواصلي معنا"
+                : "Contact us"
           }
           title={ar ? "تواصلي معنا" : "Contact us"}
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "group flex h-12 w-12 items-center justify-center rounded-full",
+            "group flex items-center justify-center rounded-full",
+            isProductPage ? "h-10 w-10 lg:h-11 lg:w-11" : "h-12 w-12",
             "bg-[var(--btn-bg)] text-[var(--btn-fg)]",
-            "shadow-[var(--shadow-md)]",
+            "shadow-[var(--shadow-sm)] ring-1 ring-white/10",
             "transition-transform duration-200 ease-out",
             "hover:scale-[1.04] active:scale-[0.95]",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]",
           )}
         >
           <IconWhatsApp
-            size={18}
+            size={isProductPage ? 16 : 18}
             className="text-[var(--btn-fg)] transition-transform duration-200 group-active:scale-90"
           />
         </button>
-        <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[var(--ink)]/75">
-          {ar ? "تواصلي معنا" : "Contact us"}
-        </span>
+        {!isProductPage ? (
+          <span className="pointer-events-none select-none text-[0.62rem] font-medium tracking-[0.02em] text-[var(--ink)]/75 lg:hidden">
+            {ar ? "تواصلي معنا" : "Contact us"}
+          </span>
+        ) : null}
       </div>
     </div>
   );

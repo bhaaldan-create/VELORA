@@ -10,17 +10,19 @@ import { useLocale } from "@/context/LocaleContext";
 import { isProductInStock } from "@/lib/inventory";
 import { getProductWhatsAppUrl } from "@/lib/social-links";
 import { cn } from "@/lib/utils";
-import { ProductHeroImage } from "./product-detail/ProductHeroImage";
+import { ProductGallery } from "./product-detail/ProductGallery";
 import { ProductRelated, ProductRoutine } from "./product-detail/ProductRails";
 import {
   ProductAbout,
   ProductBenefits,
+  ProductDetails,
   ProductIngredients,
   ProductLarsaCard,
-  ProductMicroTags,
+  ProductRatingRow,
   ProductSuitability,
 } from "./product-detail/ProductSections";
-import { productCopy } from "./product-detail/copy";
+import { isPresentValue, productCopy } from "./product-detail/copy";
+import "./product-detail/product-detail.css";
 
 type Props = {
   product: Product;
@@ -62,7 +64,7 @@ function QtyControl({
       </button>
       <span
         className={cn(
-          "min-w-6 text-center font-medium text-[var(--plum)]",
+          "min-w-6 text-center font-medium tabular-nums text-[var(--plum)]",
           compact ? "text-[0.8rem]" : "text-[0.88rem]",
         )}
       >
@@ -83,6 +85,45 @@ function QtyControl({
   );
 }
 
+function StickyPurchaseBar({
+  product,
+  qty,
+  setQty,
+  ar,
+  added,
+  onAdd,
+}: {
+  product: Product;
+  qty: number;
+  setQty: (n: number) => void;
+  ar: boolean;
+  added: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="pdp-sticky-bar">
+      <div className="mx-auto flex max-w-lg items-center gap-2.5">
+        <div className="min-w-0 shrink-0">
+          <ProductPrice
+            size="sm"
+            price={product.price}
+            originalPrice={product.originalPrice}
+            discountPercent={product.discountPercent}
+            className="[&>span:first-child]:text-[0.95rem] [&>span:first-child]:font-semibold [&>span:first-child]:text-[var(--plum)]"
+          />
+        </div>
+        <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
+        <AddToBagButton
+          size="compact"
+          added={added}
+          onClick={onAdd}
+          className="min-w-0 flex-1"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetail({ product, related, routine }: Props) {
   const { addItem } = useCart();
   const { locale } = useLocale();
@@ -92,6 +133,8 @@ export function ProductDetail({ product, related, routine }: Props) {
   const [added, setAdded] = useState(false);
   const waProductUrl = getProductWhatsAppUrl(product, ar ? "ar" : "en");
   const inStock = isProductInStock(product);
+  const brand = product.brandName?.trim();
+  const hasBrand = isPresentValue(brand);
 
   const handleAdd = () => {
     if (!inStock) return;
@@ -100,13 +143,12 @@ export function ProductDetail({ product, related, routine }: Props) {
     window.setTimeout(() => setAdded(false), 1800);
   };
 
-  /* Mobile sticky CTA is always docked — reserve bottom space so content never jumps. */
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
     const apply = () => {
       document.documentElement.style.setProperty(
         "--pdp-sticky-offset",
-        mq.matches && inStock ? "4.5rem" : "0px",
+        mq.matches && inStock ? "4.75rem" : "0px",
       );
     };
     apply();
@@ -117,114 +159,96 @@ export function ProductDetail({ product, related, routine }: Props) {
     };
   }, [inStock]);
 
+  const purchaseBlock = (
+    <div className="space-y-3">
+      {inStock ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <QtyControl qty={qty} setQty={setQty} ar={ar} />
+          <AddToBagButton
+            size="lg"
+            added={added}
+            onClick={handleAdd}
+            className="sm:flex-1"
+          />
+        </div>
+      ) : (
+        <p className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#c45a5a]/28 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] px-6 text-[0.88rem] font-medium tracking-[0.08em] text-[#fff8f7] shadow-[0_10px_24px_-12px_rgba(166,61,69,0.55)]">
+          {copy.outOfStock}
+        </p>
+      )}
+    </div>
+  );
+
   return (
     <div className="bg-[var(--ivory)] pb-[calc(6.25rem+var(--pdp-sticky-offset,0px)+env(safe-area-inset-bottom))] lg:pb-20">
-      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8 sm:pt-10 lg:pt-12">
-        <div className="grid gap-7 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-start lg:gap-14 xl:gap-16">
-          {/* Hero column: image + brand logo signature */}
-          <ProductHeroImage product={product} ar={ar} />
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8 sm:pt-10 lg:pt-12">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-12 xl:gap-16">
+          <ProductGallery product={product} ar={ar} />
 
-          {/* Editorial product story */}
           <div className="motion-safe:animate-[velora-rise_0.8s_0.06s_ease-out_both]">
-            <h1 className="font-display line-clamp-2 min-h-[calc(1.28em*2)] text-[clamp(1.35rem,3.8vw,1.95rem)] font-bold leading-[1.28] tracking-[-0.01em] text-[var(--plum)]">
+            {hasBrand ? (
+              <p
+                className="text-[0.72rem] font-medium tracking-[0.18em] text-[var(--plum)]/55"
+                dir="ltr"
+              >
+                {brand}
+              </p>
+            ) : null}
+
+            <h1
+              className={cn(
+                "font-display text-[clamp(1.4rem,4.2vw,2rem)] font-bold leading-[1.22] tracking-[-0.015em] text-[var(--plum)]",
+                hasBrand ? "mt-1.5" : "mt-0",
+              )}
+            >
               {ar ? product.nameAr : product.name}
             </h1>
+
             <p
-              className="font-display mt-1.5 line-clamp-1 text-[0.82rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
+              className="mt-1.5 text-[0.84rem] font-light leading-relaxed tracking-[0.01em] text-[var(--muted)]"
               dir={ar ? "ltr" : undefined}
             >
               {ar ? product.name : product.nameAr}
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.78rem] text-[var(--muted)]">
-              {product.reviews > 0 ? (
-                <>
-                  <span className="inline-flex items-center gap-1 text-[var(--plum)]">
-                    <span aria-hidden className="text-[0.85rem]">
-                      ★
-                    </span>
-                    <span className="font-medium tabular-nums">
-                      {product.rating.toFixed(1)}
-                    </span>
-                  </span>
-                  <span className="text-[var(--plum)]/25" aria-hidden>
-                    ·
-                  </span>
-                  <span>
-                    {product.reviews.toLocaleString(ar ? "ar-IQ" : "en-US")}{" "}
-                    {copy.reviews}
-                  </span>
-                  <span className="text-[var(--plum)]/25" aria-hidden>
-                    ·
-                  </span>
-                  <a
-                    href="#reviews"
-                    className="text-[var(--plum)]/70 underline-offset-4 transition hover:text-[var(--plum)] hover:underline"
-                  >
-                    {copy.viewReviews}
-                  </a>
-                </>
-              ) : (
-                <span>{copy.noReviews}</span>
-              )}
-            </div>
+            <ProductRatingRow product={product} ar={ar} />
 
-            <div className="mt-5 flex flex-wrap items-end gap-2.5">
+            <div className="mt-5 flex flex-wrap items-end gap-x-3 gap-y-1.5">
               <ProductPrice
                 size="lg"
+                layout="editorial"
                 price={product.price}
                 originalPrice={product.originalPrice}
                 discountPercent={product.discountPercent}
-                className="[&>span:first-child]:text-[1.35rem] [&>span:first-child]:font-semibold [&>span:first-child]:text-[var(--plum)] sm:[&>span:first-child]:text-[1.5rem]"
               />
-              {product.size ? (
-                <span className="mb-1 text-[0.75rem] tracking-[0.02em] text-[var(--muted)]">
+              {isPresentValue(product.size) ? (
+                <span className="mb-1.5 text-[0.78rem] tracking-[0.02em] text-[var(--muted)]">
                   {product.size}
                 </span>
               ) : null}
             </div>
 
-            {/* Purchase stays directly under price so length of benefits/tags never shifts it */}
-            <div className="mt-7 hidden space-y-3 lg:block">
-              {inStock ? (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <QtyControl qty={qty} setQty={setQty} ar={ar} />
-                  <AddToBagButton
-                    size="lg"
-                    added={added}
-                    onClick={handleAdd}
-                    className="sm:flex-1"
-                  />
-                </div>
-              ) : (
-                <p className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#c45a5a]/28 bg-[linear-gradient(145deg,#c45a5a,#a63d45)] px-6 text-[0.88rem] font-medium tracking-[0.08em] text-[#fff8f7] shadow-[0_10px_24px_-12px_rgba(166,61,69,0.55)]">
-                  {copy.outOfStock}
-                </p>
-              )}
+            <ProductBenefits product={product} ar={ar} />
 
-              {waProductUrl ? (
-                <ProductWhatsAppButton
-                  href={waProductUrl}
-                  label={copy.orderWhatsApp}
-                />
-              ) : null}
-            </div>
-
-            {/* Mobile: docked sticky CTA only — keep WhatsApp reachable in-flow */}
+            {/* WhatsApp — primary conversion CTA */}
             {waProductUrl ? (
-              <div className="mt-7 lg:hidden">
+              <div className="mt-7">
                 <ProductWhatsAppButton
                   href={waProductUrl}
                   label={copy.orderWhatsApp}
+                  hint={copy.orderWhatsAppHint}
+                  variant="hero"
                 />
               </div>
             ) : null}
 
-            <ProductMicroTags product={product} ar={ar} />
-            <ProductBenefits product={product} ar={ar} />
+            {/* Desktop purchase under WhatsApp; mobile uses sticky bar */}
+            <div className="mt-5 hidden lg:block">{purchaseBlock}</div>
+
             <ProductAbout product={product} ar={ar} />
             <ProductIngredients product={product} ar={ar} />
             <ProductSuitability product={product} ar={ar} />
+            <ProductDetails product={product} ar={ar} />
             <ProductLarsaCard ar={ar} />
           </div>
         </div>
@@ -233,30 +257,15 @@ export function ProductDetail({ product, related, routine }: Props) {
         <ProductRelated products={related} ar={ar} />
       </div>
 
-      {/* Sticky purchase — mobile: always docked above bottom nav */}
       {inStock ? (
-        <div
-          className="fixed inset-x-0 z-40 border-t border-[var(--plum)]/8 bg-[var(--bg-glass-strong)] px-4 py-2.5 backdrop-blur-xl lg:hidden bottom-[calc(4.15rem+env(safe-area-inset-bottom))]"
-          style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}
-        >
-          <div className="mx-auto flex max-w-lg items-center gap-2">
-            <div className="min-w-0 shrink-0">
-              <ProductPrice
-                size="sm"
-                price={product.price}
-                originalPrice={product.originalPrice}
-                discountPercent={product.discountPercent}
-              />
-            </div>
-            <QtyControl qty={qty} setQty={setQty} ar={ar} compact />
-            <AddToBagButton
-              size="compact"
-              added={added}
-              onClick={handleAdd}
-              className="min-w-0 flex-1"
-            />
-          </div>
-        </div>
+        <StickyPurchaseBar
+          product={product}
+          qty={qty}
+          setQty={setQty}
+          ar={ar}
+          added={added}
+          onAdd={handleAdd}
+        />
       ) : null}
     </div>
   );

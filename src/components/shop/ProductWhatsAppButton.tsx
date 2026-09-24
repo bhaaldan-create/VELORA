@@ -6,14 +6,46 @@ import { cn } from "@/lib/utils";
 type Props = {
   href: string;
   label: string;
+  hint?: string;
+  /** Premium primary CTA for product detail */
+  variant?: "default" | "hero";
   className?: string;
 };
 
 /**
- * زر طلب واتساب داخل صفحة المنتج فقط —
- * صغير، مختصر، بهوية VELORA مع لمسة تواصل خفيفة.
+ * زر طلب واتساب داخل صفحة المنتج —
+ * يحافظ على الرابط الحالي مع مظهر فاخر قابل للترقية.
  */
-export function ProductWhatsAppButton({ href, label, className }: Props) {
+export function ProductWhatsAppButton({
+  href,
+  label,
+  hint,
+  variant = "default",
+  className,
+}: Props) {
+  if (variant === "hero") {
+    return (
+      <div className={cn("w-full", className)}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={label}
+          dir="rtl"
+          className="pdp-wa-hero focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--plum-fill)]/28 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
+        >
+          <IconWhatsApp size={18} className="shrink-0 text-[#e8f5ef]" />
+          <span className="leading-none">{label}</span>
+        </a>
+        {hint ? (
+          <p className="mt-2 text-center text-[0.7rem] leading-relaxed text-[var(--muted)]">
+            {hint}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <a
       href={href}

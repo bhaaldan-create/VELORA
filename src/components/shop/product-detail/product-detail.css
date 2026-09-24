@@ -1,0 +1,184 @@
+/* Product detail page — editorial media + sticky purchase */
+
+.pdp-gallery__stage {
+  touch-action: pan-y;
+  background: color-mix(in srgb, var(--larsa-lavender) 55%, var(--ivory));
+}
+
+.pdp-gallery__stage .pdp-gallery__img {
+  transform-origin: var(--pdp-zoom-x, 50%) var(--pdp-zoom-y, 50%);
+  /* Packshots often ship with padding — gently fill the hero frame */
+  transform: scale(1.2);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (min-width: 1024px) {
+  .pdp-gallery__stage.is-zooming .pdp-gallery__img {
+    transform: scale(1.55);
+  }
+}
+
+.pdp-section {
+  position: relative;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+}
+
+.pdp-section::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    to left,
+    transparent,
+    color-mix(in srgb, var(--plum) 14%, transparent),
+    transparent
+  );
+}
+
+.pdp-section__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--plum);
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 640px) {
+  .pdp-section__title {
+    font-size: 1.15rem;
+  }
+}
+
+.pdp-section__sub {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.pdp-benefit {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--larsa-lavender) 42%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--plum) 7%, transparent);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pdp-benefit:hover {
+  background: color-mix(in srgb, var(--larsa-lavender) 58%, #ffffff);
+  border-color: color-mix(in srgb, var(--plum) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+.pdp-skin-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, #ffffff 88%, var(--larsa-lavender));
+  border: 1px solid color-mix(in srgb, var(--plum) 8%, transparent);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pdp-skin-chip:hover {
+  border-color: color-mix(in srgb, var(--plum) 16%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.pdp-spec-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0.5rem 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--plum) 7%, transparent);
+}
+
+.pdp-spec-row:last-child {
+  border-bottom: none;
+}
+
+.pdp-sticky-bar {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 40;
+  bottom: calc(4.15rem + env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--plum) 8%, transparent);
+  background: color-mix(in srgb, var(--bg-glass-strong) 92%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  padding: 0.55rem 1rem max(0.45rem, env(safe-area-inset-bottom));
+  box-shadow: 0 -10px 32px -18px rgba(50, 22, 47, 0.22);
+}
+
+@media (min-width: 1024px) {
+  .pdp-sticky-bar {
+    display: none;
+  }
+}
+
+.pdp-wa-hero {
+  display: flex;
+  width: 100%;
+  min-height: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border-radius: 999px;
+  padding-inline: 1.25rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8f4f1;
+  background: linear-gradient(
+    145deg,
+    #2f5e4a 0%,
+    #3a6b56 42%,
+    #355a4c 100%
+  );
+  border: 1px solid color-mix(in srgb, #1f3d32 35%, transparent);
+  box-shadow:
+    0 1px 2px rgba(31, 61, 50, 0.12),
+    0 14px 28px -16px rgba(47, 94, 74, 0.45);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.pdp-wa-hero:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow:
+    0 2px 4px rgba(31, 61, 50, 0.14),
+    0 18px 34px -14px rgba(47, 94, 74, 0.5);
+}
+
+.pdp-wa-hero:active {
+  transform: translateY(0) scale(0.985);
+}
+
+[data-theme="dark"] .pdp-benefit {
+  background: color-mix(in srgb, var(--larsa-lavender) 70%, transparent);
+}
+
+[data-theme="dark"] .pdp-skin-chip {
+  background: color-mix(in srgb, var(--larsa-lavender) 55%, transparent);
+}
+
+[data-theme="dark"] .pdp-wa-hero {
+  color: #f3ebe6;
+  background: linear-gradient(145deg, #3d6b58 0%, #2f5646 100%);
+}
