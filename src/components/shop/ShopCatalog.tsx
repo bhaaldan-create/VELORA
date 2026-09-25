@@ -241,15 +241,44 @@ export function ShopCatalog({ categories, products }: ShopCatalogProps) {
             {loading && !remote ? (
               <div className="h-40 animate-pulse rounded-3xl bg-[var(--mist)]" />
             ) : list.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                {list.map((product, index) => (
-                  <CompactProductCard
-                    key={product.id}
-                    product={product}
-                    priority={index < 4}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {list.map((product, index) => (
+                    <CompactProductCard
+                      key={product.id}
+                      product={product}
+                      priority={index < 4}
+                    />
+                  ))}
+                </div>
+                {total > params.pageSize ? (
+                  <div className="mt-8 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      className="vs-btn"
+                      disabled={params.page <= 1 || loading}
+                      onClick={() => replace({ page: params.page - 1 })}
+                    >
+                      {ar ? "السابق" : "Prev"}
+                    </button>
+                    <span className="vs-count self-center">
+                      {params.page}
+                      <span className="mx-1 text-[var(--muted)]">/</span>
+                      {Math.max(1, Math.ceil(total / params.pageSize))}
+                    </span>
+                    <button
+                      type="button"
+                      className="vs-btn"
+                      disabled={
+                        loading || params.page * params.pageSize >= total
+                      }
+                      onClick={() => replace({ page: params.page + 1 })}
+                    >
+                      {ar ? "التالي" : "Next"}
+                    </button>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <SearchEmptyState ar={ar} onClear={clearAll} />
             )}

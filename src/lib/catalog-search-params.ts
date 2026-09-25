@@ -163,8 +163,8 @@ export function parseCatalogSearchParams(
   const sortRaw = (get("sort") || "").trim() as CatalogSort;
   const page = Math.max(1, parseIntParam(get("page")) || 1);
   const pageSize = Math.min(
-    48,
-    Math.max(1, parseIntParam(get("pageSize")) || 24),
+    96,
+    Math.max(1, parseIntParam(get("pageSize")) || 48),
   );
 
   const defaultSort: CatalogSort = q ? "best-match" : "best-selling";
@@ -247,6 +247,11 @@ export function serializeCatalogSearchParams(
   setOrDelete("origin", params.origin);
   if (params.page && params.page > 1) next.set("page", String(params.page));
   else next.delete("page");
+  if (params.pageSize && params.pageSize !== 48) {
+    next.set("pageSize", String(params.pageSize));
+  } else {
+    next.delete("pageSize");
+  }
 
   return next;
 }

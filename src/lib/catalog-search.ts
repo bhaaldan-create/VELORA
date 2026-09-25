@@ -12,7 +12,7 @@ import {
   STOREFRONT_REVALIDATE_SECONDS,
 } from "@/lib/cache-tags";
 import { salePriceFromBase } from "@/lib/pricing";
-import { shopBrands } from "@/data/shop-brands";
+import { productMatchesBrand, shopBrands } from "@/data/shop-brands";
 import type {
   CatalogFacets,
   CatalogSearchParams,
@@ -80,8 +80,8 @@ function buildWhere(params: CatalogSearchParams): Prisma.ProductWhereInput {
             .filter(Boolean),
         ),
       );
-      // Brand filter MUST only constrain Product.brandName — never product title.
-      // Matching name/nameAr made brand filters behave like free-text search.
+      // Broad candidate set (legacy rows may lack brandName); refined via
+      // productMatchesBrand in searchCatalog after fetch.
       and.push({
         OR: [
           {
@@ -90,14 +90,25 @@ function buildWhere(params: CatalogSearchParams): Prisma.ProductWhereInput {
               mode: "insensitive" as const,
             },
           },
-          ...tokens.map((token) => ({
-            brandName: { contains: token, mode: "insensitive" as const },
-          })),
+          ...tokens.flatMap((token) => [
+            {
+              brandName: {
+                contains: token,
+                mode: "insensitive" as const,
+              },
+            },
+            { name: { contains: token, mode: "insensitive" as const } },
+            { nameAr: { contains: token, mode: "insensitive" as const } },
+          ]),
         ],
       });
     } else {
       and.push({
-        brandName: { contains: params.brand, mode: "insensitive" },
+        OR: [
+          { brandName: { contains: params.brand, mode: "insensitive" } },
+          { name: { contains: params.brand, mode: "insensitive" } },
+          { nameAr: { contains: params.brand, mode: "insensitive" } },
+        ],
       });
     }
   }
@@ -275,21 +286,57 @@ export async function searchCatalog(
         !!params.origin ||
         params.minPrice != null ||
         params.maxPrice != null;
+      // Brand needs post-filter so title-only legacy rows match rails,
+      // and false-positive title hits are dropped via productMatchesBrand.
+      const needsBrandPost = Boolean(params.brand);
+      const needsPost = needsJsonPost || needsBrandPost;
+
+      const brandMeta = params.brand
+        ? shopBrands.find(
+            (b) =>
+              b.slug === params.brand ||
+              b.name.toLowerCase() === params.brand!.toLowerCase() ||
+              b.match.some(
+                (m) => m.toLowerCase() === params.brand!.toLowerCase(),
+              ),
+          )
+        : null;
 
       const rows = await prisma.product.findMany({
         where,
         orderBy: prismaOrderBy(params.sort),
         select: searchSelect,
-        // Fetch a wider window when post-filtering; otherwise page in DB
-        take: needsJsonPost ? 500 : params.pageSize,
-        skip: needsJsonPost ? 0 : (params.page - 1) * params.pageSize,
+        // Wider window when post-filtering; otherwise page in DB
+        take: needsPost ? 2500 : params.pageSize,
+        skip: needsPost ? 0 : (params.page - 1) * params.pageSize,
       });
 
       let filtered = rows.filter((row) => {
-        if (isFragranceProduct({ name: row.name, nameAr: row.nameAr, category: row.categorySlug as CategorySlug } as Product)) {
+        if (
+          isFragranceProduct({
+            name: row.name,
+            nameAr: row.nameAr,
+            category: row.categorySlug as CategorySlug,
+          } as Product)
+        ) {
           return false;
         }
-        return passesJsonFilters(row, params);
+        if (!passesJsonFilters(row, params)) return false;
+        if (needsBrandPost && brandMeta) {
+          return productMatchesBrand(
+            row.name,
+            row.nameAr,
+            brandMeta,
+            row.brandName,
+          );
+        }
+        if (needsBrandPost && !brandMeta && params.brand) {
+          const needle = params.brand.toLowerCase();
+          const bn = row.brandName?.toLowerCase() ?? "";
+          const hay = `${row.name} ${row.nameAr}`.toLowerCase();
+          return bn.includes(needle) || hay.includes(needle);
+        }
+        return true;
       });
 
       if (params.sort === "best-match" && params.q) {
@@ -302,11 +349,11 @@ export async function searchCatalog(
           .map((x) => x.row);
       }
 
-      const total = needsJsonPost
+      const total = needsPost
         ? filtered.length
         : await prisma.product.count({ where });
 
-      const pageRows = needsJsonPost
+      const pageRows = needsPost
         ? filtered.slice(
             (params.page - 1) * params.pageSize,
             params.page * params.pageSize,
@@ -315,13 +362,13 @@ export async function searchCatalog(
 
       return {
         products: pageRows.map(mapProductCard),
-        total: needsJsonPost ? filtered.length : total,
+        total: needsPost ? filtered.length : total,
         page: params.page,
         pageSize: params.pageSize,
         sort: params.sort,
       };
     },
-    ["catalog-advanced-search-v4", cacheKey],
+    ["catalog-advanced-search-v5", cacheKey],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.products],
