@@ -629,12 +629,21 @@ html[data-locale="en"] .font-display {
 /*
  * أسعار الموقع فقط — IBM Plex Sans Arabic دائماً
  * (يتجاوز Kufyan / Outfit حتى في الواجهة الإنجليزية)
+ * مهم: أطفال .t1/.t2 يفرضون track-wide — نلغيه هنا حتى لا تتشوه الأرقام.
  */
 .font-price {
   font-family: var(--font-body), "Segoe UI", Tahoma, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
   letter-spacing: 0;
+  font-weight: 500;
+}
+
+.font-price,
+.font-price * {
+  font-family: inherit;
+  letter-spacing: 0;
+  font-feature-settings: "tnum" 1, "lnum" 1, "kern" 1;
 }
 
 .font-latin {
