@@ -308,7 +308,10 @@
   --color-surface: var(--surface);
   --color-elevated: var(--bg-elevated);
   --font-sans: var(--font-body);
-  --font-display: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
+  /* Display = نفس عائلة IBM Plex بتدرجات الأوزان */
+  --font-display: var(--font-body), "Segoe UI", Tahoma, system-ui, sans-serif;
+  /* Alias قديم كان يشير لـ Kufyan — يبقى متوافقاً مع CSS القديم */
+  --font-kufyan: var(--font-body);
   --font-latin: var(--font-latin);
 }
 
@@ -541,7 +544,7 @@ html[data-locale="en"] body {
 }
 
 html[data-locale="en"] .font-display {
-  font-family: var(--font-latin), var(--font-kufyan), sans-serif;
+  font-family: var(--font-latin), var(--font-body), system-ui, sans-serif;
 }
 
 /* درجات الخط الثمانية */
@@ -584,51 +587,18 @@ html[data-locale="en"] .font-display {
 }
 
 /*
- * Kufyan Arabic — عناوين العرض
- * Thin 100 · UltraLight 200 · Light 300 · Regular 400 · Bold 700 · Heavy 800 · Black 900
- * النص التشغيلي والأسعار يبقيان IBM Plex Sans Arabic (--font-body)
+ * عناوين العرض — IBM Plex Sans Arabic بتدرجاته الطبيعية
+ * Light 300 · Regular 400 · Medium 500 · SemiBold 600 · Bold 700
  */
 .font-display {
-  font-family: var(--font-kufyan), var(--font-body), system-ui, sans-serif;
-  font-feature-settings: "kern" 1;
+  font-family: var(--font-body), "Segoe UI", Tahoma, system-ui, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
   letter-spacing: -0.01em;
   text-rendering: optimizeLegibility;
 }
 
-/* مطابقة أوزان Tailwind مع ملفات Kufyan */
-.font-display.font-thin {
-  font-weight: 100;
-}
-
-.font-display.font-extralight {
-  font-weight: 200;
-}
-
-.font-display.font-light {
-  font-weight: 300;
-}
-
-.font-display.font-normal {
-  font-weight: 400;
-}
-
-.font-display.font-medium,
-.font-display.font-semibold,
-.font-display.font-bold {
-  font-weight: 700;
-}
-
-.font-display.font-extrabold {
-  font-weight: 800;
-}
-
-.font-display.font-black {
-  font-weight: 900;
-}
-
 /*
- * أسعار الموقع فقط — IBM Plex Sans Arabic دائماً
- * (يتجاوز Kufyan / Outfit حتى في الواجهة الإنجليزية)
+ * أسعار الموقع — نفس IBM Plex مع أرقام جدولية
  * مهم: أطفال .t1/.t2 يفرضون track-wide — نلغيه هنا حتى لا تتشوه الأرقام.
  */
 .font-price {
@@ -1575,7 +1545,7 @@ html[data-launch="done"] .velora-launch {
 }
 
 .velora-launch__word--velora {
-  font-family: var(--font-latin), var(--font-kufyan), Georgia, serif;
+  font-family: var(--font-latin), var(--font-body), system-ui, sans-serif;
   font-size: clamp(1rem, 3.8vw, 1.2rem);
   font-weight: 600;
   animation: velora-launch-fade 0.75s ease 0.4s both;

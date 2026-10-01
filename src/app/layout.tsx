@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { IBM_Plex_Sans_Arabic, Outfit } from "next/font/google";
-import localFont from "next/font/local";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MobileOAuthBridge } from "@/components/auth/MobileOAuthBridge";
@@ -16,51 +15,16 @@ import { brand } from "@/constants/brand";
 import { VeloraBootLaunch } from "@/components/layout/VeloraBootLaunch";
 import "./globals.css";
 
-/** نص الواجهة والأسعار — IBM Plex Sans Arabic */
+/**
+ * خط التطبيق بالكامل — IBM Plex Sans Arabic
+ * Light 300 · Regular 400 · Medium 500 · SemiBold 600 · Bold 700
+ */
 const sans = IBM_Plex_Sans_Arabic({
   variable: "--font-body",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   preload: true,
-});
-
-/**
- * عناوين العرض — Kufyan Arabic (الأوزان المستخدمة فعلياً في الواجهة)
- * Light 300 · Regular 400 · Bold 700 · Heavy 800 · Black 900
- */
-const kufyan = localFont({
-  src: [
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Light.ttf",
-      weight: "300",
-      style: "normal",
-    },
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Heavy.ttf",
-      weight: "800",
-      style: "normal",
-    },
-    {
-      path: "../fonts/kufyan/Kufyan_Arabic_Black.ttf",
-      weight: "900",
-      style: "normal",
-    },
-  ],
-  variable: "--font-kufyan",
-  display: "swap",
-  /* Avoid competing with LCP images on first paint (thin/ultralight unused). */
-  preload: false,
 });
 
 /** لاتيني مودرن لشعارات مثل My VELORA */
@@ -117,7 +81,7 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${sans.variable} ${kufyan.variable} ${latin.variable} h-full`}
+      className={`${sans.variable} ${latin.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
