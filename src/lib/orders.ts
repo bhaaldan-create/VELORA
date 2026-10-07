@@ -11,6 +11,16 @@ import type { Prisma } from "@/generated/prisma/client";
 export type { OrderStatus, StoredOrder } from "@/lib/order-types";
 export { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/lib/order-types";
 
+/** رقم طلب فريد: YYMMDDHHmmss + 3 أرقام عشوائية */
+export function createOrderId() {
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, "")
+    .slice(0, 14);
+  const rand = Math.floor(Math.random() * 900 + 100);
+  return `${stamp.slice(2)}${rand}`;
+}
+
 function rowToStored(row: {
   id: string;
   subject: string;
@@ -232,6 +242,8 @@ export function filterOrders(
       entry.order.city,
       entry.order.address,
       entry.order.paymentMethodLabel,
+      entry.order.source || "",
+      entry.order.createdByAdminName || "",
       entry.adminNote || "",
       ...entry.order.items.map((i) => `${i.nameAr} ${i.name}`),
     ]

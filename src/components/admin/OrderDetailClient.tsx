@@ -297,6 +297,26 @@ export function OrderDetailClient({ order: initial }: { order: StoredOrder }) {
               الدفع والشحن
             </h2>
             <dl className="space-y-2.5 text-[13px]">
+              {order.order.source ? (
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[var(--admin-text-muted)]">مصدر الطلب</dt>
+                  <dd>
+                    {order.order.source === "instagram"
+                      ? "إنستغرام"
+                      : order.order.source === "whatsapp"
+                        ? "واتساب"
+                        : order.order.source === "website"
+                          ? "الموقع / التطبيق"
+                          : "أخرى"}
+                  </dd>
+                </div>
+              ) : null}
+              {order.order.createdByAdminName ? (
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[var(--admin-text-muted)]">أضافه الأدمن</dt>
+                  <dd>{order.order.createdByAdminName}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-2">
                 <dt className="text-[var(--admin-text-muted)]">طريقة الدفع</dt>
                 <dd>{order.order.paymentMethodLabel}</dd>

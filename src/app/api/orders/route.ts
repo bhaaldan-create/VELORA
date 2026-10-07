@@ -11,6 +11,7 @@ import { buildOrderEmail, type OrderPayload } from "@/lib/order-email";
 import { normalizeIraqMobile } from "@/lib/phone";
 import { isSuperQiPaymentMethod, SUPER_QI_ACCOUNT } from "@/lib/super-qi";
 import { isWaylPaymentMethod } from "@/data/payments";
+import { createOrderId } from "@/lib/orders";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
     }
 
     const order = parsed.data as OrderPayload;
+    order.source = order.source || "website";
 
     const normalizedPhone = normalizeIraqMobile(order.phone);
     if (!normalizedPhone) {
@@ -147,11 +149,3 @@ export async function POST(req: Request) {
   }
 }
 
-function createOrderId() {
-  const stamp = new Date()
-    .toISOString()
-    .replace(/[-:TZ.]/g, "")
-    .slice(0, 14);
-  const rand = Math.floor(Math.random() * 900 + 100);
-  return `${stamp.slice(2)}${rand}`;
-}

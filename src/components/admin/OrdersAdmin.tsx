@@ -9,6 +9,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { ManualOrderForm } from "@/components/admin/ManualOrderForm";
 import { WhatsAppReceiptActions } from "@/components/admin/WhatsAppReceiptActions";
 import { StatusBadge } from "@/components/admin/ui/StatusBadge";
 import {
@@ -22,9 +23,11 @@ import {
   Copy,
   Filter,
   MessageCircle,
+  Plus,
   Search,
   ShoppingBag,
 } from "@/components/admin/ui/icons";
+import { ORDER_SOURCE_LABELS } from "@/lib/order-email";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_SHORT,
@@ -73,6 +76,8 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [showCreate, setShowCreate] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
 
   useEffect(() => {
     const s = searchParams.get("status");
@@ -103,6 +108,10 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
       ) {
         return false;
       }
+      if (sourceFilter !== "all") {
+        const src = entry.order.source || "website";
+        if (src !== sourceFilter) return false;
+      }
       if (!q) return true;
       const hay = [
         entry.orderId,
@@ -113,6 +122,8 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
         entry.order.address,
         entry.order.paymentMethodLabel,
         entry.order.transferReference,
+        entry.order.source || "",
+        entry.order.createdByAdminName || "",
         entry.trackingNumber || "",
         entry.adminNote || "",
         ...entry.order.items.map((i) => `${i.nameAr} ${i.name}`),
@@ -121,7 +132,7 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [orders, statusFilter, deferredQuery, paymentFilter]);
+  }, [orders, statusFilter, deferredQuery, paymentFilter, sourceFilter]);
 
   function recalculateCounts(list: StoredOrder[]): Counts {
     const next = { all: list.length } as Counts;
@@ -242,15 +253,38 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
         title="الطلبات"
         description="مساحة عمل لإدارة الطلبات، الحالات، والتوصيل."
         actions={
-          <AdminButton
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowFilters((v) => !v)}
-          >
-            <Filter className="size-3.5" strokeWidth={1.6} />
-            فلاتر
-          </AdminButton>
+          <div className="flex flex-wrap gap-2">
+            <AdminButton
+              size="sm"
+              onClick={() => setShowCreate((v) => !v)}
+            >
+              <Plus className="size-3.5" strokeWidth={1.6} />
+              {showCreate ? "إخفاء النموذج" : "إضافة طلب"}
+            </AdminButton>
+            <AdminButton
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <Filter className="size-3.5" strokeWidth={1.6} />
+              فلاتر
+            </AdminButton>
+          </div>
         }
+      />
+
+      <ManualOrderForm
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={(order) => {
+          startTransition(() => {
+            setOrders((prev) => {
+              const next = [order, ...prev.filter((o) => o.orderId !== order.orderId)];
+              setCounts(recalculateCounts(next));
+              return next;
+            });
+          });
+        }}
       />
 
       <div className="flex gap-2 overflow-x-auto admin-scroll pb-1">
@@ -322,6 +356,20 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
                 <option value="pending">بانتظار الدفع</option>
               </select>
             </label>
+            <label className="block text-[12px] text-[var(--admin-text-secondary)]">
+              مصدر الطلب
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="mt-1.5 h-10 w-full rounded-[8px] border border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] px-3 text-[13px] outline-none"
+              >
+                <option value="all">الكل</option>
+                <option value="instagram">إنستغرام</option>
+                <option value="whatsapp">واتساب</option>
+                <option value="website">الموقع / التطبيق</option>
+                <option value="other">أخرى</option>
+              </select>
+            </label>
             <div className="flex items-end">
               <AdminButton
                 variant="ghost"
@@ -329,6 +377,7 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
                 onClick={() => {
                   setStatusFilter("all");
                   setPaymentFilter("all");
+                  setSourceFilter("all");
                   setQuery("");
                 }}
               >
@@ -414,6 +463,11 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
                               {entry.orderId}
                             </Link>
                             <StatusBadge status={entry.status} short />
+                            {entry.order.source ? (
+                              <span className="rounded-full bg-[var(--admin-surface-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--admin-plum-soft)]">
+                                {ORDER_SOURCE_LABELS[entry.order.source]}
+                              </span>
+                            ) : null}
                             <button
                               type="button"
                               className="text-[var(--admin-text-muted)] hover:text-[var(--admin-text)]"
@@ -428,6 +482,11 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
                           <h2 className="mt-1.5 text-[15px] font-semibold text-[var(--admin-text)]">
                             {entry.order.fullName}
                           </h2>
+                          {entry.order.createdByAdminName ? (
+                            <p className="mt-0.5 text-[11px] text-[var(--admin-text-muted)]">
+                              أضافه: {entry.order.createdByAdminName}
+                            </p>
+                          ) : null}
                           <p className="mt-1 text-[12px] text-[var(--admin-text-secondary)]">
                             <a
                               href={`tel:${entry.order.phone}`}

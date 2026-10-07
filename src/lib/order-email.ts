@@ -14,6 +14,9 @@ export type OrderItemPayload = {
   size?: string;
 };
 
+/** مصدر الطلب — موقع / تطبيق أو قنوات التواصل */
+export type OrderSource = "website" | "instagram" | "whatsapp" | "other";
+
 export type OrderPayload = {
   fullName: string;
   email: string;
@@ -44,6 +47,18 @@ export type OrderPayload = {
   total?: number;
   shippingCarrier?: string;
   shippingCarrierLabel?: string;
+  /** من أين وصل الطلب */
+  source?: OrderSource;
+  /** موظف الأدمن الذي أنشأ الطلب يدوياً */
+  createdByAdminId?: string;
+  createdByAdminName?: string;
+};
+
+export const ORDER_SOURCE_LABELS: Record<OrderSource, string> = {
+  website: "الموقع / التطبيق",
+  instagram: "إنستغرام",
+  whatsapp: "واتساب",
+  other: "أخرى",
 };
 
 export function buildOrderEmail(order: OrderPayload, orderId: string) {

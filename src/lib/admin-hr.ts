@@ -166,6 +166,12 @@ const DEFAULT_STAFF_LOGINS = [
     name: "يوسف واثق",
     role: "manager" as EmployeeRole,
   },
+  {
+    username: "AyshaBahaa",
+    password: "ayshabahaa2002",
+    name: "عائشة المشهداني",
+    role: "cashier" as EmployeeRole,
+  },
 ] as const;
 
 /** يضمن حسابات الدخول الابتدائية للفريق */
