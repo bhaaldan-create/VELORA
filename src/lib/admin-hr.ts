@@ -155,12 +155,6 @@ const DEFAULT_STAFF_LOGINS = [
     role: "manager" as EmployeeRole,
   },
   {
-    username: "Ahmedmazin",
-    password: "55668899",
-    name: "أحمد مازن",
-    role: "manager" as EmployeeRole,
-  },
-  {
     username: "YousefWathiq",
     password: "55772211",
     name: "يوسف واثق",
