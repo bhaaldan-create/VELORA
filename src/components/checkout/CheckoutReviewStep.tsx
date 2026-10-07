@@ -233,9 +233,9 @@ export function CheckoutReviewStep({
             <Image
               src={WASEET_CARRIER.logoBadge}
               alt={WASEET_CARRIER.nameEn}
-              width={72}
-              height={20}
-              className="h-[15px] w-auto object-contain"
+              width={96}
+              height={36}
+              className="h-[20px] w-auto object-contain"
             />
           </span>
         </div>

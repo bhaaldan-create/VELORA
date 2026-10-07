@@ -1,16 +1,28 @@
-/** أجور التوصيل عبر شركة الوسط — تُضاف لكل طلب */
+/** أجور التوصيل عبر ذهب أكسبريس — تُضاف لكل طلب */
 export const DELIVERY_FEE_IQD = 6000;
 
-export const WASEET_CARRIER = {
-  id: "waseet",
-  nameEn: "Waseet Company",
-  nameAr: "شركة الوسط",
-  slogan: "Deliver Faster",
-  logo: "/shipping/waseet.png",
-  /** نسخة مقصوصة بإحكام حول الشعار والنص فقط */
-  logoBadge: "/shipping/waseet-badge.png",
+/** شركة التوصيل الحالية — ذهب أكسبريس */
+export const THAHAB_CARRIER = {
+  id: "thahab-express",
+  nameEn: "Thahab Express",
+  nameAr: "ذهب أكسبريس",
+  slogan: "للتوصيل والخدمات اللوجستية",
+  logo: "/shipping/thahab-express.png",
+  /** الشعار أبيض — يُعرض على خلفية داكنة */
+  logoBadge: "/shipping/thahab-express.png",
+  /** خلفية شارة الشعار في الواجهة */
+  badgeBg: "#1A1510",
   feeIqd: DELIVERY_FEE_IQD,
 } as const;
+
+/** الناقل الافتراضي للمتجر */
+export const DEFAULT_CARRIER = THAHAB_CARRIER;
+
+/**
+ * Alias للتوافق مع الاستيرادات القديمة.
+ * @deprecated استخدم THAHAB_CARRIER أو DEFAULT_CARRIER
+ */
+export const WASEET_CARRIER = THAHAB_CARRIER;
 
 export function getOrderTotal(
   subtotal: number,

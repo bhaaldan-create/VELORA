@@ -243,14 +243,14 @@
 
 .cr-ship__badge {
   display: inline-flex;
-  height: 2rem;
+  height: 2.15rem;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 999px;
-  background: #1b4f9c;
-  padding: 0 0.55rem;
+  border-radius: 8px;
+  background: #1a1510;
+  padding: 0.2rem 0.55rem;
 }
 
 /* Totals */

@@ -2,7 +2,7 @@ import { formatPrice } from "@/lib/utils";
 import {
   resolveDeliveryFee,
   resolveOrderTotal,
-  WASEET_CARRIER,
+  THAHAB_CARRIER,
 } from "@/lib/shipping";
 
 export type OrderItemPayload = {
@@ -41,7 +41,7 @@ export type OrderPayload = {
   items: OrderItemPayload[];
   /** مجموع المنتجات قبل التوصيل */
   subtotal: number;
-  /** أجور التوصيل (شركة الوسط) */
+  /** أجور التوصيل (ذهب أكسبريس) */
   deliveryFee?: number;
   /** الإجمالي شامل التوصيل */
   total?: number;
@@ -79,7 +79,7 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
   const deliveryFee = resolveDeliveryFee(order);
   const total = resolveOrderTotal(order);
   const carrierLabel =
-    order.shippingCarrierLabel || WASEET_CARRIER.nameAr;
+    order.shippingCarrierLabel || THAHAB_CARRIER.nameAr;
 
   const subject = `طلب جديد VELORA #${orderId} — ${order.fullName}`;
 

@@ -532,7 +532,7 @@ export function OrdersAdmin({ initialOrders, initialCounts }: Props) {
                           </span>
                         ) : null}
                         <span>
-                          {entry.order.shippingCarrierLabel || "شركة الوسط"}
+                          {entry.order.shippingCarrierLabel || "ذهب أكسبريس"}
                         </span>
                         {entry.trackingNumber ? (
                           <span className="admin-num" dir="ltr">

@@ -53,13 +53,16 @@ export function CartOrderSummary({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1B4F9C] px-2">
+          <span
+            className="inline-flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-[7px] px-2"
+            style={{ background: WASEET_CARRIER.badgeBg }}
+          >
             <Image
               src={WASEET_CARRIER.logoBadge}
               alt={WASEET_CARRIER.nameEn}
-              width={72}
-              height={20}
-              className="h-[16px] w-auto object-contain"
+              width={96}
+              height={36}
+              className="h-[22px] w-auto object-contain"
             />
           </span>
           <span className="bag-carrier__mark" aria-hidden>

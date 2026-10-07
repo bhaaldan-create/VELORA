@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
-import { DELIVERY_FEE_IQD, WASEET_CARRIER } from "@/lib/shipping";
+import { DELIVERY_FEE_IQD, THAHAB_CARRIER } from "@/lib/shipping";
 
 type Props = {
   feeIqd?: number;
@@ -8,21 +8,21 @@ type Props = {
   compact?: boolean;
 };
 
-/** شارة وسط بحجم شارات الدفع — الصورة كاملة بدون قص CSS */
-function WaseetBadge({ compact }: { compact?: boolean }) {
-  const h = compact ? 28 : 32;
-  const w = compact ? 108 : 124;
+/** شارة ذهب أكسبريس — الشعار أبيض على خلفية داكنة */
+function ThahabBadge({ compact }: { compact?: boolean }) {
+  const h = compact ? 32 : 36;
+  const w = compact ? 118 : 136;
 
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-[#1B4F9C] p-0.5 shadow-sm"
-      style={{ width: w, height: h }}
+      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[6px] p-1 shadow-sm"
+      style={{ width: w, height: h, background: THAHAB_CARRIER.badgeBg }}
     >
       <Image
-        src={WASEET_CARRIER.logoBadge}
-        alt={`${WASEET_CARRIER.nameEn}`}
-        width={501}
-        height={129}
+        src={THAHAB_CARRIER.logoBadge}
+        alt={THAHAB_CARRIER.nameEn}
+        width={640}
+        height={360}
         className="h-full w-full object-contain"
         sizes={`${w}px`}
         priority={false}
@@ -44,10 +44,10 @@ export function DeliveryFeeNotice({
           : "flex items-center gap-3 border border-[var(--plum)]/10 bg-white/80 px-3 py-3"
       }
     >
-      <WaseetBadge compact={compact} />
+      <ThahabBadge compact={compact} />
       <div className="min-w-0 flex-1">
         <p className="t2 text-[var(--muted)]">
-          التوصيل عبر {WASEET_CARRIER.nameAr}
+          التوصيل عبر {THAHAB_CARRIER.nameAr}
         </p>
         {highlightAdded ? (
           <p className="t3 mt-0.5 font-medium text-[var(--plum)]">

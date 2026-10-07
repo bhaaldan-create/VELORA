@@ -15,7 +15,7 @@ import { normalizeIraqMobile } from "@/lib/phone";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
-  WASEET_CARRIER,
+  THAHAB_CARRIER,
 } from "@/lib/shipping";
 
 export async function GET(req: Request) {
@@ -192,8 +192,8 @@ export async function POST(req: Request) {
       subtotal,
       deliveryFee,
       total: getOrderTotal(subtotal, deliveryFee),
-      shippingCarrier: WASEET_CARRIER.id,
-      shippingCarrierLabel: WASEET_CARRIER.nameAr,
+      shippingCarrier: THAHAB_CARRIER.id,
+      shippingCarrierLabel: THAHAB_CARRIER.nameAr,
       source: data.source,
       createdByAdminId: gate.actor.subject,
       createdByAdminName: gate.actor.label,

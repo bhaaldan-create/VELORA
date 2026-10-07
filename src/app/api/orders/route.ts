@@ -15,7 +15,7 @@ import { createOrderId } from "@/lib/orders";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
-  WASEET_CARRIER,
+  THAHAB_CARRIER,
 } from "@/lib/shipping";
 
 const orderSchema = z.object({
@@ -96,9 +96,9 @@ export async function POST(req: Request) {
       typeof order.deliveryFee === "number"
         ? order.deliveryFee
         : DELIVERY_FEE_IQD;
-    order.shippingCarrier = order.shippingCarrier || WASEET_CARRIER.id;
+    order.shippingCarrier = order.shippingCarrier || THAHAB_CARRIER.id;
     order.shippingCarrierLabel =
-      order.shippingCarrierLabel || WASEET_CARRIER.nameAr;
+      order.shippingCarrierLabel || THAHAB_CARRIER.nameAr;
     order.total = getOrderTotal(order.subtotal, order.deliveryFee);
 
     if (isSuperQiPaymentMethod(order.paymentMethod)) {

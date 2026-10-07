@@ -37,13 +37,14 @@ export type ShipmentRecord = {
 export function listShippingProviders(): ShippingProvider[] {
   return [
     {
-      id: "waseet",
-      name: "Waseet",
-      nameAr: "شركة الوسط",
+      id: "thahab-express",
+      name: "Thahab Express",
+      nameAr: "ذهب أكسبريس",
+      logoUrl: "/shipping/thahab-express.png",
       apiStatus: "disconnected",
       webhookStatus: "disconnected",
       active: true,
-      notes: "التوصيل الحالي برسوم ثابتة — ربط API جاهز للتفعيل لاحقاً.",
+      notes: "التوصيل الحالي برسوم ثابتة عبر ذهب أكسبريس — ربط API جاهز للتفعيل لاحقاً.",
     },
   ];
 }

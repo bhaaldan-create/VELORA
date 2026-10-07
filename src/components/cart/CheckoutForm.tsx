@@ -39,7 +39,7 @@ import "@/components/checkout/checkout-wizard.css";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
-  WASEET_CARRIER,
+  THAHAB_CARRIER,
 } from "@/lib/shipping";
 import { mapCheckoutErrorToArabic, mapWaylErrorToArabic } from "@/lib/wayl";
 import { cn } from "@/lib/utils";
@@ -219,8 +219,8 @@ export function CheckoutForm({
       subtotal,
       deliveryFee,
       total,
-      shippingCarrier: WASEET_CARRIER.id,
-      shippingCarrierLabel: WASEET_CARRIER.nameAr,
+      shippingCarrier: THAHAB_CARRIER.id,
+      shippingCarrierLabel: THAHAB_CARRIER.nameAr,
     };
 
     try {

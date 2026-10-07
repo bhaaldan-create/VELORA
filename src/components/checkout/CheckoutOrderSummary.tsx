@@ -58,13 +58,16 @@ export function CheckoutOrderSummary({
             {WASEET_CARRIER.nameAr}
           </p>
         </div>
-        <span className="inline-flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-[#1B4F9C] px-1.5">
+        <span
+          className="inline-flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-[7px] px-2"
+          style={{ background: WASEET_CARRIER.badgeBg }}
+        >
           <Image
             src={WASEET_CARRIER.logoBadge}
             alt={WASEET_CARRIER.nameEn}
-            width={80}
-            height={22}
-            className="h-[18px] w-auto object-contain"
+            width={96}
+            height={36}
+            className="h-[22px] w-auto object-contain"
           />
         </span>
       </div>

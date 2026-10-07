@@ -125,7 +125,7 @@ export default async function AdminShippingPage() {
                           {o.order.fullName}
                         </p>
                         <p className="mt-1 text-[12px] text-[var(--admin-text-secondary)]">
-                          {o.order.shippingCarrierLabel || "شركة الوسط"}
+                          {o.order.shippingCarrierLabel || "ذهب أكسبريس"}
                           {o.trackingNumber
                             ? ` · ${o.trackingNumber}`
                             : " · بانتظار رقم التتبع"}

@@ -335,7 +335,7 @@ export function OrderDetailClient({ order: initial }: { order: StoredOrder }) {
               ) : null}
               <div className="flex justify-between gap-2">
                 <dt className="text-[var(--admin-text-muted)]">شركة التوصيل</dt>
-                <dd>{order.order.shippingCarrierLabel || "شركة الوسط"}</dd>
+                <dd>{order.order.shippingCarrierLabel || "ذهب أكسبريس"}</dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt className="text-[var(--admin-text-muted)]">رقم الطلب</dt>
