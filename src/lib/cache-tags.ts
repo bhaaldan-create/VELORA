@@ -8,4 +8,4 @@ export const CACHE_TAGS = {
 } as const;
 
 /** Fallback ISR / data-cache TTL when admin has not triggered revalidation. */
-export const STOREFRONT_REVALIDATE_SECONDS = 3600;
+export const STOREFRONT_REVALIDATE_SECONDS = 60;

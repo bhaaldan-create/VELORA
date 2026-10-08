@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /** Static shell — search runs client-side against cached catalog APIs. */
-export const revalidate = 3600;
+export const revalidate = 60;
 
 export default function SearchPage() {
   return (

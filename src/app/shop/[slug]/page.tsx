@@ -8,7 +8,7 @@ import {
 } from "@/lib/catalog";
 
 /** ISR — payloads use /api/media paths (no embedded image blobs). */
-export const revalidate = 3600;
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
