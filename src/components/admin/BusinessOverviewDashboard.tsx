@@ -175,7 +175,7 @@ export function BusinessOverviewDashboard({
           footnote={
             data.netMarginPct !== null
               ? `هامش صافي ${data.netMarginPct}%`
-              : "إيراد − تكلفة − مصروف − رواتب"
+              : "مبيعات المنتجات − تكلفة − مصروف − رواتب (بدون أجور التوصيل)"
           }
         />
         <StatCard label="الطلبات" value={data.orders} format="number" />

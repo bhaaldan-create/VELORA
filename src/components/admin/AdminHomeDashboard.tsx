@@ -237,7 +237,7 @@ export function AdminHomeDashboard({
           footnote={
             data.netMarginPct !== null
               ? `هامش صافي ${data.netMarginPct}%`
-              : "إيراد − تكلفة − مصروف − رواتب"
+              : "مبيعات المنتجات − تكلفة − مصروف − رواتب (بدون أجور التوصيل)"
           }
         />
         <StatCard

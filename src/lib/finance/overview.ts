@@ -86,11 +86,13 @@ function daysAgo(n: number) {
   return d;
 }
 
-function orderTotal(order: StoredOrder): number {
-  return (
-    order.order.total ??
-    order.order.subtotal + (order.order.deliveryFee ?? 0)
-  );
+/** إيراد المتجر = سعر المنتجات فقط. أجور التوصيل تمر للناقل وليست دخلاً. */
+function orderMerchandise(order: StoredOrder): number {
+  const subtotal = order.order.subtotal;
+  if (typeof subtotal === "number" && subtotal >= 0) return subtotal;
+  const total = order.order.total ?? 0;
+  const fee = order.order.deliveryFee ?? 0;
+  return Math.max(0, total - fee);
 }
 
 function inRange(iso: string, range: DateRange) {
@@ -240,7 +242,7 @@ export const getBusinessOverview = cache(async function getBusinessOverview(
   const profitByDay = new Map<string, { profit: number; known: boolean }>();
 
   for (const o of activeOrders) {
-    const total = orderTotal(o);
+    const total = orderMerchandise(o);
     revenue += total;
     const dk = dayKey(o.savedAt);
     revByDay.set(dk, (revByDay.get(dk) || 0) + total);
@@ -352,7 +354,7 @@ export const getBusinessOverview = cache(async function getBusinessOverview(
       o.order.paymentStatus === "paid" ||
       o.status === "delivered",
   );
-  const cashIn = paidOrders.reduce((s, o) => s + orderTotal(o), 0);
+  const cashIn = paidOrders.reduce((s, o) => s + orderMerchandise(o), 0);
   const cashOut = operatingExpenses + payroll + importCosts;
 
   const seriesDays: string[] = [];
