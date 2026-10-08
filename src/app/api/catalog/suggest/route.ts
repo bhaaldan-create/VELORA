@@ -4,9 +4,8 @@ import {
   CATALOG_CACHE_CONTROL,
   CATALOG_CDN_CACHE_CONTROL,
 } from "@/lib/media-cache";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 60;
 
 /** Live search suggestions: products, brands, categories + popular list. */
 export async function GET(req: Request) {
