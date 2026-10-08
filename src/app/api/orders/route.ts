@@ -92,10 +92,7 @@ export async function POST(req: Request) {
     }
     order.phone = normalizedPhone;
 
-    order.deliveryFee =
-      typeof order.deliveryFee === "number"
-        ? order.deliveryFee
-        : DELIVERY_FEE_IQD;
+    order.deliveryFee = DELIVERY_FEE_IQD;
     order.shippingCarrier = order.shippingCarrier || THAHAB_CARRIER.id;
     order.shippingCarrierLabel =
       order.shippingCarrierLabel || THAHAB_CARRIER.nameAr;

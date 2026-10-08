@@ -1,5 +1,5 @@
 /** أجور التوصيل عبر ذهب أكسبريس — تُضاف لكل طلب */
-export const DELIVERY_FEE_IQD = 6000;
+export const DELIVERY_FEE_IQD = 5000;
 
 /** شركة التوصيل الحالية — ذهب أكسبريس */
 export const THAHAB_CARRIER = {
