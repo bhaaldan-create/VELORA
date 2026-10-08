@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 /** Immediate tag expiry for admin-driven storefront updates. */
@@ -9,12 +9,22 @@ type CatalogRevalidateOptions = {
   oldSlug?: string | null;
 };
 
+/** Prefer updateTag (Server Actions); fall back for Route Handler call sites. */
+function bustTag(tag: string) {
+  try {
+    updateTag(tag);
+  } catch {
+    // updateTag is Server-Action-only; Route Handlers use expire: 0 instead.
+  }
+  revalidateTag(tag, REVALIDATE_NOW);
+}
+
 /** Invalidate storefront catalog + homepage after admin product/home changes. */
 export function revalidateStorefront(options: CatalogRevalidateOptions = {}) {
-  revalidateTag(CACHE_TAGS.catalog, REVALIDATE_NOW);
-  revalidateTag(CACHE_TAGS.products, REVALIDATE_NOW);
-  revalidateTag(CACHE_TAGS.categories, REVALIDATE_NOW);
-  revalidateTag(CACHE_TAGS.home, REVALIDATE_NOW);
+  bustTag(CACHE_TAGS.catalog);
+  bustTag(CACHE_TAGS.products);
+  bustTag(CACHE_TAGS.categories);
+  bustTag(CACHE_TAGS.home);
 
   revalidatePath("/");
   revalidatePath("/shop");
@@ -26,16 +36,16 @@ export function revalidateStorefront(options: CatalogRevalidateOptions = {}) {
   const oldSlug = options.oldSlug?.trim();
 
   if (slug) {
-    revalidateTag(CACHE_TAGS.product(slug), REVALIDATE_NOW);
+    bustTag(CACHE_TAGS.product(slug));
     revalidatePath(`/shop/${slug}`);
   }
   if (oldSlug && oldSlug !== slug) {
-    revalidateTag(CACHE_TAGS.product(oldSlug), REVALIDATE_NOW);
+    bustTag(CACHE_TAGS.product(oldSlug));
     revalidatePath(`/shop/${oldSlug}`);
   }
 }
 
 export function revalidateHomepage() {
-  revalidateTag(CACHE_TAGS.home, REVALIDATE_NOW);
+  bustTag(CACHE_TAGS.home);
   revalidatePath("/");
 }

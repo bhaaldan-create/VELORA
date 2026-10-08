@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 import {
+  CATALOG_CACHE_CONTROL,
   MEDIA_CACHE_CONTROL,
   MEDIA_IMMUTABLE_CACHE_CONTROL,
 } from "./src/lib/media-cache";
@@ -101,7 +102,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=3600, stale-while-revalidate=86400",
+            value: CATALOG_CACHE_CONTROL,
           },
         ],
       },

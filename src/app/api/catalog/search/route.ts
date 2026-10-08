@@ -2,9 +2,13 @@ import {
   parseCatalogSearchParams,
   searchCatalog,
 } from "@/lib/catalog-search";
-import { MEDIA_CACHE_CONTROL, MEDIA_CDN_CACHE_CONTROL } from "@/lib/media-cache";
+import {
+  CATALOG_CACHE_CONTROL,
+  CATALOG_CDN_CACHE_CONTROL,
+} from "@/lib/media-cache";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const revalidate = 3600;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 /**
  * Advanced catalog search.
@@ -49,9 +53,9 @@ export async function GET(req: Request) {
         },
         {
           headers: {
-            "Cache-Control": MEDIA_CACHE_CONTROL,
-            "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
-            "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+            "Cache-Control": CATALOG_CACHE_CONTROL,
+            "CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
+            "Vercel-CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
           },
         },
       );
@@ -62,9 +66,9 @@ export async function GET(req: Request) {
       { ok: true, ...result },
       {
         headers: {
-          "Cache-Control": MEDIA_CACHE_CONTROL,
-          "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
-          "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+          "Cache-Control": CATALOG_CACHE_CONTROL,
+          "CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
+          "Vercel-CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
         },
       },
     );

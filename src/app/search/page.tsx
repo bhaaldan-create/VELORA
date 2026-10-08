@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchScreen } from "@/components/shop/SearchScreen";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 export const metadata: Metadata = {
   title: "البحث",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 /** Static shell — search runs client-side against cached catalog APIs. */
-export const revalidate = 3600;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export default function SearchPage() {
   return (

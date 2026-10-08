@@ -1,8 +1,12 @@
 import { suggestCatalog } from "@/lib/catalog-search";
 import { popularSearches } from "@/data/popular-searches";
-import { MEDIA_CACHE_CONTROL, MEDIA_CDN_CACHE_CONTROL } from "@/lib/media-cache";
+import {
+  CATALOG_CACHE_CONTROL,
+  CATALOG_CDN_CACHE_CONTROL,
+} from "@/lib/media-cache";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
-export const revalidate = 3600;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 /** Live search suggestions: products, brands, categories + popular list. */
 export async function GET(req: Request) {
@@ -17,9 +21,9 @@ export async function GET(req: Request) {
       },
       {
         headers: {
-          "Cache-Control": MEDIA_CACHE_CONTROL,
-          "CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
-          "Vercel-CDN-Cache-Control": MEDIA_CDN_CACHE_CONTROL,
+          "Cache-Control": CATALOG_CACHE_CONTROL,
+          "CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
+          "Vercel-CDN-Cache-Control": CATALOG_CDN_CACHE_CONTROL,
         },
       },
     );

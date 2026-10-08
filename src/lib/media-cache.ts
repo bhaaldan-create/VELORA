@@ -8,3 +8,10 @@ export const MEDIA_CDN_CACHE_CONTROL =
 
 export const MEDIA_IMMUTABLE_CACHE_CONTROL =
   "public, max-age=31536000, immutable";
+
+/** Short CDN TTL for catalog JSON (prices/stock) so admin edits propagate quickly. */
+export const CATALOG_CACHE_CONTROL =
+  "public, s-maxage=60, stale-while-revalidate=120";
+
+export const CATALOG_CDN_CACHE_CONTROL =
+  "public, s-maxage=60, stale-while-revalidate=120";

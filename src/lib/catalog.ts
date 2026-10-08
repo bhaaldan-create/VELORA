@@ -93,7 +93,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       if (product && isFragranceProduct(product)) return null;
       return product;
     },
-    ["catalog-product-slug-v5", slug],
+    ["catalog-product-slug-v6", slug],
     {
       revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.product(slug)],
@@ -112,7 +112,7 @@ export async function getProductById(id: string): Promise<Product | null> {
       if (product && isFragranceProduct(product)) return null;
       return product;
     },
-    ["catalog-product-id-v5", id],
+    ["catalog-product-id-v6", id],
     catalogCache,
   )();
 }

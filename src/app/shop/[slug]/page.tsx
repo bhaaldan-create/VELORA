@@ -6,9 +6,10 @@ import {
   getRelatedProducts,
   getRoutineCompanions,
 } from "@/lib/catalog";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 
 /** ISR — payloads use /api/media paths (no embedded image blobs). */
-export const revalidate = 3600;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 export async function generateMetadata({
   params,
