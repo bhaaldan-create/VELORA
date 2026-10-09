@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
-import type { OrderPayload } from "@/lib/order-email";
+import type { OrderItemPayload, OrderPayload } from "@/lib/order-email";
 import {
   normalizeStatus,
   ORDER_STATUSES,
   type OrderStatus,
   type StoredOrder,
 } from "@/lib/order-types";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import type { Prisma } from "@/generated/prisma/client";
 
 export type { OrderStatus, StoredOrder } from "@/lib/order-types";
@@ -19,6 +20,171 @@ export function createOrderId() {
     .slice(0, 14);
   const rand = Math.floor(Math.random() * 900 + 100);
   return `${stamp.slice(2)}${rand}`;
+}
+
+/** طلب مرفوض لأن الكمية أكبر من المخزون، أو المنتج غير موجود / غير نشط. */
+export class InsufficientStockError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InsufficientStockError";
+  }
+}
+
+const STOCK_RELEASE_STATUSES: ReadonlySet<OrderStatus> = new Set([
+  "cancelled",
+  "returned",
+  "failed_delivery",
+]);
+
+type AggregatedStockLine = {
+  id: string;
+  quantity: number;
+  name?: string;
+  nameAr?: string;
+};
+
+function aggregateStockLines(items: OrderItemPayload[]): AggregatedStockLine[] {
+  if (!Array.isArray(items)) {
+    throw new InsufficientStockError("بيانات كمية المنتج غير صالحة.");
+  }
+  const totals = new Map<string, AggregatedStockLine>();
+  for (const item of items) {
+    const id = typeof item?.id === "string" ? item.id.trim() : "";
+    const quantity = item?.quantity;
+    if (!id || !Number.isInteger(quantity) || quantity <= 0) {
+      throw new InsufficientStockError("بيانات كمية المنتج غير صالحة.");
+    }
+    const existing = totals.get(id);
+    if (existing) {
+      existing.quantity += quantity;
+      continue;
+    }
+    totals.set(id, {
+      id,
+      quantity,
+      name: item.name,
+      nameAr: item.nameAr,
+    });
+  }
+  return [...totals.values()];
+}
+
+function stockLineLabel(
+  line: AggregatedStockLine,
+  product?: { nameAr?: string | null; name?: string | null } | null,
+) {
+  return (
+    product?.nameAr?.trim() ||
+    product?.name?.trim() ||
+    line.nameAr?.trim() ||
+    line.name?.trim() ||
+    "المنتج"
+  );
+}
+
+function insufficientStockMessage(name: string, remaining?: number | null) {
+  if (typeof remaining === "number") {
+    return `الكمية المطلوبة من «${name}» غير متوفرة. المتبقي ${remaining}.`;
+  }
+  return `الكمية المطلوبة من «${name}» غير متوفرة.`;
+}
+
+function revalidateStockedProducts(slugs: string[]) {
+  for (const slug of new Set(slugs.filter((value) => value.trim().length > 0))) {
+    try {
+      revalidateStorefront({ slug });
+    } catch (error) {
+      console.error("[orders] storefront revalidate failed", slug, error);
+    }
+  }
+}
+
+async function applyStockCommit(
+  tx: Prisma.TransactionClient,
+  lines: AggregatedStockLine[],
+) {
+  const affected: string[] = [];
+  for (const line of lines) {
+    const product = await tx.product.findUnique({
+      where: { id: line.id },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        nameAr: true,
+        stock: true,
+        isActive: true,
+      },
+    });
+    const label = stockLineLabel(line, product);
+    if (!product || !product.isActive) {
+      throw new InsufficientStockError(
+        insufficientStockMessage(label, product?.stock),
+      );
+    }
+
+    const updated = await tx.product.updateMany({
+      where: {
+        id: line.id,
+        isActive: true,
+        stock: { gte: line.quantity },
+      },
+      data: { stock: { decrement: line.quantity } },
+    });
+    if (updated.count !== 1) {
+      const fresh = await tx.product.findUnique({
+        where: { id: line.id },
+        select: { name: true, nameAr: true, stock: true },
+      });
+      throw new InsufficientStockError(
+        insufficientStockMessage(stockLineLabel(line, fresh), fresh?.stock),
+      );
+    }
+    affected.push(product.slug);
+  }
+  return affected;
+}
+
+async function applyStockRelease(
+  tx: Prisma.TransactionClient,
+  lines: AggregatedStockLine[],
+) {
+  const affected: string[] = [];
+  for (const line of lines) {
+    const updated = await tx.product.updateMany({
+      where: { id: line.id },
+      data: { stock: { increment: line.quantity } },
+    });
+    if (updated.count !== 1) {
+      throw new InsufficientStockError(
+        insufficientStockMessage(stockLineLabel(line)),
+      );
+    }
+    const product = await tx.product.findUnique({
+      where: { id: line.id },
+      select: { slug: true },
+    });
+    if (product?.slug) affected.push(product.slug);
+  }
+  return affected;
+}
+
+/** خصم كميات الطلب من المخزون. يُرفض الطلب كاملاً إذا نقص منتج واحد. */
+export async function commitOrderStock(items: OrderItemPayload[]) {
+  const lines = aggregateStockLines(items);
+  if (lines.length === 0) return;
+
+  const slugs = await prisma.$transaction((tx) => applyStockCommit(tx, lines));
+  revalidateStockedProducts(slugs);
+}
+
+/** إعادة كميات الطلب إلى المخزون مرة واحدة. */
+export async function releaseOrderStock(items: OrderItemPayload[]) {
+  const lines = aggregateStockLines(items);
+  if (lines.length === 0) return;
+
+  const slugs = await prisma.$transaction((tx) => applyStockRelease(tx, lines));
+  revalidateStockedProducts(slugs);
 }
 
 function rowToStored(row: {
@@ -160,19 +326,78 @@ export async function updateOrderStatus(
   const existing = await prisma.order.findUnique({ where: { id: orderId } });
   if (!existing) return null;
 
-  const row = await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status,
-      adminNote:
-        typeof opts?.adminNote === "string"
-          ? opts.adminNote.trim() || null
-          : existing.adminNote,
-      receiptSentAt: opts?.markReceiptSent
-        ? new Date()
-        : existing.receiptSentAt,
-    },
-  });
+  const current = rowToStored(existing);
+  const releasing = STOCK_RELEASE_STATUSES.has(status);
+  const mayAdjustStock = Boolean(
+    current?.order.stockHeld &&
+      ((releasing && !current.order.stockReleased) ||
+        (!releasing && current.order.stockReleased)),
+  );
+
+  const adminNote =
+    typeof opts?.adminNote === "string"
+      ? opts.adminNote.trim() || null
+      : existing.adminNote;
+  const receiptSentAt = opts?.markReceiptSent
+    ? new Date()
+    : existing.receiptSentAt;
+
+  const { row, slugs } = await (async () => {
+    if (!mayAdjustStock || !current) {
+      const updated = await prisma.order.update({
+        where: { id: orderId },
+        data: { status, adminNote, receiptSentAt },
+      });
+      return { row: updated, slugs: [] as string[] };
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
+      const fresh = await tx.order.findUnique({ where: { id: orderId } });
+      if (!fresh) return { row: null, slugs: [] as string[] };
+
+      const freshStored = rowToStored(fresh);
+      const freshOrder = freshStored?.order;
+      const shouldRelease = Boolean(
+        freshOrder?.stockHeld && releasing && !freshOrder.stockReleased,
+      );
+      const shouldCommit = Boolean(
+        freshOrder?.stockHeld && !releasing && freshOrder.stockReleased,
+      );
+
+      let nextSlugs: string[] = [];
+      let orderJson: OrderPayload | null = null;
+      if (shouldRelease && freshOrder) {
+        nextSlugs = await applyStockRelease(
+          tx,
+          aggregateStockLines(freshOrder.items),
+        );
+        orderJson = { ...freshOrder, stockReleased: true };
+      } else if (shouldCommit && freshOrder) {
+        nextSlugs = await applyStockCommit(
+          tx,
+          aggregateStockLines(freshOrder.items),
+        );
+        orderJson = { ...freshOrder, stockReleased: false };
+      }
+
+      const updated = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status,
+          adminNote,
+          receiptSentAt,
+          ...(orderJson
+            ? { orderJson: orderJson as unknown as Prisma.InputJsonValue }
+            : {}),
+        },
+      });
+      return { row: updated, slugs: nextSlugs };
+    });
+  })();
+
+  if (!row) return null;
+  revalidateStockedProducts(slugs);
 
   const stored = rowToStored(row);
   if (stored && status === "delivered") {

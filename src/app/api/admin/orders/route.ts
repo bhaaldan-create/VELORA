@@ -2,11 +2,14 @@ import { z } from "zod";
 import { assertAdminModule } from "@/lib/admin/guard";
 import { buildOrderEmail, type OrderPayload } from "@/lib/order-email";
 import {
+  commitOrderStock,
   countOrdersByStatus,
   createOrderId,
   filterOrders,
+  InsufficientStockError,
   isOrderStatus,
   listStoredOrders,
+  releaseOrderStock,
   saveStoredOrder,
   updateOrderStatus,
   type OrderStatus,
@@ -99,6 +102,12 @@ export async function PATCH(req: Request) {
     return Response.json({ ok: true, order: updated });
   } catch (error) {
     console.error("[admin/orders] PATCH failed", error);
+    if (error instanceof InsufficientStockError) {
+      return Response.json(
+        { ok: false, error: error.message },
+        { status: 409 },
+      );
+    }
     return Response.json(
       { ok: false, error: "تعذّر تحديث حالة الطلب." },
       { status: 500 },
@@ -210,6 +219,10 @@ export async function POST(req: Request) {
             ? "الموقع"
             : "أخرى";
 
+    await commitOrderStock(order.items);
+    order.stockHeld = true;
+    order.stockReleased = false;
+
     const stored = await saveStoredOrder({
       savedAt: new Date().toISOString(),
       orderId,
@@ -224,11 +237,20 @@ export async function POST(req: Request) {
       ].join("\n"),
       status: "new",
       adminNote: `طلب يدوي عبر ${sourceNote} — ${gate.actor.label}`,
+    }).catch(async (error: unknown) => {
+      await releaseOrderStock(order.items);
+      throw error;
     });
 
     return Response.json({ ok: true, order: stored, orderId });
   } catch (error) {
     console.error("[admin/orders] POST failed", error);
+    if (error instanceof InsufficientStockError) {
+      return Response.json(
+        { ok: false, error: error.message },
+        { status: 409 },
+      );
+    }
     return Response.json(
       { ok: false, error: "تعذّر إنشاء الطلب اليدوي." },
       { status: 500 },

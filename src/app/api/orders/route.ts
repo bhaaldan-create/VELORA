@@ -11,7 +11,7 @@ import { buildOrderEmail, type OrderPayload } from "@/lib/order-email";
 import { normalizeIraqMobile } from "@/lib/phone";
 import { isSuperQiPaymentMethod, SUPER_QI_ACCOUNT } from "@/lib/super-qi";
 import { isWaylPaymentMethod } from "@/data/payments";
-import { createOrderId } from "@/lib/orders";
+import { createOrderId, InsufficientStockError } from "@/lib/orders";
 import {
   DELIVERY_FEE_IQD,
   getOrderTotal,
@@ -136,6 +136,12 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("[orders] failed", error);
+    if (error instanceof InsufficientStockError) {
+      return Response.json(
+        { ok: false, error: error.message },
+        { status: 409 },
+      );
+    }
     return Response.json(
       {
         ok: false,

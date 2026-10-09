@@ -1,5 +1,9 @@
 import type { OrderPayload } from "@/lib/order-email";
-import { saveStoredOrder } from "@/lib/orders";
+import {
+  commitOrderStock,
+  releaseOrderStock,
+  saveStoredOrder,
+} from "@/lib/orders";
 import { isSmtpConfigured, sendTransactionalEmail } from "@/lib/smtp";
 
 export const ORDER_EMAIL_TO =
@@ -44,15 +48,24 @@ export async function sendOrderEmailViaProviders(input: {
 }): Promise<SendOrderResult> {
   const { order, orderId, subject, text, html } = input;
 
-  await saveStoredOrder({
-    savedAt: new Date().toISOString(),
-    orderId,
-    subject,
-    emailedTo: ORDER_EMAIL_TO,
-    order,
-    text,
-    status: "new",
-  });
+  await commitOrderStock(order.items);
+  order.stockHeld = true;
+  order.stockReleased = false;
+
+  try {
+    await saveStoredOrder({
+      savedAt: new Date().toISOString(),
+      orderId,
+      subject,
+      emailedTo: ORDER_EMAIL_TO,
+      order,
+      text,
+      status: "new",
+    });
+  } catch (error) {
+    await releaseOrderStock(order.items);
+    throw error;
+  }
 
   if (isSmtpConfigured()) {
     const mailed = await sendTransactionalEmail({

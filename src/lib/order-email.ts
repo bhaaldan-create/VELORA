@@ -52,6 +52,10 @@ export type OrderPayload = {
   /** موظف الأدمن الذي أنشأ الطلب يدوياً */
   createdByAdminId?: string;
   createdByAdminName?: string;
+  /** تم خصم كميات الطلب من المخزون */
+  stockHeld?: boolean;
+  /** أُعيدت الكميات بعد إلغاء / إرجاع / فشل تسليم */
+  stockReleased?: boolean;
 };
 
 export const ORDER_SOURCE_LABELS: Record<OrderSource, string> = {
