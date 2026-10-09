@@ -27,6 +27,8 @@ export type ShopBrand = {
   logo: string;
   /** Optical max width inside logo well (0–1) */
   opticalScale?: number;
+  /** شعار أسود بخلفية شفافة — يُقلب للأبيض في الوضع الليلي */
+  ink?: boolean;
   /** Soft card wash — CSS color stops */
   wash: string;
 };
@@ -512,7 +514,21 @@ export const shopBrands: ShopBrand[] = [
     wash: "linear-gradient(160deg,#fbf6f8 0%,#f5e8ee 55%,#ffffff 100%)",
   },
 
-  // 🇬🇧 UK — 1
+  // 🇬🇧 UK — 2
+  {
+    id: "revolution",
+    slug: "revolution",
+    name: "Revolution",
+    nameAr: "ريفولوشن",
+    country: "United Kingdom",
+    countryAr: "المملكة المتحدة",
+    countryCode: "GB",
+    match: ["revolution", "revolution beauty", "makeup revolution"],
+    logo: "/brands/logos/revolution.svg",
+    opticalScale: 0.86,
+    ink: true,
+    wash: "linear-gradient(160deg,#f7f7f8 0%,#ececef 55%,#ffffff 100%)",
+  },
   {
     id: "charlotte-tilbury",
     slug: "charlotte-tilbury",

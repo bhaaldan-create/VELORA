@@ -1666,3 +1666,17 @@ html[data-launch="done"] .velora-launch {
   }
 }
 
+.brand-ink-well {
+  background: var(--ivory-fixed);
+}
+[data-theme="dark"] .brand-ink-well {
+  background: #161214;
+}
+.brand-ink-logo {
+  filter: none;
+}
+[data-theme="dark"] .brand-ink-logo {
+  filter: invert(1);
+  opacity: 0.94;
+}
+

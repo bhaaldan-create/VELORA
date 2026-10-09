@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ProductMedia } from "@/components/shop/ProductMedia";
+import { getShopBrandByProductBrandName } from "@/data/shop-brands";
 import { ProductBadge, productDetailBadges } from "@/components/shop/ProductBadge";
 import { WishlistHeartButton } from "@/components/shop/WishlistHeartButton";
 import { shouldUseNativeImageElement } from "@/lib/admin/media-url";
@@ -231,6 +232,7 @@ export function ProductBrandLogo({
 }) {
   if (!brandLogoUrl) return null;
   const useNative = shouldUseNativeImageElement(brandLogoUrl);
+  const ink = getShopBrandByProductBrandName(brandName)?.ink === true;
 
   return (
     <div
@@ -238,13 +240,21 @@ export function ProductBrandLogo({
       dir="ltr"
     >
       <div className="mb-3 h-px w-9 bg-[var(--plum)]/12" aria-hidden />
-      <div className="relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[260px]">
+      <div
+        className={cn(
+          "relative flex h-8 max-w-[min(100%,220px)] items-center justify-center sm:h-9 sm:max-w-[260px]",
+          ink && "brand-ink-well",
+        )}
+      >
         {useNative ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={brandLogoUrl}
             alt={brandName ? `${brandName} logo` : "Brand logo"}
-            className="h-auto max-h-8 w-auto max-w-full object-contain object-center opacity-90 sm:max-h-9"
+            className={cn(
+              "h-auto max-h-8 w-auto max-w-full object-contain object-center opacity-90 sm:max-h-9",
+              ink && "brand-ink-logo",
+            )}
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
@@ -255,7 +265,10 @@ export function ProductBrandLogo({
             alt={brandName ? `${brandName} logo` : "Brand logo"}
             width={260}
             height={36}
-            className="h-auto max-h-8 w-auto max-w-full object-contain object-center opacity-90 sm:max-h-9"
+            className={cn(
+              "h-auto max-h-8 w-auto max-w-full object-contain object-center opacity-90 sm:max-h-9",
+              ink && "brand-ink-logo",
+            )}
           />
         )}
       </div>

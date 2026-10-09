@@ -49,7 +49,8 @@ export function BrandCard({
           className={cn(
             "relative mx-auto flex aspect-square w-full max-w-[7.5rem] items-center justify-center overflow-hidden rounded-[1.35rem]",
             /* خلفية فاتحة ثابتة لشعارات البراند — ليست لون ثيم */
-            "bg-[var(--ivory-fixed)] shadow-[var(--shadow-sm)]",
+            brand.ink ? "brand-ink-well" : "bg-[var(--ivory-fixed)]",
+            "shadow-[var(--shadow-sm)]",
             "ring-1 ring-[var(--border)]",
           )}
         >
@@ -62,7 +63,7 @@ export function BrandCard({
               height={160}
               loading="lazy"
               decoding="async"
-              className="object-contain"
+              className={cn("object-contain", brand.ink && "brand-ink-logo")}
               style={{
                 width: `${scale * 100}%`,
                 height: `${scale * 100}%`,
