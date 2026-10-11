@@ -22,6 +22,7 @@ export type AdminNavId =
   | "employees"
   | "branches"
   | "marketing"
+  | "promotions"
   | "notifications"
   | "homepage"
   | "club"
@@ -63,6 +64,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: "payments", href: "/admin/payments", labelAr: "المدفوعات", labelEn: "Payments", icon: "payments", group: "system" },
   { id: "whatsapp", href: "/admin/whatsapp", labelAr: "واتساب", labelEn: "WhatsApp", icon: "whatsapp", group: "system" },
   { id: "marketing", href: "/admin/marketing", labelAr: "التسويق", labelEn: "Marketing", icon: "marketing", group: "system" },
+  { id: "promotions", href: "/admin/promotions", labelAr: "العروض والأكواد", labelEn: "Promotions", icon: "promotions", group: "commerce" },
   { id: "notifications", href: "/admin/notifications", labelAr: "الإشعارات", labelEn: "Notifications", icon: "notifications", group: "system" },
   { id: "homepage", href: "/admin/homepage", labelAr: "الصفحة الرئيسية", labelEn: "Homepage", icon: "homepage", group: "system" },
   { id: "club", href: "/admin/club", labelAr: "نادي الجمال", labelEn: "Beauty Club", icon: "club", group: "system" },

@@ -7,6 +7,7 @@ import {
   salePriceIqd,
   type ProductCostBreakdown,
 } from "@/lib/finance/product-cost";
+import { orderMerchandiseIqd } from "@/lib/shipping";
 
 export type DateRange = { from: Date; to: Date };
 
@@ -88,11 +89,7 @@ function daysAgo(n: number) {
 
 /** إيراد المتجر = سعر المنتجات فقط. أجور التوصيل تمر للناقل وليست دخلاً. */
 function orderMerchandise(order: StoredOrder): number {
-  const subtotal = order.order.subtotal;
-  if (typeof subtotal === "number" && subtotal >= 0) return subtotal;
-  const total = order.order.total ?? 0;
-  const fee = order.order.deliveryFee ?? 0;
-  return Math.max(0, total - fee);
+  return orderMerchandiseIqd(order.order);
 }
 
 function inRange(iso: string, range: DateRange) {

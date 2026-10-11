@@ -236,7 +236,7 @@ export function AdminHomeDashboard({
           icon={TrendingUp}
           footnote={
             data.netMarginPct !== null
-              ? `هامش صافي ${data.netMarginPct}%`
+              ? `هامش صافي ${data.netMarginPct}% · بدون أجور التوصيل`
               : "مبيعات المنتجات − تكلفة − مصروف − رواتب (بدون أجور التوصيل)"
           }
         />

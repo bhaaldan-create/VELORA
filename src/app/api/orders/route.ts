@@ -13,10 +13,11 @@ import { isSuperQiPaymentMethod, SUPER_QI_ACCOUNT } from "@/lib/super-qi";
 import { isWaylPaymentMethod } from "@/data/payments";
 import { createOrderId, InsufficientStockError } from "@/lib/orders";
 import {
-  DELIVERY_FEE_IQD,
-  getOrderTotal,
-  THAHAB_CARRIER,
-} from "@/lib/shipping";
+  applyQuoteToOrder,
+  CouponRejected,
+  pricePublicOrder,
+} from "@/lib/discounts/service";
+import { THAHAB_CARRIER } from "@/lib/shipping";
 
 const orderSchema = z.object({
   fullName: z.string().min(2),
@@ -48,6 +49,8 @@ const orderSchema = z.object({
   subtotal: z.number().positive(),
   deliveryFee: z.number().nonnegative().optional(),
   total: z.number().positive().optional(),
+  couponCode: z.string().max(40).optional(),
+  confirmTotal: z.number().nonnegative().optional(),
   shippingCarrier: z.string().optional(),
   shippingCarrierLabel: z.string().optional(),
 });
@@ -77,7 +80,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const order = parsed.data as OrderPayload;
+    const { confirmTotal, ...orderRest } = parsed.data;
+    const order = orderRest as OrderPayload;
     order.source = order.source || "website";
 
     const normalizedPhone = normalizeIraqMobile(order.phone);
@@ -92,11 +96,41 @@ export async function POST(req: Request) {
     }
     order.phone = normalizedPhone;
 
-    order.deliveryFee = DELIVERY_FEE_IQD;
     order.shippingCarrier = order.shippingCarrier || THAHAB_CARRIER.id;
     order.shippingCarrierLabel =
       order.shippingCarrierLabel || THAHAB_CARRIER.nameAr;
-    order.total = getOrderTotal(order.subtotal, order.deliveryFee);
+    try {
+      const quote = await pricePublicOrder({
+        items: order.items,
+        couponCode: order.couponCode,
+        customerId: order.customerId,
+        phone: order.phone,
+        email: order.email,
+      });
+      applyQuoteToOrder(order, quote);
+    } catch (error) {
+      if (error instanceof CouponRejected) {
+        return Response.json(
+          { ok: false, error: error.message },
+          { status: error.status },
+        );
+      }
+      throw error;
+    }
+    if (confirmTotal != null && confirmTotal !== order.total) {
+      return Response.json(
+        {
+          ok: false,
+          error: `تغيّر المبلغ المستحق إلى ${Number(order.total).toLocaleString("ar-IQ")} د.ع. أكّدي لإكمال الطلب.`,
+          requiresConfirmation: true,
+          payable: order.total,
+          deliveryFee: order.deliveryFee,
+          couponDiscountIqd: order.couponDiscountIqd || 0,
+          merchandiseAfter: order.subtotal,
+        },
+        { status: 409 },
+      );
+    }
 
     if (isSuperQiPaymentMethod(order.paymentMethod)) {
       if (!order.transferReference?.trim()) {
@@ -136,6 +170,12 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("[orders] failed", error);
+    if (error instanceof CouponRejected) {
+      return Response.json(
+        { ok: false, error: error.message },
+        { status: error.status },
+      );
+    }
     if (error instanceof InsufficientStockError) {
       return Response.json(
         { ok: false, error: error.message },

@@ -35,12 +35,20 @@ export default function AdminMarketingPage() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/admin/whatsapp"
-            className="mt-5 inline-flex h-9 items-center rounded-[8px] bg-[var(--admin-plum)] px-4 text-[13px] font-medium text-white"
-          >
-            فتح مركز واتساب
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link
+              href="/admin/promotions"
+              className="inline-flex h-9 items-center rounded-[8px] bg-[var(--admin-plum)] px-4 text-[13px] font-medium text-white"
+            >
+              العروض وأكواد المؤثرين
+            </Link>
+            <Link
+              href="/admin/whatsapp"
+              className="inline-flex h-9 items-center rounded-[8px] border border-[var(--admin-border)] px-4 text-[13px] font-medium"
+            >
+              فتح مركز واتساب
+            </Link>
+          </div>
         </Surface>
       </div>
     </AdminShell>

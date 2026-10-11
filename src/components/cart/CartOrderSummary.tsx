@@ -11,6 +11,9 @@ type Props = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  couponCode?: string | null;
+  couponDiscount?: number;
+  productDiscount?: number;
   className?: string;
   showCta?: boolean;
   compact?: boolean;
@@ -20,6 +23,9 @@ export function CartOrderSummary({
   subtotal,
   deliveryFee,
   total,
+  couponCode,
+  couponDiscount = 0,
+  productDiscount = 0,
   className,
   showCta = true,
   compact = false,
@@ -33,12 +39,28 @@ export function CartOrderSummary({
 
       <dl className={cn("bag-summary__rows", compact && "!mt-0")}>
         <div className="bag-summary__row">
-          <dt>المجموع الفرعي</dt>
-          <dd className="font-price">{formatPrice(subtotal)}</dd>
+          <dt>مجموع المنتجات</dt>
+          <dd className="font-price">{formatPrice(subtotal + productDiscount)}</dd>
         </div>
+        {productDiscount > 0 ? (
+          <div className="bag-summary__row">
+            <dt>عروض المنتجات</dt>
+            <dd className="font-price">-{formatPrice(productDiscount)}</dd>
+          </div>
+        ) : null}
+        {couponCode ? (
+          <div className="bag-summary__row">
+            <dt>كوبون {couponCode}</dt>
+            <dd className="font-price">
+              {couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
+            </dd>
+          </div>
+        ) : null}
         <div className="bag-summary__row">
           <dt>أجور التوصيل</dt>
-          <dd className="font-price">{formatPrice(deliveryFee)}</dd>
+          <dd className="font-price">
+            {deliveryFee > 0 ? formatPrice(deliveryFee) : "مجاني"}
+          </dd>
         </div>
       </dl>
 

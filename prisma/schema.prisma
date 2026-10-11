@@ -215,6 +215,7 @@ model Customer {
   updatedAt     DateTime               @updatedAt
   wishlistItems CustomerWishlistItem[]
   notifications CustomerNotification[]
+  deviceTokens  CustomerDeviceToken[]
   veloraCards   VeloraCard[]
   achievements  VeloraAchievement[]
   referralLinks VeloraReferralLink[]
@@ -224,6 +225,23 @@ model Customer {
   qrClaims       LoyaltyQrClaim[]
 
   @@index([referredByCustomerId])
+}
+
+/// توكن إشعارات الدفع (FCM) لجهاز الزبونة
+model CustomerDeviceToken {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// FCM registration token
+  token      String
+  /// ios | android | web
+  platform   String   @default("unknown")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([token])
+  @@index([customerId, updatedAt])
+  @@index([platform])
 }
 
 /// منتجات محفوظة في قائمة أمنيات الزبون (بدون تكرار)
@@ -815,4 +833,154 @@ model LoyaltyPromoCampaign {
   updatedAt  DateTime @updatedAt
 
   @@index([active, type, startsAt, endsAt])
+}
+
+/// حملة ترويج (موسمية / مؤثر / متجر). إيقافها يمنع استرداد الأكواد المرتبطة ما لم يُستثنَ الكود.
+model PromoCampaign {
+  id          String    @id @default(cuid())
+  name        String
+  description String    @default("")
+  /// DRAFT | ACTIVE | PAUSED | COMPLETED | ARCHIVED
+  status      String    @default("DRAFT")
+  startsAt    DateTime?
+  endsAt      DateTime?
+  /// سقف تعرّض الخصم بالدينار، إن وُجد. تحذير إرشادي عند تجاوزه.
+  budgetIqd   Int?
+  ownerLabel  String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  coupons     Coupon[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+model Influencer {
+  id                 String    @id @default(cuid())
+  name               String
+  email              String    @default("")
+  phone              String    @default("")
+  platform           String    @default("")
+  username           String    @default("")
+  profileUrl         String    @default("")
+  notes              String    @default("")
+  /// PENDING | ACTIVE | PAUSED | ARCHIVED
+  status             String    @default("PENDING")
+  agreementStart     DateTime?
+  agreementEnd       DateTime?
+  commissionEnabled  Boolean   @default(false)
+  /// PERCENT | FIXED — مستقل عن خصم الزبون
+  commissionType     String    @default("PERCENT")
+  /// نسبة مئوية أو مبلغ ثابت بالدينار
+  commissionValue    Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  coupons            Coupon[]
+  redemptions        CouponRedemption[]
+
+  @@index([status])
+}
+
+model Coupon {
+  id                    String         @id @default(cuid())
+  /// مُطبَّع: أحرف كبيرة بدون مسافات
+  code                  String         @unique
+  name                  String
+  description           String         @default("")
+  notes                 String         @default("")
+  /// PERCENT | FIXED | FREE_SHIPPING
+  type                  String
+  /// نسبة 1–100 أو مبلغ ثابت بالدينار. الشحن المجاني = 0
+  value                 Int            @default(0)
+  maxDiscountIqd        Int?
+  /// الحد الأدنى لمجموع المنتجات المؤهلة بعد سعر البيع وقبل الكوبون، بدون الشحن
+  minSubtotalIqd        Int            @default(0)
+  startsAt              DateTime?
+  endsAt                DateTime?
+  /// DRAFT | ACTIVE | PAUSED | ARCHIVED — المجدول/المنتهي/المستنفد يُشتق عند القراءة
+  status                String         @default("DRAFT")
+  maxRedemptions        Int?
+  maxPerCustomer        Int?
+  firstOrderOnly        Boolean        @default(false)
+  registeredOnly        Boolean        @default(false)
+  /// إن كان false تُستبعد الأسطر المخفّضة أصلاً من أساس الكوبون
+  applyToSaleItems      Boolean        @default(true)
+  /// PUBLIC | PRIVATE — الخاص لا يُعرض، ويبقى خاضعاً للتحقق في الخادم
+  visibility            String         @default("PUBLIC")
+  ignoreCampaignPause   Boolean        @default(false)
+  /// حد هامش إرشادي يُفرض فقط عند توفر تكلفة لكل الأسطر المؤهلة
+  minMarginPercent      Int?
+  campaignId            String?
+  campaign              PromoCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  influencerId          String?
+  influencer            Influencer?    @relation(fields: [influencerId], references: [id], onDelete: Restrict)
+  eligibleProductIds    Json           @default("[]")
+  eligibleCategories    Json           @default("[]")
+  eligibleBrands        Json           @default("[]")
+  excludedProductIds    Json           @default("[]")
+  excludedCategories    Json           @default("[]")
+  excludedBrands        Json           @default("[]")
+  restrictedCustomerIds Json           @default("[]")
+  commissionOverrideType  String?
+  commissionOverrideValue Int?
+  createdBy             String         @default("")
+  updatedBy             String         @default("")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  redemptions           CouponRedemption[]
+
+  @@index([status, endsAt])
+  @@index([campaignId])
+  @@index([influencerId])
+}
+
+/// لقطة مالية ثابتة. لا تُحذف مع الطلب. العكس يُعلَّم ولا يُمسح.
+model CouponRedemption {
+  id                  String      @id @default(cuid())
+  couponId            String
+  coupon              Coupon      @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  orderId             String      @unique
+  customerKey         String
+  customerId          String      @default("")
+  code                String
+  merchandiseBeforeIqd Int
+  discountIqd         Int
+  shippingDiscountIqd Int         @default(0)
+  eligibleBaseIqd     Int
+  deliveryFeeIqd      Int
+  payableIqd          Int
+  influencerId        String?
+  influencer          Influencer? @relation(fields: [influencerId], references: [id], onDelete: SetNull)
+  campaignId          String?
+  commissionIqd       Int         @default(0)
+  commissionBasisIqd  Int         @default(0)
+  /// NONE | HELD | PENDING | APPROVED | PAID | REVERSED
+  commissionStatus    String      @default("NONE")
+  reviewRequired      Boolean     @default(false)
+  reviewReasons       Json        @default("[]")
+  payoutReference     String      @default("")
+  paidAt              DateTime?
+  reversed            Boolean     @default(false)
+  reversedReason      String      @default("")
+  snapshotJson        Json
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@index([couponId, customerKey])
+  @@index([influencerId, createdAt])
+  @@index([campaignId, createdAt])
+  @@index([commissionStatus, reversed])
+}
+
+/// محاولات التحقق. لا يُخزَّن الكود الخام إن لم يطابق كوداً موجوداً.
+model CouponAttempt {
+  id         String   @id @default(cuid())
+  couponId   String   @default("")
+  codeHash   String   @default("")
+  outcome    String
+  customerKey String  @default("")
+  ipHash     String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([ipHash, createdAt])
+  @@index([createdAt])
 }

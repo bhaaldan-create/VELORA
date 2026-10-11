@@ -17,7 +17,8 @@ export type AdminModule =
   | "reports"
   | "settings"
   | "customers"
-  | "employees";
+  | "employees"
+  | "promotions";
 
 const ROLE_MODULES: Record<string, AdminModule[]> = {
   root: [
@@ -36,6 +37,7 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "settings",
     "customers",
     "employees",
+    "promotions",
   ],
   manager: [
     "overview",
@@ -53,6 +55,7 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "settings",
     "customers",
     "employees",
+    "promotions",
   ],
   warehouse: [
     "overview",
@@ -62,7 +65,7 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "imports",
     "suppliers",
   ],
-  cashier: ["overview", "orders", "customers", "products"],
+  cashier: ["overview", "orders", "customers", "products", "promotions"],
   finance: [
     "overview",
     "ai",
@@ -73,6 +76,7 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "reports",
     "orders",
     "settings",
+    "promotions",
   ],
   advisor: ["overview", "products", "customers", "orders"],
   delivery: ["overview", "orders"],
@@ -92,6 +96,7 @@ const ROLE_MODULES: Record<string, AdminModule[]> = {
     "settings",
     "customers",
     "employees",
+    "promotions",
   ],
 };
 
@@ -135,6 +140,8 @@ export function moduleForPath(pathname: string): AdminModule | null {
     { prefix: "/api/admin/salary", module: "payroll" },
     { prefix: "/api/admin/attendance", module: "payroll" },
     { prefix: "/admin/settings", module: "settings" },
+    { prefix: "/admin/promotions", module: "promotions" },
+    { prefix: "/api/admin/promotions", module: "promotions" },
   ];
   for (const r of rules) {
     if (p === r.prefix || p.startsWith(`${r.prefix}/`)) return r.module;

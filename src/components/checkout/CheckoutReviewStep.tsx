@@ -22,6 +22,8 @@ type Props = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  couponCode?: string | null;
+  couponDiscount?: number;
   onEditShipping: () => void;
   onEditPayment: () => void;
   onConfirm: () => void;
@@ -119,6 +121,8 @@ export function CheckoutReviewStep({
   subtotal,
   deliveryFee,
   total,
+  couponCode,
+  couponDiscount = 0,
   onEditShipping,
   onEditPayment,
   onConfirm,
@@ -244,11 +248,19 @@ export function CheckoutReviewStep({
       <div className="cr-totals">
         <dl>
           <div className="cr-totals__row">
-            <dt className="cr-totals__label">المجموع الفرعي</dt>
+            <dt className="cr-totals__label">مجموع المنتجات</dt>
             <dd className="cr-totals__value font-price">
               {formatPrice(subtotal)}
             </dd>
           </div>
+          {couponCode ? (
+            <div className="cr-totals__row">
+              <dt className="cr-totals__label">كوبون {couponCode}</dt>
+              <dd className="cr-totals__value font-price">
+                {couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
+              </dd>
+            </div>
+          ) : null}
           <div className="cr-totals__row">
             <dt className="cr-totals__label">أجور التوصيل</dt>
             <dd className="cr-totals__value font-price">

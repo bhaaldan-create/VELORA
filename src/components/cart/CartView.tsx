@@ -8,6 +8,8 @@ import { CartClearDialog } from "@/components/cart/CartClearDialog";
 import { CartEmptyState } from "@/components/cart/CartEmptyState";
 import { CartLineItem } from "@/components/cart/CartLineItem";
 import { CartOrderSummary } from "@/components/cart/CartOrderSummary";
+import { CouponField } from "@/components/cart/CouponField";
+import { useCouponQuote } from "@/components/cart/useCouponQuote";
 import { IconArrowStart } from "@/components/cart/CartIcons";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -26,8 +28,19 @@ export function CartView() {
   const { items, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
     useCart();
   const [clearOpen, setClearOpen] = useState(false);
-  const deliveryFee = DELIVERY_FEE_IQD;
-  const total = getOrderTotal(subtotal, deliveryFee);
+  const coupon = useCouponQuote({
+    items: items.map(({ product, quantity }) => ({ id: product.id, quantity })),
+  });
+  const productDiscount = items.reduce((sum, { product, quantity }) => {
+    const base =
+      product.originalPrice && product.originalPrice > product.price
+        ? product.originalPrice
+        : product.price;
+    return sum + (base - product.price) * quantity;
+  }, 0);
+  const deliveryFee = coupon.quote?.deliveryFee ?? DELIVERY_FEE_IQD;
+  const saleSubtotal = coupon.quote?.merchandiseSubtotal ?? subtotal;
+  const total = coupon.quote?.total ?? getOrderTotal(subtotal, deliveryFee);
 
   if (items.length === 0) {
     return <CartEmptyState />;
@@ -67,21 +80,51 @@ export function CartView() {
           </section>
 
           <div className="hidden lg:block lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
-            <CartOrderSummary
-              subtotal={subtotal}
-              deliveryFee={deliveryFee}
-              total={total}
-            />
+            <div className="space-y-4">
+              <CouponField
+                id="coupon-code-desktop"
+                code={coupon.code}
+                applied={coupon.applied}
+                error={coupon.error}
+                loading={coupon.loading}
+                onChange={coupon.setCode}
+                onApply={coupon.apply}
+                onClear={coupon.clear}
+              />
+              <CartOrderSummary
+                subtotal={saleSubtotal}
+                deliveryFee={deliveryFee}
+                total={total}
+                couponCode={coupon.quote?.couponCode}
+                couponDiscount={coupon.quote?.couponDiscountIqd}
+                productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
+              />
+            </div>
           </div>
         </div>
 
         <div className="mt-8 lg:hidden">
-          <CartOrderSummary
-            subtotal={subtotal}
-            deliveryFee={deliveryFee}
-            total={total}
-            showCta={false}
-          />
+          <div className="space-y-4">
+            <CouponField
+              id="coupon-code-mobile"
+              code={coupon.code}
+              applied={coupon.applied}
+              error={coupon.error}
+              loading={coupon.loading}
+              onChange={coupon.setCode}
+              onApply={coupon.apply}
+              onClear={coupon.clear}
+            />
+            <CartOrderSummary
+              subtotal={saleSubtotal}
+              deliveryFee={deliveryFee}
+              total={total}
+              couponCode={coupon.quote?.couponCode}
+              couponDiscount={coupon.quote?.couponDiscountIqd}
+              productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
+              showCta={false}
+            />
+          </div>
         </div>
       </div>
 

@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/db";
 import { listStoredOrders } from "@/lib/orders";
 import type { OrderStatus, StoredOrder } from "@/lib/order-types";
+import { orderMerchandiseIqd } from "@/lib/shipping";
 
+/** مبيعات البورد = المنتجات فقط، بدون أجور التوصيل. */
 function orderTotal(order: StoredOrder): number {
-  return (
-    order.order.total ??
-    order.order.subtotal + (order.order.deliveryFee ?? 0)
-  );
+  return orderMerchandiseIqd(order.order);
 }
 
 function startOfDay(d: Date) {

@@ -31,6 +31,26 @@ export function getOrderTotal(
   return Math.max(0, subtotal) + Math.max(0, deliveryFee);
 }
 
+/**
+ * إيراد المتجر = سعر المنتجات فقط.
+ * أجور التوصيل تُحصَّل للناقل وليست دخلاً ولا تدخل في صافي الربح.
+ */
+export function orderMerchandiseIqd(order: {
+  subtotal: number;
+  deliveryFee?: number | null;
+  total?: number | null;
+}): number {
+  const subtotal = Math.max(0, order.subtotal || 0);
+  const fee = Math.max(0, order.deliveryFee || 0);
+  if (fee <= 0) return subtotal;
+  const total = order.total;
+  // صفوف قديمة حفظت المجموع مع التوصيل داخل subtotal
+  if (typeof total === "number" && total + 0.5 < subtotal + fee) {
+    return Math.max(0, subtotal - fee);
+  }
+  return subtotal;
+}
+
 export function resolveDeliveryFee(order: {
   deliveryFee?: number | null;
   subtotal: number;

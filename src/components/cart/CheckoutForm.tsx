@@ -29,6 +29,8 @@ import {
   CheckoutSuccessExperience,
 } from "@/components/checkout/CheckoutSuccessExperience";
 import { CheckoutReviewStep } from "@/components/checkout/CheckoutReviewStep";
+import { CouponField } from "@/components/cart/CouponField";
+import { useCouponQuote } from "@/components/cart/useCouponQuote";
 import { PremiumPaymentPicker } from "@/components/checkout/PremiumPaymentPicker";
 import { ShippingAddressCard } from "@/components/checkout/ShippingAddressCard";
 import {
@@ -86,8 +88,30 @@ export function CheckoutForm({
 
   const methods = paymentMethods ?? [];
   const needsWayl = isWaylPaymentMethod(paymentMethod);
-  const deliveryFee = DELIVERY_FEE_IQD;
-  const total = getOrderTotal(subtotal, deliveryFee);
+  const coupon = useCouponQuote({
+    items: items.map(({ product, quantity }) => ({ id: product.id, quantity })),
+    customerId: customer?.id,
+    phone,
+    email,
+  });
+  const [serverAdjust, setServerAdjust] = useState<{
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
+    couponDiscount: number;
+  } | null>(null);
+  const deliveryFee =
+    serverAdjust?.deliveryFee ?? coupon.quote?.deliveryFee ?? DELIVERY_FEE_IQD;
+  const couponDiscount =
+    serverAdjust?.couponDiscount ?? coupon.quote?.couponDiscountIqd ?? 0;
+  const saleSubtotal = coupon.quote?.merchandiseSubtotal ?? subtotal;
+  const displaySubtotal = serverAdjust
+    ? serverAdjust.subtotal + serverAdjust.couponDiscount
+    : saleSubtotal;
+  const total =
+    serverAdjust?.total ??
+    coupon.quote?.total ??
+    getOrderTotal(subtotal, DELIVERY_FEE_IQD);
   const itemCount = items.reduce((sum, { quantity }) => sum + quantity, 0);
   const usingAccount = Boolean(customer);
   const showShippingForm = !usingAccount || editingShipping;
@@ -184,6 +208,14 @@ export function CheckoutForm({
     const trimmedAddress = address.trim();
     const trimmedNotes = notes.trim();
 
+    if (coupon.applied && coupon.error) {
+      finalizeRef.current = false;
+      setError(coupon.error);
+      setPhase("steps");
+      setStep("review");
+      return;
+    }
+
     if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedAddress) {
       finalizeRef.current = false;
       setError("أكملي بيانات الشحن قبل تأكيد الطلب.");
@@ -216,9 +248,11 @@ export function CheckoutForm({
         quantity,
         size: product.size,
       })),
-      subtotal,
+      subtotal: displaySubtotal,
       deliveryFee,
       total,
+      couponCode: coupon.applied || undefined,
+      confirmTotal: total,
       shippingCarrier: THAHAB_CARRIER.id,
       shippingCarrierLabel: THAHAB_CARRIER.nameAr,
     };
@@ -234,7 +268,26 @@ export function CheckoutForm({
         orderId?: string;
         error?: string;
         message?: string;
+        requiresConfirmation?: boolean;
+        payable?: number;
+        deliveryFee?: number;
+        couponDiscountIqd?: number;
+        merchandiseAfter?: number;
       };
+
+      if (res.status === 409 && json.requiresConfirmation && json.payable != null) {
+        setServerAdjust({
+          subtotal: json.merchandiseAfter ?? displaySubtotal,
+          deliveryFee: json.deliveryFee ?? deliveryFee,
+          total: json.payable,
+          couponDiscount: json.couponDiscountIqd ?? couponDiscount,
+        });
+        finalizeRef.current = false;
+        setPhase("steps");
+        setStep("review");
+        setError(json.error || "تغيّر المبلغ المستحق. أكّدي للمتابعة.");
+        return;
+      }
 
       if (!res.ok || !json.ok) {
         throw new Error(json.error || "تعذّر إرسال الطلب.");
@@ -271,6 +324,7 @@ export function CheckoutForm({
           return;
         }
 
+        coupon.clear();
         clearCart();
         window.location.href = linkJson.paymentUrl;
         return;
@@ -278,6 +332,7 @@ export function CheckoutForm({
 
       setSelectedPaymentLabel(paymentMethodLabel);
       setOrderId(json.orderId ?? null);
+      coupon.clear();
       clearCart();
       setPhase("success");
     } catch (err) {
@@ -302,6 +357,12 @@ export function CheckoutForm({
     phone,
     subtotal,
     total,
+    displaySubtotal,
+    couponDiscount,
+    coupon.applied,
+    coupon.error,
+    coupon.loading,
+    coupon.clear,
     clearCart,
   ]);
 
@@ -552,9 +613,11 @@ export function CheckoutForm({
                 address={address}
                 paymentMethod={paymentMethodData}
                 items={items}
-                subtotal={subtotal}
+                subtotal={displaySubtotal}
                 deliveryFee={deliveryFee}
                 total={total}
+                couponCode={coupon.quote?.couponCode || coupon.applied}
+                couponDiscount={couponDiscount}
                 onEditShipping={() => setStep("details")}
                 onEditPayment={() => setStep("payment")}
                 onConfirm={openCountdown}
@@ -582,11 +645,29 @@ export function CheckoutForm({
           </form>
 
           <div className="space-y-6 lg:sticky lg:top-[calc(var(--header-offset)+1rem)]">
+            <CouponField
+              code={coupon.code}
+              applied={coupon.applied}
+              error={coupon.error}
+              loading={coupon.loading}
+              onChange={coupon.setCode}
+              onApply={() => {
+                setServerAdjust(null);
+                coupon.apply();
+              }}
+              onClear={() => {
+                setServerAdjust(null);
+                coupon.clear();
+              }}
+            />
             <CheckoutOrderSummary
               itemCount={itemCount}
-              subtotal={subtotal}
+              subtotal={displaySubtotal}
               deliveryFee={deliveryFee}
               total={total}
+              couponCode={coupon.quote?.couponCode}
+              couponDiscount={couponDiscount}
+              productDiscount={coupon.quote?.productDiscountIqd}
             />
             <div className="hidden lg:block">{flowCta}</div>
           </div>

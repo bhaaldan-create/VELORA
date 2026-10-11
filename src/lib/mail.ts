@@ -4,6 +4,10 @@ import {
   releaseOrderStock,
   saveStoredOrder,
 } from "@/lib/orders";
+import {
+  redeemOrderCoupon,
+  reverseCouponRedemption,
+} from "@/lib/discounts/service";
 import { isSmtpConfigured, sendTransactionalEmail } from "@/lib/smtp";
 
 export const ORDER_EMAIL_TO =
@@ -53,6 +57,13 @@ export async function sendOrderEmailViaProviders(input: {
   order.stockReleased = false;
 
   try {
+    await redeemOrderCoupon(order, orderId);
+  } catch (error) {
+    await releaseOrderStock(order.items);
+    throw error;
+  }
+
+  try {
     await saveStoredOrder({
       savedAt: new Date().toISOString(),
       orderId,
@@ -63,6 +74,7 @@ export async function sendOrderEmailViaProviders(input: {
       status: "new",
     });
   } catch (error) {
+    await reverseCouponRedemption(orderId, "order_save_failed");
     await releaseOrderStock(order.items);
     throw error;
   }

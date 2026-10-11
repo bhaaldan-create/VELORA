@@ -423,6 +423,12 @@ export async function updateOrderStatus(
       console.error("[loyalty] order reversal failed:", err);
     }
   }
+  try {
+    const { syncCouponCommission } = await import("@/lib/discounts/service");
+    await syncCouponCommission(orderId, status);
+  } catch (err) {
+    console.error("[coupon] commission sync failed:", err);
+  }
   return stored;
 }
 

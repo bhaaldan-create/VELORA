@@ -8,6 +8,9 @@ type Props = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  couponCode?: string | null;
+  couponDiscount?: number;
+  productDiscount?: number;
   className?: string;
 };
 
@@ -16,6 +19,9 @@ export function CheckoutOrderSummary({
   subtotal,
   deliveryFee,
   total,
+  couponCode,
+  couponDiscount = 0,
+  productDiscount = 0,
   className,
 }: Props) {
   return (
@@ -32,8 +38,20 @@ export function CheckoutOrderSummary({
 
       <dl className="mt-5 space-y-3.5">
         <SummaryRow label="عدد المنتجات" value={String(itemCount)} />
-        <SummaryRow label="المجموع الفرعي" value={formatPrice(subtotal)} />
-        <SummaryRow label="أجور التوصيل" value={formatPrice(deliveryFee)} />
+        <SummaryRow label="مجموع المنتجات" value={formatPrice(subtotal + productDiscount)} />
+        {productDiscount > 0 ? (
+          <SummaryRow label="عروض المنتجات" value={`-${formatPrice(productDiscount)}`} />
+        ) : null}
+        {couponCode ? (
+          <SummaryRow
+            label={`كوبون ${couponCode}`}
+            value={couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
+          />
+        ) : null}
+        <SummaryRow
+          label="أجور التوصيل"
+          value={deliveryFee > 0 ? formatPrice(deliveryFee) : "مجاني"}
+        />
       </dl>
 
       <div

@@ -56,6 +56,15 @@ export type OrderPayload = {
   stockHeld?: boolean;
   /** أُعيدت الكميات بعد إلغاء / إرجاع / فشل تسليم */
   stockReleased?: boolean;
+  /** كود الخصم بعد التطبيع، إن قُبل في الخادم */
+  couponCode?: string;
+  couponDiscountIqd?: number;
+  productDiscountIqd?: number;
+  /** مجموع أسعار البيع قبل كوبون السلة */
+  listMerchandiseIqd?: number;
+  shippingDiscountIqd?: number;
+  /** لقطة قواعد الخصم وقت الطلب */
+  discountSnapshot?: Record<string, unknown> | null;
 };
 
 export const ORDER_SOURCE_LABELS: Record<OrderSource, string> = {
@@ -111,7 +120,10 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
         `- ${i.nameAr} (${i.name}) × ${i.quantity} = ${formatPrice(i.price * i.quantity)}`,
     ),
     ``,
-    `المجموع الفرعي: ${formatPrice(order.subtotal)}`,
+    `مجموع المنتجات: ${formatPrice(order.subtotal + (order.couponDiscountIqd || 0))}`,
+    order.couponCode
+      ? `كوبون ${order.couponCode}: -${formatPrice(order.couponDiscountIqd || 0)}`
+      : "",
     `أجور التوصيل: ${formatPrice(deliveryFee)} (تم إضافتها)`,
     `الإجمالي: ${formatPrice(total)}`,
     order.notes ? `ملاحظات: ${order.notes}` : "",
@@ -168,9 +180,17 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
 
         <div style="margin-top:14px;font-size:14px;color:#3D2640;">
           <div style="display:flex;justify-content:space-between;padding:4px 0;">
-            <span>المجموع الفرعي</span>
-            <span dir="ltr">${formatPrice(order.subtotal)}</span>
+            <span>مجموع المنتجات</span>
+            <span dir="ltr">${formatPrice(order.subtotal + (order.couponDiscountIqd || 0))}</span>
           </div>
+          ${
+            order.couponCode
+              ? `<div style="display:flex;justify-content:space-between;padding:4px 0;">
+            <span>كوبون ${escapeHtml(order.couponCode)}</span>
+            <span dir="ltr">-${formatPrice(order.couponDiscountIqd || 0)}</span>
+          </div>`
+              : ""
+          }
           <div style="display:flex;justify-content:space-between;padding:4px 0;">
             <span>أجور التوصيل (${escapeHtml(carrierLabel)}) — تم إضافة ${formatPrice(deliveryFee)}</span>
             <span dir="ltr">${formatPrice(deliveryFee)}</span>
