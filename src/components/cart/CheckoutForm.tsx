@@ -30,7 +30,7 @@ import {
 } from "@/components/checkout/CheckoutSuccessExperience";
 import { CheckoutReviewStep } from "@/components/checkout/CheckoutReviewStep";
 import { CouponField } from "@/components/cart/CouponField";
-import { useCouponQuote } from "@/components/cart/useCouponQuote";
+import { couponDisplayPercent, useCouponQuote } from "@/components/cart/useCouponQuote";
 import { PremiumPaymentPicker } from "@/components/checkout/PremiumPaymentPicker";
 import { ShippingAddressCard } from "@/components/checkout/ShippingAddressCard";
 import {
@@ -108,6 +108,15 @@ export function CheckoutForm({
   const displaySubtotal = serverAdjust
     ? serverAdjust.subtotal + serverAdjust.couponDiscount
     : saleSubtotal;
+  const shownPercent = couponDisplayPercent(
+    coupon.quote
+      ? {
+          discountPercent: coupon.quote.discountPercent,
+          merchandiseSubtotal: displaySubtotal,
+          couponDiscountIqd: couponDiscount,
+        }
+      : null,
+  );
   const total =
     serverAdjust?.total ??
     coupon.quote?.total ??
@@ -618,7 +627,7 @@ export function CheckoutForm({
                 total={total}
                 couponCode={coupon.quote?.couponCode || coupon.applied}
                 couponDiscount={couponDiscount}
-                discountPercent={coupon.quote?.discountPercent}
+                discountPercent={shownPercent}
                 onEditShipping={() => setStep("details")}
                 onEditPayment={() => setStep("payment")}
                 onConfirm={openCountdown}
@@ -651,6 +660,8 @@ export function CheckoutForm({
               applied={coupon.applied}
               error={coupon.error}
               loading={coupon.loading}
+              discountPercent={shownPercent}
+              discountIqd={couponDiscount}
               onChange={coupon.setCode}
               onApply={() => {
                 setServerAdjust(null);
@@ -668,7 +679,7 @@ export function CheckoutForm({
               total={total}
               couponCode={coupon.quote?.couponCode}
               couponDiscount={couponDiscount}
-              discountPercent={coupon.quote?.discountPercent}
+              discountPercent={shownPercent}
               productDiscount={coupon.quote?.productDiscountIqd}
             />
             <div className="hidden lg:block">{flowCta}</div>

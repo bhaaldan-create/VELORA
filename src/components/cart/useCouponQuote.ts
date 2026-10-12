@@ -15,6 +15,26 @@ export type CouponQuote = {
 
 const KEY = "velora.coupon";
 
+/** النسبة التي يراها الزبون. الخادم هو المصدر، وإن غاب الحقل تُستنتج من المبلغ. */
+export function couponDisplayPercent(
+  quote: {
+    discountPercent?: number | null;
+    merchandiseSubtotal?: number;
+    couponDiscountIqd?: number;
+  } | null | undefined,
+): number | null {
+  if (!quote) return null;
+  const direct = quote.discountPercent;
+  if (typeof direct === "number" && direct > 0) return direct;
+  const base = quote.merchandiseSubtotal ?? 0;
+  const off = quote.couponDiscountIqd ?? 0;
+  if (base > 0 && off > 0) {
+    const pct = Math.round((off / base) * 100);
+    if (pct >= 1 && pct <= 100) return pct;
+  }
+  return null;
+}
+
 export function useCouponQuote(input: {
   items: { id: string; quantity: number }[];
   customerId?: string;
@@ -77,8 +97,10 @@ export function useCouponQuote(input: {
   function apply() {
     const next = code.trim();
     setApplied(next);
-    if (next) window.sessionStorage.setItem(KEY, next);
-    else window.sessionStorage.removeItem(KEY);
+    if (next) {
+      setLoading(true);
+      window.sessionStorage.setItem(KEY, next);
+    } else window.sessionStorage.removeItem(KEY);
   }
 
   function clear() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useCouponQuote } from "@/components/cart/useCouponQuote";
+import { couponDisplayPercent, useCouponQuote } from "@/components/cart/useCouponQuote";
 import { cn, formatPrice } from "@/lib/utils";
 
 type Props = {
@@ -44,6 +44,7 @@ export function ProductCouponApply({ productId, quantity, ar }: Props) {
   }, [phase]);
 
   const accepted = Boolean(coupon.quote && coupon.applied && !coupon.error);
+  const percent = couponDisplayPercent(coupon.quote);
   const discount = coupon.quote?.couponDiscountIqd ?? 0;
   const freeShipping = (coupon.quote?.shippingDiscountIqd ?? 0) > 0;
 
@@ -77,10 +78,10 @@ export function ProductCouponApply({ productId, quantity, ar }: Props) {
         </div>
         <div className="min-w-0">
           <p className="pdp-coupon-seal__title">
-            {coupon.quote?.discountPercent
+            {percent
               ? ar
-                ? `خصم ${coupon.quote.discountPercent}%`
-                : `${coupon.quote.discountPercent}% off`
+                ? `خصم ${percent}%`
+                : `${percent}% off`
               : ar
                 ? "تم تطبيق الخصم"
                 : "Discount applied"}

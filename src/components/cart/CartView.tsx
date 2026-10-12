@@ -9,7 +9,7 @@ import { CartEmptyState } from "@/components/cart/CartEmptyState";
 import { CartLineItem } from "@/components/cart/CartLineItem";
 import { CartOrderSummary } from "@/components/cart/CartOrderSummary";
 import { CouponField } from "@/components/cart/CouponField";
-import { useCouponQuote } from "@/components/cart/useCouponQuote";
+import { couponDisplayPercent, useCouponQuote } from "@/components/cart/useCouponQuote";
 import { IconArrowStart } from "@/components/cart/CartIcons";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -38,6 +38,7 @@ export function CartView() {
         : product.price;
     return sum + (base - product.price) * quantity;
   }, 0);
+  const shownPercent = couponDisplayPercent(coupon.quote);
   const deliveryFee = coupon.quote?.deliveryFee ?? DELIVERY_FEE_IQD;
   const saleSubtotal = coupon.quote?.merchandiseSubtotal ?? subtotal;
   const total = coupon.quote?.total ?? getOrderTotal(subtotal, deliveryFee);
@@ -87,6 +88,8 @@ export function CartView() {
                 applied={coupon.applied}
                 error={coupon.error}
                 loading={coupon.loading}
+                discountPercent={shownPercent}
+                discountIqd={coupon.quote?.couponDiscountIqd}
                 onChange={coupon.setCode}
                 onApply={coupon.apply}
                 onClear={coupon.clear}
@@ -97,7 +100,7 @@ export function CartView() {
                 total={total}
                 couponCode={coupon.quote?.couponCode}
                 couponDiscount={coupon.quote?.couponDiscountIqd}
-                discountPercent={coupon.quote?.discountPercent}
+                discountPercent={shownPercent}
                 productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
               />
             </div>
@@ -112,6 +115,8 @@ export function CartView() {
               applied={coupon.applied}
               error={coupon.error}
               loading={coupon.loading}
+              discountPercent={shownPercent}
+              discountIqd={coupon.quote?.couponDiscountIqd}
               onChange={coupon.setCode}
               onApply={coupon.apply}
               onClear={coupon.clear}
@@ -122,7 +127,7 @@ export function CartView() {
               total={total}
               couponCode={coupon.quote?.couponCode}
               couponDiscount={coupon.quote?.couponDiscountIqd}
-              discountPercent={coupon.quote?.discountPercent}
+              discountPercent={shownPercent}
               productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
               showCta={false}
             />

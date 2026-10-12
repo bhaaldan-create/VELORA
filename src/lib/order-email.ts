@@ -74,6 +74,22 @@ export const ORDER_SOURCE_LABELS: Record<OrderSource, string> = {
   other: "أخرى",
 };
 
+function couponLineLabel(order: OrderPayload): string | null {
+  const snap = order.discountSnapshot;
+  const type = snap && typeof snap.type === "string" ? snap.type : "";
+  const value = snap && typeof snap.value === "number" ? snap.value : 0;
+  if (type === "PERCENT" && value > 0) return `خصم ${value}%`;
+  if (type === "FREE_SHIPPING") return "شحن مجاني";
+  const base = (order.subtotal || 0) + (order.couponDiscountIqd || 0);
+  const off = order.couponDiscountIqd || 0;
+  if (base > 0 && off > 0) {
+    const pct = Math.round((off / base) * 100);
+    if (pct >= 1 && pct <= 100) return `خصم ${pct}%`;
+  }
+  if (order.couponCode || off > 0) return "خصم";
+  return null;
+}
+
 export function buildOrderEmail(order: OrderPayload, orderId: string) {
   const rows = order.items
     .map(
@@ -95,6 +111,8 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
     order.shippingCarrierLabel || THAHAB_CARRIER.nameAr;
 
   const subject = `طلب جديد VELORA #${orderId} — ${order.fullName}`;
+  const discountLabel = couponLineLabel(order);
+  const discountAmount = order.couponDiscountIqd || 0;
 
   const text = [
     `طلب جديد من موقع VELORA`,
@@ -121,8 +139,10 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
     ),
     ``,
     `مجموع المنتجات: ${formatPrice(order.subtotal + (order.couponDiscountIqd || 0))}`,
-    order.couponCode
-      ? `كوبون ${order.couponCode}: -${formatPrice(order.couponDiscountIqd || 0)}`
+    discountLabel
+      ? discountAmount > 0
+        ? `${discountLabel}: -${formatPrice(discountAmount)}`
+        : discountLabel
       : "",
     `أجور التوصيل: ${formatPrice(deliveryFee)} (تم إضافتها)`,
     `الإجمالي: ${formatPrice(total)}`,
@@ -184,10 +204,10 @@ export function buildOrderEmail(order: OrderPayload, orderId: string) {
             <span dir="ltr">${formatPrice(order.subtotal + (order.couponDiscountIqd || 0))}</span>
           </div>
           ${
-            order.couponCode
+            discountLabel
               ? `<div style="display:flex;justify-content:space-between;padding:4px 0;">
-            <span>كوبون ${escapeHtml(order.couponCode)}</span>
-            <span dir="ltr">-${formatPrice(order.couponDiscountIqd || 0)}</span>
+            <span>${escapeHtml(discountLabel)}</span>
+            <span dir="ltr">${discountAmount > 0 ? `-${formatPrice(discountAmount)}` : ""}</span>
           </div>`
               : ""
           }
