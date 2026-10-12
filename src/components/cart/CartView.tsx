@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { ui } from "@/constants/brand";
@@ -8,6 +8,7 @@ import { CartClearDialog } from "@/components/cart/CartClearDialog";
 import { CartEmptyState } from "@/components/cart/CartEmptyState";
 import { CartLineItem } from "@/components/cart/CartLineItem";
 import { CartOrderSummary } from "@/components/cart/CartOrderSummary";
+import { CouponAppliedCeremony } from "@/components/cart/CouponAppliedCeremony";
 import { CouponField } from "@/components/cart/CouponField";
 import { couponDisplayPercent, useCouponQuote } from "@/components/cart/useCouponQuote";
 import { IconArrowStart } from "@/components/cart/CartIcons";
@@ -28,6 +29,8 @@ export function CartView() {
   const { items, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
     useCart();
   const [clearOpen, setClearOpen] = useState(false);
+  const [rite, setRite] = useState(false);
+  const awaiting = useRef(false);
   const coupon = useCouponQuote({
     items: items.map(({ product, quantity }) => ({ id: product.id, quantity })),
   });
@@ -38,6 +41,18 @@ export function CartView() {
         : product.price;
     return sum + (base - product.price) * quantity;
   }, 0);
+  useLayoutEffect(() => {
+    if (!awaiting.current || coupon.loading) return;
+    awaiting.current = false;
+    if (coupon.quote && !coupon.error) setRite(true);
+  }, [coupon.loading, coupon.quote, coupon.error]);
+
+  function applyCoupon() {
+    if (!coupon.code.trim() || coupon.loading) return;
+    awaiting.current = true;
+    coupon.apply();
+  }
+
   const shownPercent = couponDisplayPercent(coupon.quote);
   const deliveryFee = coupon.quote?.deliveryFee ?? DELIVERY_FEE_IQD;
   const saleSubtotal = coupon.quote?.merchandiseSubtotal ?? subtotal;
@@ -91,8 +106,11 @@ export function CartView() {
                 discountPercent={shownPercent}
                 discountIqd={coupon.quote?.couponDiscountIqd}
                 onChange={coupon.setCode}
-                onApply={coupon.apply}
-                onClear={coupon.clear}
+                onApply={applyCoupon}
+                onClear={() => {
+                  setRite(false);
+                  coupon.clear();
+                }}
               />
               <CartOrderSummary
                 subtotal={saleSubtotal}
@@ -118,8 +136,11 @@ export function CartView() {
               discountPercent={shownPercent}
               discountIqd={coupon.quote?.couponDiscountIqd}
               onChange={coupon.setCode}
-              onApply={coupon.apply}
-              onClear={coupon.clear}
+              onApply={applyCoupon}
+              onClear={() => {
+                setRite(false);
+                coupon.clear();
+              }}
             />
             <CartOrderSummary
               subtotal={saleSubtotal}
@@ -134,6 +155,12 @@ export function CartView() {
           </div>
         </div>
       </div>
+
+      <CouponAppliedCeremony
+        open={rite}
+        percent={shownPercent}
+        onDone={() => setRite(false)}
+      />
 
       <div className="bag-sticky" role="region" aria-label="إتمام الطلب">
         <div className="bag-sticky__inner">

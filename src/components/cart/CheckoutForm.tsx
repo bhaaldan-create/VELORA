@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
@@ -29,6 +29,7 @@ import {
   CheckoutSuccessExperience,
 } from "@/components/checkout/CheckoutSuccessExperience";
 import { CheckoutReviewStep } from "@/components/checkout/CheckoutReviewStep";
+import { CouponAppliedCeremony } from "@/components/cart/CouponAppliedCeremony";
 import { CouponField } from "@/components/cart/CouponField";
 import { couponDisplayPercent, useCouponQuote } from "@/components/cart/useCouponQuote";
 import { PremiumPaymentPicker } from "@/components/checkout/PremiumPaymentPicker";
@@ -94,6 +95,13 @@ export function CheckoutForm({
     phone,
     email,
   });
+  const [rite, setRite] = useState(false);
+  const awaitingCoupon = useRef(false);
+  useLayoutEffect(() => {
+    if (!awaitingCoupon.current || coupon.loading) return;
+    awaitingCoupon.current = false;
+    if (coupon.quote && !coupon.error) setRite(true);
+  }, [coupon.loading, coupon.quote, coupon.error]);
   const [serverAdjust, setServerAdjust] = useState<{
     subtotal: number;
     deliveryFee: number;
@@ -495,6 +503,12 @@ export function CheckoutForm({
   };
 
   return (
+    <>
+      <CouponAppliedCeremony
+        open={rite}
+        percent={shownPercent}
+        onDone={() => setRite(false)}
+      />
     <div
       className={cn(
         "pb-[calc(10.5rem+env(safe-area-inset-bottom))] lg:pb-16",
@@ -664,11 +678,14 @@ export function CheckoutForm({
               discountIqd={couponDiscount}
               onChange={coupon.setCode}
               onApply={() => {
+                if (!coupon.code.trim() || coupon.loading) return;
                 setServerAdjust(null);
+                awaitingCoupon.current = true;
                 coupon.apply();
               }}
               onClear={() => {
                 setServerAdjust(null);
+                setRite(false);
                 coupon.clear();
               }}
             />
@@ -693,5 +710,6 @@ export function CheckoutForm({
         {mobileFlowCta}
       </CheckoutStickyBar>
     </div>
+    </>
   );
 }

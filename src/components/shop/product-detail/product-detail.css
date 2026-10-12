@@ -487,9 +487,9 @@
 }
 
 .pdp-coupon-seal__title {
-  font-size: 1.35rem;
+  font-size: 1.02rem;
   font-weight: 650;
-  line-height: 1;
+  line-height: 1.25;
   letter-spacing: 0;
   color: #1f5c3d;
 }

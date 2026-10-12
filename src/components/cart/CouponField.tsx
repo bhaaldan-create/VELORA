@@ -27,28 +27,43 @@ export function CouponField({
   onApply,
   onClear,
 }: Props) {
-  if (applied && !error) {
-    const title = discountPercent
+  const confirmed =
+    applied && !error && (!loading || Boolean(discountPercent) || discountIqd > 0);
+  if (confirmed) {
+    const detail = discountPercent
       ? `خصم ${discountPercent}%`
       : discountIqd > 0
-        ? "تم تطبيق الخصم"
+        ? ""
         : loading
           ? "…"
           : "شحن مجاني";
     return (
-      <div className="rounded-[16px] border border-[#1f7a4d]/28 bg-[#f4fbf7] p-4">
-        <p className="text-[1.35rem] font-semibold leading-none tracking-normal text-[#1f7a4d]">
-          {title}
-        </p>
-        {discountIqd > 0 ? (
-          <p className="mt-2 font-price text-[13px] text-[#1f7a4d]/80">
-            -{formatPrice(discountIqd)}
+      <div className="flex items-center gap-3 rounded-[16px] border border-[#1f7a4d]/28 bg-[#f4fbf7] p-4">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1f7a4d] text-white"
+          aria-hidden
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5.5 12.5 l4 4 l9-9.5" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="text-[1.05rem] font-semibold leading-tight tracking-normal text-[#1f5c3d]">
+            تم تطبيق الخصم
           </p>
-        ) : null}
+          {detail ? (
+            <p className="mt-1 text-[0.92rem] font-semibold text-[#2f6b4f]">{detail}</p>
+          ) : null}
+          {discountIqd > 0 ? (
+            <p className="mt-0.5 font-price text-[12px] text-[#1f7a4d]/80">
+              -{formatPrice(discountIqd)}
+            </p>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={onClear}
-          className="mt-3 text-[12px] text-[var(--muted)] underline"
+          className="ms-auto self-center text-[12px] text-[var(--muted)] underline"
         >
           إزالة
         </button>

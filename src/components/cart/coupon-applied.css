@@ -1,0 +1,227 @@
+.coupon-rite {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding:
+    max(1.5rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1.25rem, env(safe-area-inset-left));
+}
+
+.coupon-rite__veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 18, 28, 0.42);
+  backdrop-filter: blur(14px);
+  animation: coupon-rite-veil 0.35s ease both;
+}
+
+.coupon-rite__card {
+  position: relative;
+  width: min(19rem, calc(100vw - 2.5rem));
+  border-radius: 1.85rem;
+  padding: 2.05rem 1.35rem 1.7rem;
+  text-align: center;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(47, 107, 79, 0.12), transparent 58%),
+    linear-gradient(180deg, #fffcfa 0%, #f4efe9 100%);
+  box-shadow:
+    0 40px 90px -42px rgba(26, 18, 28, 0.72),
+    0 0 0 1px rgba(61, 38, 64, 0.06);
+  animation: coupon-rite-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.coupon-rite__mark {
+  position: relative;
+  display: grid;
+  width: 8.6rem;
+  height: 8.6rem;
+  margin-inline: auto;
+  place-items: center;
+}
+
+.coupon-rite__mark svg {
+  width: 8.6rem;
+  height: 8.6rem;
+}
+
+.coupon-rite__track,
+.coupon-rite__ring,
+.coupon-rite__check {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.coupon-rite__track {
+  stroke: rgba(47, 107, 79, 0.16);
+  stroke-width: 3;
+}
+
+.coupon-rite__ring {
+  stroke: #2f6b4f;
+  stroke-width: 3;
+  transform: rotate(-90deg);
+  transform-origin: 70px 70px;
+  stroke-dasharray: 339.3;
+  stroke-dashoffset: 0;
+}
+
+.coupon-rite.is-count .coupon-rite__ring {
+  animation: coupon-rite-drain 3s linear forwards;
+}
+
+.coupon-rite__check {
+  stroke: #1f7a4d;
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+}
+
+.coupon-rite.is-check .coupon-rite__check,
+.coupon-rite.is-leave .coupon-rite__check {
+  animation: coupon-rite-draw 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.coupon-rite.is-check .coupon-rite__ring,
+.coupon-rite.is-leave .coupon-rite__ring {
+  animation: none;
+  stroke-dashoffset: 0;
+  stroke: #1f7a4d;
+}
+
+.coupon-rite__num {
+  position: absolute;
+  font-size: 3.35rem;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+  color: #1f5c3d;
+  animation: coupon-rite-num 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.coupon-rite__copy {
+  min-height: 3.4rem;
+  margin-top: 0.85rem;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.coupon-rite.is-check .coupon-rite__copy,
+.coupon-rite.is-leave .coupon-rite__copy {
+  animation: coupon-rite-copy 0.55s 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.coupon-rite__title {
+  margin: 0;
+  font-family: var(--font-display, "Iowan Old Style", Georgia, serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #1f5c3d;
+}
+
+.coupon-rite__percent {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #2f6b4f;
+}
+
+.coupon-rite.is-leave {
+  animation: coupon-rite-out 0.4s ease forwards;
+}
+
+@keyframes coupon-rite-veil {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes coupon-rite-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes coupon-rite-num {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes coupon-rite-drain {
+  to { stroke-dashoffset: 339.3; }
+}
+
+@keyframes coupon-rite-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes coupon-rite-copy {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes coupon-rite-out {
+  to { opacity: 0; }
+}
+
+[data-theme="dark"] .coupon-rite__card {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(90, 168, 130, 0.18), transparent 58%),
+    linear-gradient(180deg, #221c20 0%, #161214 100%);
+  box-shadow:
+    0 40px 90px -42px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(215, 243, 228, 0.08);
+}
+
+[data-theme="dark"] .coupon-rite__title,
+[data-theme="dark"] .coupon-rite__num {
+  color: #d7f3e4;
+}
+
+[data-theme="dark"] .coupon-rite__percent {
+  color: #b7ebc9;
+}
+
+[data-theme="dark"] .coupon-rite__check,
+[data-theme="dark"] .coupon-rite.is-check .coupon-rite__ring,
+[data-theme="dark"] .coupon-rite.is-leave .coupon-rite__ring {
+  stroke: #8fd9ae;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coupon-rite__veil,
+  .coupon-rite__card,
+  .coupon-rite.is-count .coupon-rite__ring,
+  .coupon-rite.is-check .coupon-rite__check,
+  .coupon-rite.is-check .coupon-rite__copy {
+    animation: none;
+  }
+
+  .coupon-rite.is-check .coupon-rite__check,
+  .coupon-rite.is-check .coupon-rite__copy,
+  .coupon-rite.is-leave .coupon-rite__check,
+  .coupon-rite.is-leave .coupon-rite__copy {
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+}
