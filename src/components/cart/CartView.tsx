@@ -97,6 +97,7 @@ export function CartView() {
                 total={total}
                 couponCode={coupon.quote?.couponCode}
                 couponDiscount={coupon.quote?.couponDiscountIqd}
+                discountPercent={coupon.quote?.discountPercent}
                 productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
               />
             </div>
@@ -121,6 +122,7 @@ export function CartView() {
               total={total}
               couponCode={coupon.quote?.couponCode}
               couponDiscount={coupon.quote?.couponDiscountIqd}
+              discountPercent={coupon.quote?.discountPercent}
               productDiscount={coupon.quote?.productDiscountIqd || productDiscount}
               showCta={false}
             />

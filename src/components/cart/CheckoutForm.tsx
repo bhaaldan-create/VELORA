@@ -618,6 +618,7 @@ export function CheckoutForm({
                 total={total}
                 couponCode={coupon.quote?.couponCode || coupon.applied}
                 couponDiscount={couponDiscount}
+                discountPercent={coupon.quote?.discountPercent}
                 onEditShipping={() => setStep("details")}
                 onEditPayment={() => setStep("payment")}
                 onConfirm={openCountdown}
@@ -667,6 +668,7 @@ export function CheckoutForm({
               total={total}
               couponCode={coupon.quote?.couponCode}
               couponDiscount={couponDiscount}
+              discountPercent={coupon.quote?.discountPercent}
               productDiscount={coupon.quote?.productDiscountIqd}
             />
             <div className="hidden lg:block">{flowCta}</div>

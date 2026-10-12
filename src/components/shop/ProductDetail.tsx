@@ -10,6 +10,7 @@ import { useLocale } from "@/context/LocaleContext";
 import { isProductInStock } from "@/lib/inventory";
 import { getProductWhatsAppUrl } from "@/lib/social-links";
 import { cn } from "@/lib/utils";
+import { ProductCouponApply } from "./product-detail/ProductCouponApply";
 import { ProductGallery } from "./product-detail/ProductGallery";
 import { ProductRelated, ProductRoutine } from "./product-detail/ProductRails";
 import {
@@ -227,6 +228,8 @@ export function ProductDetail({ product, related, routine }: Props) {
                 </span>
               ) : null}
             </div>
+
+            <ProductCouponApply productId={product.id} quantity={qty} ar={ar} />
 
             <ProductBenefits product={product} ar={ar} />
 

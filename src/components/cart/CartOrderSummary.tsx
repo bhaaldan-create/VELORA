@@ -13,6 +13,7 @@ type Props = {
   total: number;
   couponCode?: string | null;
   couponDiscount?: number;
+  discountPercent?: number | null;
   productDiscount?: number;
   className?: string;
   showCta?: boolean;
@@ -25,6 +26,7 @@ export function CartOrderSummary({
   total,
   couponCode,
   couponDiscount = 0,
+  discountPercent,
   productDiscount = 0,
   className,
   showCta = true,
@@ -50,7 +52,9 @@ export function CartOrderSummary({
         ) : null}
         {couponCode ? (
           <div className="bag-summary__row">
-            <dt>كوبون {couponCode}</dt>
+            <dt>
+              {discountPercent ? `خصم ${discountPercent}%` : "خصم"}
+            </dt>
             <dd className="font-price">
               {couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
             </dd>

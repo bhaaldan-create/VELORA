@@ -24,6 +24,7 @@ type Props = {
   total: number;
   couponCode?: string | null;
   couponDiscount?: number;
+  discountPercent?: number | null;
   onEditShipping: () => void;
   onEditPayment: () => void;
   onConfirm: () => void;
@@ -123,6 +124,7 @@ export function CheckoutReviewStep({
   total,
   couponCode,
   couponDiscount = 0,
+  discountPercent,
   onEditShipping,
   onEditPayment,
   onConfirm,
@@ -255,7 +257,9 @@ export function CheckoutReviewStep({
           </div>
           {couponCode ? (
             <div className="cr-totals__row">
-              <dt className="cr-totals__label">كوبون {couponCode}</dt>
+              <dt className="cr-totals__label">
+                {discountPercent ? `خصم ${discountPercent}%` : "خصم"}
+              </dt>
               <dd className="cr-totals__value font-price">
                 {couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
               </dd>

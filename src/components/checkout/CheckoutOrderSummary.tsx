@@ -10,6 +10,7 @@ type Props = {
   total: number;
   couponCode?: string | null;
   couponDiscount?: number;
+  discountPercent?: number | null;
   productDiscount?: number;
   className?: string;
 };
@@ -21,6 +22,7 @@ export function CheckoutOrderSummary({
   total,
   couponCode,
   couponDiscount = 0,
+  discountPercent,
   productDiscount = 0,
   className,
 }: Props) {
@@ -44,7 +46,7 @@ export function CheckoutOrderSummary({
         ) : null}
         {couponCode ? (
           <SummaryRow
-            label={`كوبون ${couponCode}`}
+            label={discountPercent ? `خصم ${discountPercent}%` : "خصم"}
             value={couponDiscount > 0 ? `-${formatPrice(couponDiscount)}` : "شحن مجاني"}
           />
         ) : null}

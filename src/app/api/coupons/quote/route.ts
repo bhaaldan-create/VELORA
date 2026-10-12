@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     return Response.json({
       ok: true,
       couponCode: quote.couponCode || null,
+      discountPercent: quote.discountPercent,
       merchandiseSubtotal: quote.merchandiseBefore,
       productDiscountIqd: quote.productDiscount,
       couponDiscountIqd: quote.couponDiscountIqd,

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export type CouponQuote = {
   couponCode: string | null;
+  discountPercent: number | null;
   merchandiseSubtotal: number;
   productDiscountIqd: number;
   couponDiscountIqd: number;
