@@ -598,22 +598,17 @@ html[data-locale="en"] .font-display {
 }
 
 /*
- * أسعار الموقع — نفس IBM Plex مع أرقام جدولية
- * مهم: أطفال .t1/.t2 يفرضون track-wide — نلغيه هنا حتى لا تتشوه الأرقام.
+ * أسعار الموقع فقط — IBM Plex Sans Arabic دائماً
+ * يتجاوز Kufyan و Outfit حتى في الواجهة الإنجليزية.
+ * أطفال .t1/.t2 يفرضون تباعداً عريضاً؛ يُلغى هنا حتى لا تتشوه أرقام الدينار.
  */
-.font-price {
-  font-family: var(--font-body), "Segoe UI", Tahoma, sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "lnum" 1;
-  letter-spacing: 0;
-  font-weight: 500;
-}
-
 .font-price,
 .font-price * {
-  font-family: inherit;
-  letter-spacing: 0;
+  font-family: var(--font-body), "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "lnum" 1, "kern" 1;
+  letter-spacing: 0;
+  font-weight: 500;
 }
 
 .font-latin {
@@ -1211,9 +1206,11 @@ html[data-locale="en"] .font-display {
 }
 
 .admin-num {
+  font-family: var(--font-body), "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-feature-settings: "tnum" 1, "lnum" 1, "kern" 1;
 }
 
 .admin-scroll {
